@@ -179,6 +179,22 @@ export default function Home() {
         </div>
 
         <div className="max-w-4xl mx-auto space-y-8 z-10 relative">
+          {/* Creative Animated Pixela Text */}
+          <div className="flex justify-center items-center space-x-3 md:space-x-5 select-none mb-4 md:mb-6">
+            {["P", "I", "X", "E", "L", "A"].map((letter, index) => (
+              <span
+                key={index}
+                className="animate-lens-focus inline-block text-4xl sm:text-5xl md:text-6xl font-display font-extrabold tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-[#00f2fe] via-[#9b51e0] to-[#ff007f] animate-gradient-text hover:scale-125 hover:rotate-6 transition-all duration-300 cursor-default drop-shadow-[0_0_25px_rgba(0,242,254,0.55)]"
+                style={{
+                  animationDelay: `${index * 0.12}s`,
+                  opacity: 0,
+                }}
+              >
+                {letter}
+              </span>
+            ))}
+          </div>
+
           <h1 className="text-6xl md:text-8xl font-black tracking-tighter text-white leading-none uppercase select-none transition-all duration-700 hover:tracking-normal group cursor-default">
             Behind the <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#5885ff] via-[#ff5e95] to-[#ffaa5e] animate-gradient-text drop-shadow-[0_0_20px_rgba(255,94,149,0.2)]">Glass</span>
           </h1>
@@ -240,9 +256,30 @@ export default function Home() {
                 </div>
               </div>
 
-              <div className="pt-2">
+              <div className="pt-4 flex flex-wrap gap-4 items-center">
+                <a
+                  href="https://forms.gle/ZB759a1cnmREZFYQA"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-6 py-3 bg-primary text-white font-bold uppercase tracking-wider text-xs hover:bg-primary/90 transition-all flex items-center justify-center space-x-2 rounded shadow-lg shadow-primary/10"
+                >
+                  <span>Register as Participant</span>
+                  <ArrowRight className="h-3.5 w-3.5 shrink-0" />
+                </a>
+                
+                <a
+                  href="https://forms.gle/ZB759a1cnmREZFYQA"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-6 py-3 bg-transparent border border-white/20 text-white font-bold uppercase tracking-wider text-xs hover:bg-white/5 hover:border-white transition-all flex items-center justify-center space-x-2 rounded"
+                >
+                  <span>Register as Audience</span>
+                </a>
+              </div>
+
+              <div className="pt-3">
                 <NextLink
-                  href="/about"
+                  href="/shutter-stories"
                   className="inline-flex items-center space-x-2 text-xs font-bold uppercase tracking-wider text-primary hover:text-white transition-colors"
                 >
                   <span>View Exhibition Details & Schedule</span>
@@ -253,32 +290,20 @@ export default function Home() {
 
             {/* Right side poster display */}
             <div className="lg:col-span-6 relative flex justify-center items-center h-[350px] sm:h-[450px]">
-              <div className="relative w-full max-w-[280px] sm:max-w-[320px] aspect-[3/4]">
-                {/* Poster 1 */}
-                <div className="absolute inset-0 bg-card border border-border/60 rounded-lg p-3 shadow-2xl rotate-[-6deg] hover:rotate-0 hover:z-30 hover:scale-105 transition-all duration-300 cursor-pointer z-10">
-                  <div className="w-full h-[75%] rounded overflow-hidden bg-cover bg-center bg-zinc-900" style={{ backgroundImage: `url('https://images.unsplash.com/photo-1542038784456-1ea8e935640e?w=600&auto=format&fit=crop&q=80')` }} />
-                  <div className="mt-3 text-center">
-                    <span className="font-bold text-[10px] uppercase tracking-widest text-primary">Shutter Stories</span>
-                    <p className="text-[9px] text-zinc-500 mt-0.5">Oriental Campus • Aug 21</p>
-                  </div>
+              <div className="relative w-full max-w-[280px] sm:max-w-[320px] aspect-[2/3]">
+                {/* Poster 1 (Retro Poster - Frontmost) */}
+                <div className="absolute inset-0 bg-card border border-border/60 rounded-lg p-1.5 shadow-2xl rotate-[-4deg] hover:rotate-0 hover:z-30 hover:scale-105 transition-all duration-300 cursor-pointer z-20">
+                  <div className="w-full h-full rounded-md overflow-hidden bg-center bg-zinc-900" style={{ backgroundImage: `url('/poster1.jpg')`, backgroundSize: '100% 100%', backgroundRepeat: 'no-repeat' }} />
                 </div>
 
-                {/* Poster 2 */}
-                <div className="absolute inset-0 bg-card border border-border/60 rounded-lg p-3 shadow-2xl rotate-[6deg] translate-x-4 translate-y-2 hover:rotate-0 hover:z-30 hover:scale-105 transition-all duration-300 cursor-pointer z-20">
-                  <div className="w-full h-[75%] rounded overflow-hidden bg-cover bg-center bg-zinc-900" style={{ backgroundImage: `url('https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=600&auto=format&fit=crop&q=80')` }} />
-                  <div className="mt-3 text-center">
-                    <span className="font-bold text-[10px] uppercase tracking-widest text-primary">Photography Exhibition</span>
-                    <p className="text-[9px] text-zinc-500 mt-0.5">10 AM • Friday Auditorium</p>
-                  </div>
+                {/* Poster 2 (White Poster - Middle) */}
+                <div className="absolute inset-0 bg-card border border-border/60 rounded-lg p-1.5 shadow-2xl rotate-[8deg] translate-x-6 translate-y-3 hover:rotate-0 hover:z-30 hover:scale-105 transition-all duration-300 cursor-pointer z-10">
+                  <div className="w-full h-full rounded-md overflow-hidden bg-center bg-zinc-900" style={{ backgroundImage: `url('/poster2.jpg')`, backgroundSize: '100% 100%', backgroundRepeat: 'no-repeat' }} />
                 </div>
 
-                {/* Poster 3 */}
-                <div className="absolute inset-0 bg-card border border-border/60 rounded-lg p-3 shadow-2xl translate-x-[-15px] translate-y-[10px] rotate-[-12deg] hover:rotate-0 hover:z-30 hover:scale-105 transition-all duration-300 cursor-pointer z-0 opacity-80">
-                  <div className="w-full h-[75%] rounded overflow-hidden bg-cover bg-center bg-zinc-900" style={{ backgroundImage: `url('https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=600&auto=format&fit=crop&q=80')` }} />
-                  <div className="mt-3 text-center">
-                    <span className="font-bold text-[10px] uppercase tracking-widest text-primary">Pixela Club</span>
-                    <p className="text-[9px] text-zinc-500 mt-0.5">Bhopal • Stay Tuned</p>
-                  </div>
+                {/* Poster 3 (Dark Frame Poster - Backmost) */}
+                <div className="absolute inset-0 bg-card border border-border/60 rounded-lg p-1.5 shadow-2xl translate-x-[-16px] translate-y-[12px] rotate-[-12deg] hover:rotate-0 hover:z-30 hover:scale-105 transition-all duration-300 cursor-pointer z-0 opacity-80">
+                  <div className="w-full h-full rounded-md overflow-hidden bg-center bg-zinc-900" style={{ backgroundImage: `url('/poster3.jpg')`, backgroundSize: '100% 100%', backgroundRepeat: 'no-repeat' }} />
                 </div>
               </div>
             </div>
@@ -361,115 +386,55 @@ export default function Home() {
         </div>
       </section>
 
-      {/* 4. Upcoming Photowalks */}
+      {/* 4. Photowalks */}
       <section className="relative py-24 px-4 border-b border-border/40 studio-spotlight-subtle">
         <div className="max-w-6xl mx-auto space-y-12">
           {/* Header Row */}
           <div className="flex justify-between items-end">
             <div className="space-y-2">
               <h2 className="text-3xl md:text-4xl font-black text-white uppercase tracking-tight">
-                Upcoming Photowalks
+                Photowalks
               </h2>
-            </div>
-            <div className="flex space-x-2">
-              <button className="h-9 w-9 rounded border border-border/60 hover:bg-white hover:text-black transition-colors flex items-center justify-center text-zinc-400">
-                <ChevronLeft className="h-4 w-4" />
-              </button>
-              <button className="h-9 w-9 rounded border border-border/60 hover:bg-white hover:text-black transition-colors flex items-center justify-center text-zinc-400">
-                <ChevronRight className="h-4 w-4" />
-              </button>
             </div>
           </div>
 
           {/* Cards Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {/* Card 1 */}
-            <div className="bg-card/40 border border-border/65 rounded overflow-hidden group hover:border-white/20 transition-all flex flex-col h-full justify-between">
-              <div>
-                <div className="relative aspect-[1.8/1] bg-zinc-900 overflow-hidden">
-                  <div 
-                    className="absolute inset-0 bg-cover bg-center group-hover:scale-105 transition-transform duration-500" 
-                    style={{ backgroundImage: `url('https://images.unsplash.com/photo-1514565131-fce0801e5785?w=600&auto=format&fit=crop&q=80')` }}
-                  />
-                  <span className="absolute top-4 left-4 bg-black/60 backdrop-blur-md text-[9px] font-bold text-white px-2 py-0.5 rounded tracking-wide font-mono uppercase">
-                    24 DEC, 2024
-                  </span>
-                  <button className="absolute top-4 right-4 h-7 w-7 rounded-full bg-black/60 backdrop-blur-md flex items-center justify-center text-zinc-400 hover:text-red-500 transition-colors">
-                    <Heart className="h-3.5 w-3.5" />
-                  </button>
-                </div>
-                <div className="p-5 space-y-2">
-                  <h3 className="font-bold text-base text-white">District Blue Hour</h3>
-                  <p className="text-zinc-400 text-xs font-light leading-relaxed">
-                    Join us for a long-exposure session in the heart of the financial district as the city transforms.
-                  </p>
-                </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 max-w-4xl mx-auto gap-8">
+            {/* Card 1 - MANUABHAN TEKRI */}
+            <div className="bg-card/40 border border-border/65 rounded overflow-hidden group hover:border-white/20 transition-all flex flex-col h-full">
+              <div className="relative aspect-[1.8/1] bg-zinc-900 overflow-hidden">
+                <div 
+                  className="absolute inset-0 bg-cover bg-center group-hover:scale-105 transition-transform duration-500" 
+                  style={{ backgroundImage: `url('/photowalk1.jpg')` }}
+                />
+                <span className="absolute top-4 left-4 bg-black/60 backdrop-blur-md text-[9px] font-bold text-white px-2 py-0.5 rounded tracking-wide font-mono uppercase">
+                  1st Place
+                </span>
               </div>
-              <div className="px-5 pb-5 pt-2">
-                <button className="text-[10px] font-bold text-white uppercase tracking-wider flex items-center space-x-1.5 hover:opacity-85 transition-opacity">
-                  <span>Reserve Spot</span>
-                  <ArrowRight className="h-3.5 w-3.5 text-primary" />
-                </button>
+              <div className="p-5 space-y-2 flex-grow">
+                <h3 className="font-bold text-base text-white uppercase tracking-wider font-display">MANUABHAN TEKRI</h3>
+                <p className="text-zinc-400 text-xs font-light leading-relaxed">
+                  A scenic hilltop photowalk capturing the panoramic horizon of Bhopal, rocky terrains, and high-altitude perspective shots.
+                </p>
               </div>
             </div>
 
-            {/* Card 2 */}
-            <div className="bg-card/40 border border-border/65 rounded overflow-hidden group hover:border-white/20 transition-all flex flex-col h-full justify-between">
-              <div>
-                <div className="relative aspect-[1.8/1] bg-zinc-900 overflow-hidden">
-                  <div 
-                    className="absolute inset-0 bg-cover bg-center group-hover:scale-105 transition-transform duration-500" 
-                    style={{ backgroundImage: `url('https://images.unsplash.com/photo-1505705694340-019e1e335916?w=600&auto=format&fit=crop&q=80')` }}
-                  />
-                  <span className="absolute top-4 left-4 bg-black/60 backdrop-blur-md text-[9px] font-bold text-white px-2 py-0.5 rounded tracking-wide font-mono uppercase">
-                    02 NOV, 2024
-                  </span>
-                  <button className="absolute top-4 right-4 h-7 w-7 rounded-full bg-black/60 backdrop-blur-md flex items-center justify-center text-zinc-400 hover:text-red-500 transition-colors">
-                    <Heart className="h-3.5 w-3.5" />
-                  </button>
-                </div>
-                <div className="p-5 space-y-2">
-                  <h3 className="font-bold text-base text-white">Industrial Texture</h3>
-                  <p className="text-zinc-400 text-xs font-light leading-relaxed">
-                    An exploration of rust, steel, and geometry in the historic academic shipyards.
-                  </p>
-                </div>
+            {/* Card 2 - ITH BHOPAL */}
+            <div className="bg-card/40 border border-border/65 rounded overflow-hidden group hover:border-white/20 transition-all flex flex-col h-full">
+              <div className="relative aspect-[1.8/1] bg-zinc-900 overflow-hidden">
+                <div 
+                  className="absolute inset-0 bg-cover bg-center group-hover:scale-105 transition-transform duration-500" 
+                  style={{ backgroundImage: `url('/photowalk2.jpg')` }}
+                />
+                <span className="absolute top-4 left-4 bg-black/60 backdrop-blur-md text-[9px] font-bold text-white px-2 py-0.5 rounded tracking-wide font-mono uppercase">
+                  2nd Place
+                </span>
               </div>
-              <div className="px-5 pb-5 pt-2">
-                <button className="text-[10px] font-bold text-white uppercase tracking-wider flex items-center space-x-1.5 hover:opacity-85 transition-opacity">
-                  <span>Reserve Spot</span>
-                  <ArrowRight className="h-3.5 w-3.5 text-primary" />
-                </button>
-              </div>
-            </div>
-
-            {/* Card 3 */}
-            <div className="bg-card/40 border border-border/65 rounded overflow-hidden group hover:border-white/20 transition-all flex flex-col h-full justify-between">
-              <div>
-                <div className="relative aspect-[1.8/1] bg-zinc-900 overflow-hidden">
-                  <div 
-                    className="absolute inset-0 bg-cover bg-center group-hover:scale-105 transition-transform duration-500" 
-                    style={{ backgroundImage: `url('https://images.unsplash.com/photo-1448375240586-882707db888b?w=600&auto=format&fit=crop&q=80')` }}
-                  />
-                  <span className="absolute top-4 left-4 bg-black/60 backdrop-blur-md text-[9px] font-bold text-white px-2 py-0.5 rounded tracking-wide font-mono uppercase">
-                    18 NOV, 2024
-                  </span>
-                  <button className="absolute top-4 right-4 h-7 w-7 rounded-full bg-black/60 backdrop-blur-md flex items-center justify-center text-zinc-400 hover:text-red-500 transition-colors">
-                    <Heart className="h-3.5 w-3.5" />
-                  </button>
-                </div>
-                <div className="p-5 space-y-2">
-                  <h3 className="font-bold text-base text-white">Fog & Canopy</h3>
-                  <p className="text-zinc-400 text-xs font-light leading-relaxed">
-                    Capturing the ethereal moods of the redwood trails during the morning mist.
-                  </p>
-                </div>
-              </div>
-              <div className="px-5 pb-5 pt-2">
-                <button className="text-[10px] font-bold text-white uppercase tracking-wider flex items-center space-x-1.5 hover:opacity-85 transition-opacity">
-                  <span>Reserve Spot</span>
-                  <ArrowRight className="h-3.5 w-3.5 text-primary" />
-                </button>
+              <div className="p-5 space-y-2 flex-grow">
+                <h3 className="font-bold text-base text-white uppercase tracking-wider font-display">ITH BHOPAL</h3>
+                <p className="text-zinc-400 text-xs font-light leading-relaxed">
+                  Exploring the heritage architecture, historical pink corridors, and symmetrical stone stairs of Bhopal.
+                </p>
               </div>
             </div>
           </div>

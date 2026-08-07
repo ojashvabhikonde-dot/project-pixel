@@ -168,7 +168,14 @@ export default function RootLayout({
               </div>
               {/* Footer Socials */}
               <div className="flex flex-wrap gap-x-6 gap-y-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                <a href="#" className="hover:text-foreground transition-colors">Instagram</a>
+                <a 
+                  href="https://www.instagram.com/pixela.jpeg?igsh=dXl3eG94ejViNzBj" 
+                  target="_blank" 
+                  rel="noopener noreferrer" 
+                  className="hover:text-foreground transition-colors"
+                >
+                  Instagram
+                </a>
                 <a href="#" className="hover:text-foreground transition-colors">Twitter</a>
                 <a href="#" className="hover:text-foreground transition-colors">LinkedIn</a>
                 <a href="#" className="hover:text-foreground transition-colors">Privacy Policy</a>

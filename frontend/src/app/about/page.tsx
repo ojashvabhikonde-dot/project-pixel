@@ -10,7 +10,18 @@ export default function AboutPage() {
       
       {/* 1. Hero / Page Header (Image 3) */}
       <section className="grid grid-cols-1 lg:grid-cols-12 gap-16 items-center">
-        {/* Left Column - Content */}
+        {/* Left Column - Pixela Brand Image */}
+        <div className="lg:col-span-5">
+          <div className="relative aspect-square rounded border border-border/40 overflow-hidden bg-zinc-950 shadow-2xl">
+            <div 
+              className="absolute inset-0 bg-cover bg-center" 
+              style={{ backgroundImage: `url('/about_hero.png')` }}
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+          </div>
+        </div>
+
+        {/* Right Column - Content */}
         <div className="lg:col-span-7 space-y-8">
           <div className="space-y-4">
             <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest block font-mono">
@@ -36,17 +47,6 @@ export default function AboutPage() {
             </div>
           </div>
         </div>
-
-        {/* Right Column - Camera Lens Image */}
-        <div className="lg:col-span-5">
-          <div className="relative aspect-square rounded border border-border/40 overflow-hidden bg-zinc-950 shadow-2xl">
-            <div 
-              className="absolute inset-0 bg-cover bg-center" 
-              style={{ backgroundImage: `url('https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=800&auto=format&fit=crop&q=80')` }}
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-          </div>
-        </div>
       </section>
 
       {/* 2. Our Story Section (Image 3 middle style) */}
@@ -61,9 +61,11 @@ export default function AboutPage() {
         {/* Right column - Story + Pillars */}
         <div className="lg:col-span-8 space-y-12">
           <p className="text-zinc-400 text-sm font-light leading-relaxed">
-            Born in the digital age but rooted in the classic principles of exposure and composition, Pixela began as a small gathering of enthusiasts in a dimly lit studio. We shared a singular obsession: what happens between the click of the shutter and the light hitting the sensor. 
+            Four years ago, Pixela was founded by Ishu Yadav with a small group of students who shared a passion for photography and visual storytelling. What started as a handful of enthusiastic creators has grown into a thriving community of 70+ members united by creativity, curiosity, and a love for capturing moments.
             <br /><br />
-            Today, we are a global community. We don't just take pictures; we capture experiences. Our mission is to equip the next generation of visual artists with the tools, technology, and critical eye needed to frame the stories of tomorrow.
+            Today, Pixela plays an important role in documenting college life by covering campus events and preserving memories through photography and videography. The club also brings members together through photo walks, giving them opportunities to explore, learn, and improve their creative skills.
+            <br /><br />
+            More than just a photography club, Pixela is a community where creativity is encouraged, skills are nurtured, and every member is inspired to see the world through a unique perspective, one frame at a time.
           </p>
 
           {/* Perspective & Chromaticity cards */}
