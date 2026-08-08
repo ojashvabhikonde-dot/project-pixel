@@ -177,14 +177,33 @@ export default function RootLayout({
                   Instagram
                 </a>
                 <a href="#" className="hover:text-foreground transition-colors">Twitter</a>
-                <a href="#" className="hover:text-foreground transition-colors">LinkedIn</a>
+                <a 
+                  href="https://www.linkedin.com/company/pixelaphotographyclub/" 
+                  target="_blank" 
+                  rel="noopener noreferrer" 
+                  className="hover:text-foreground transition-colors"
+                >
+                  LinkedIn
+                </a>
                 <a href="#" className="hover:text-foreground transition-colors">Privacy Policy</a>
               </div>
             </div>
-            {/* Copyright */}
-            <p className="text-[11px] text-zinc-500 mt-6 text-left">
-              © {new Date().getFullYear()} Pixela Photography Club. Behind the Glass.
-            </p>
+            {/* Copyright & Watermark */}
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-6 text-[11px] text-zinc-500">
+              <p>© {new Date().getFullYear()} Pixela Photography Club. Behind the Glass.</p>
+              <div className="flex items-center space-x-1.5 text-[11px] text-zinc-400">
+                <span>Designed by</span>
+                <a 
+                  href="https://portfolio-ojashva.vercel.app/" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="watermark-signature text-base font-bold text-transparent bg-clip-text bg-gradient-to-r from-[#00f2fe] via-[#ff5e95] to-[#ffaa5e] animate-gradient-text hover:opacity-85 transition-opacity cursor-pointer"
+                  title="Open Ojashva Bhikonde Portfolio"
+                >
+                  Ojashva Bhikonde
+                </a>
+              </div>
+            </div>
           </div>
         </footer>
 

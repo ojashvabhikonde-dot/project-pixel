@@ -51,13 +51,13 @@ export default function Home() {
       .then((res) => res.json())
       .then((data) => {
         if (data && data.length > 0) {
-          setFeaturedPhotos(data.slice(0, 9));
+          setFeaturedPhotos(data.slice(0, 3));
         } else {
-          setFeaturedPhotos(MOCK_PHOTOS);
+          setFeaturedPhotos(MOCK_PHOTOS.slice(0, 3));
         }
       })
       .catch(() => {
-        setFeaturedPhotos(MOCK_PHOTOS);
+        setFeaturedPhotos(MOCK_PHOTOS.slice(0, 3));
       })
       .finally(() => {
         setLoading(false);
@@ -455,7 +455,7 @@ export default function Home() {
 
           {loading ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {Array.from({ length: 6 }).map((_, i) => (
+              {Array.from({ length: 3 }).map((_, i) => (
                 <div key={i} className="h-64 rounded-2xl bg-card animate-pulse border border-border/40" />
               ))}
             </div>

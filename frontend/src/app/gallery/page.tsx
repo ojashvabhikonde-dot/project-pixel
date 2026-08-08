@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Camera, Image as ImageIcon, Heart, Download, Share2, Upload, X, Sliders, CheckCircle } from 'lucide-react';
+import { Camera, Image as ImageIcon, Heart, Download, Share2, Upload, X, Sliders, CheckCircle, Trash2 } from 'lucide-react';
 import LoginModal from '@/components/LoginModal';
 
 const CATEGORIES = [
@@ -12,6 +12,7 @@ export default function GalleryPage() {
   const [photos, setPhotos] = useState<any[]>([]);
   const [activeCategory, setActiveCategory] = useState('All');
   const [selectedPhoto, setSelectedPhoto] = useState<any | null>(null);
+  const [photoToDelete, setPhotoToDelete] = useState<any | null>(null);
   const [isUploadOpen, setIsUploadOpen] = useState(false);
   const [isLoginOpen, setIsLoginOpen] = useState(false);
   
@@ -144,6 +145,34 @@ export default function GalleryPage() {
     }
   };
 
+  const handleDeletePhoto = (photo: any, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    setPhotoToDelete(photo);
+  };
+
+  const confirmDeletePhoto = async () => {
+    if (!photoToDelete) return;
+    const photoId = photoToDelete._id || photoToDelete.id;
+
+    // Instantly remove locally
+    setPhotos(prev => prev.filter(p => (p._id !== photoId && p.id !== photoId)));
+    if (selectedPhoto && (selectedPhoto._id === photoId || selectedPhoto.id === photoId)) {
+      setSelectedPhoto(null);
+    }
+    setPhotoToDelete(null);
+
+    try {
+      if (token) {
+        await fetch(`http://localhost:5000/api/gallery/${photoId}`, {
+          method: 'DELETE',
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+      }
+    } catch (err) {
+      console.error('Error deleting photo:', err);
+    }
+  };
+
   // Filter photos by category
   const filteredPhotos = photos.filter(photo => 
     activeCategory === 'All' ? true : photo.category === activeCategory
@@ -208,7 +237,7 @@ export default function GalleryPage() {
         <div className="columns-1 sm:columns-2 md:columns-3 lg:columns-4 gap-6 space-y-6 pt-6">
           {filteredPhotos.map((photo, index) => (
             <div
-              key={photo._id || index}
+              key={photo._id || photo.id || index}
               onClick={() => setSelectedPhoto(photo)}
               className="break-inside-avoid relative overflow-hidden rounded bg-card border border-border/40 group cursor-pointer hover:border-white/20 transition-all duration-300 shadow-md"
             >
@@ -217,6 +246,16 @@ export default function GalleryPage() {
                 alt={photo.title}
                 className="w-full object-cover group-hover:scale-[1.01] transition-transform duration-500"
               />
+
+              {/* Quick Delete button top-right on hover */}
+              <button
+                onClick={(e) => handleDeletePhoto(photo, e)}
+                className="absolute top-2.5 right-2.5 z-20 opacity-0 group-hover:opacity-100 p-2 bg-red-950/80 hover:bg-red-600 text-white rounded-full transition-all duration-200 shadow-lg cursor-pointer border border-red-500/30"
+                title="Delete Photo"
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+              </button>
+
               <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-4 text-left">
                 <span className="text-[9px] bg-zinc-900/80 text-zinc-300 px-2 py-0.5 rounded-sm w-max mb-1.5 font-medium tracking-wider uppercase font-mono border border-white/5">
                   {photo.category}
@@ -356,6 +395,14 @@ export default function GalleryPage() {
                 >
                   <Share2 className="h-4 w-4" />
                 </button>
+                <button
+                  onClick={(e) => handleDeletePhoto(selectedPhoto, e)}
+                  className="flex items-center space-x-1.5 px-3 py-2 bg-red-950/70 hover:bg-red-900 border border-red-800/60 text-red-300 hover:text-white rounded text-xs font-semibold transition-colors cursor-pointer"
+                  title="Delete Photo"
+                >
+                  <Trash2 className="h-4 w-4" />
+                  <span>Delete</span>
+                </button>
               </div>
             </div>
           </div>
@@ -379,15 +426,14 @@ export default function GalleryPage() {
               <div className="text-center py-8 space-y-3">
                 <CheckCircle className="h-12 w-12 text-green-500 mx-auto" />
                 <h3 className="font-bold text-lg">Upload Successful!</h3>
-                <p className="text-zinc-400 text-xs">Waiting for admin panel approval.</p>
+                <p className="text-zinc-400 text-xs">Your photograph has been added to the gallery.</p>
               </div>
             ) : (
               <form onSubmit={handleUploadSubmit} className="space-y-4">
                 <div>
-                  <label className="block text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-1">Image File</label>
+                  <label className="block text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-1">Image File (Optional)</label>
                   <input
                     type="file"
-                    required
                     accept="image/*"
                     onChange={(e) => setSelectedFile(e.target.files ? e.target.files[0] : null)}
                     className="w-full bg-zinc-950 border border-zinc-800 rounded-md py-1.5 px-3 text-xs focus:outline-none focus:border-primary"
@@ -422,7 +468,7 @@ export default function GalleryPage() {
 
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-xs text-zinc-400 mb-1">Camera Model</label>
+                    <label className="block text-xs text-zinc-400 mb-1">Camera Model (Optional)</label>
                     <input
                       type="text"
                       placeholder="e.g. Sony A7 III"
@@ -432,7 +478,7 @@ export default function GalleryPage() {
                     />
                   </div>
                   <div>
-                    <label className="block text-xs text-zinc-400 mb-1">Lens Description</label>
+                    <label className="block text-xs text-zinc-400 mb-1">Lens Description (Optional)</label>
                     <input
                       type="text"
                       placeholder="e.g. FE 50mm f/1.8"
@@ -491,6 +537,39 @@ export default function GalleryPage() {
                 </button>
               </form>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {photoToDelete && (
+        <div id="delete-confirm-modal" className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+          <div className="bg-zinc-950 border border-zinc-800 rounded-lg p-6 max-w-sm w-full space-y-5 text-white shadow-2xl">
+            <div className="space-y-2">
+              <h3 className="text-lg font-bold text-white flex items-center space-x-2">
+                <Trash2 className="h-5 w-5 text-red-500" />
+                <span>Delete Photograph</span>
+              </h3>
+              <p className="text-zinc-400 text-xs font-light leading-relaxed">
+                Are you sure you want to delete <span className="font-semibold text-white">"{photoToDelete.title || 'this photograph'}"</span>? It will be permanently removed from the gallery.
+              </p>
+            </div>
+            <div className="flex space-x-3 pt-2">
+              <button
+                id="btn-cancel-delete"
+                onClick={() => setPhotoToDelete(null)}
+                className="flex-1 py-2 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 rounded-md text-xs font-semibold transition-colors cursor-pointer text-zinc-300"
+              >
+                Cancel
+              </button>
+              <button
+                id="btn-confirm-delete"
+                onClick={confirmDeletePhoto}
+                className="flex-1 py-2 bg-red-600 hover:bg-red-500 text-white rounded-md text-xs font-semibold transition-colors cursor-pointer shadow-lg shadow-red-900/20"
+              >
+                Confirm Delete
+              </button>
+            </div>
           </div>
         </div>
       )}

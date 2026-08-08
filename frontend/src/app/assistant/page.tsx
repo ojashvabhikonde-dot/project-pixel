@@ -135,48 +135,83 @@ export default function AssistantPage() {
           /* CHAT INTERFACE */
           <div className="flex-1 flex flex-col h-[550px]">
             {/* Messages box */}
-            <div className="flex-1 p-6 overflow-y-auto space-y-4">
+            <div className="flex-1 p-6 overflow-y-auto space-y-4 font-sans">
               {messages.map((msg, i) => (
                 <div 
                   key={i} 
                   className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}
                 >
-                  <div className={`max-w-[80%] rounded p-4 text-xs leading-relaxed ${
+                  <div className={`max-w-[85%] rounded-xl p-4 text-sm leading-relaxed whitespace-pre-wrap ${
                     msg.sender === 'user'
-                      ? 'bg-white text-black font-semibold rounded-tr-none'
-                      : 'bg-zinc-900 border border-border/40 text-zinc-200 rounded-tl-none font-light'
+                      ? 'bg-[#5885ff] text-white font-semibold rounded-tr-none shadow-lg shadow-blue-900/30'
+                      : 'bg-[#161517] border border-white/15 text-zinc-100 rounded-tl-none font-normal shadow-md'
                   }`}>
-                    {msg.text}
+                    {msg.text.split('\n').map((line: string, lIdx: number) => (
+                      <React.Fragment key={lIdx}>
+                        {line.split(/(\*\*.*?\*\*)/g).map((part: string, pIdx: number) => {
+                          if (part.startsWith('**') && part.endsWith('**')) {
+                            return (
+                              <strong key={pIdx} className="font-bold text-white bg-white/10 px-1 py-0.5 rounded text-xs sm:text-sm">
+                                {part.slice(2, -2)}
+                              </strong>
+                            );
+                          }
+                          return part;
+                        })}
+                        {lIdx < msg.text.split('\n').length - 1 && <br />}
+                      </React.Fragment>
+                    ))}
                   </div>
                 </div>
               ))}
               {chatLoading && (
                 <div className="flex justify-start">
-                  <div className="bg-zinc-900 border border-border/40 text-zinc-400 rounded rounded-tl-none p-4 text-xs flex items-center space-x-2">
-                    <RefreshCw className="h-3 w-3 animate-spin text-primary" />
-                    <span>Pixie is typing...</span>
+                  <div className="bg-[#161517] border border-white/15 text-zinc-300 rounded-xl rounded-tl-none p-4 text-sm font-medium flex items-center space-x-2.5">
+                    <RefreshCw className="h-4 w-4 animate-spin text-[#5885ff]" />
+                    <span>Pixie is crafting an answer...</span>
                   </div>
                 </div>
               )}
               <div ref={chatEndRef} />
             </div>
 
+            {/* Quick Prompt Chips */}
+            <div className="px-6 py-2.5 border-t border-white/10 bg-zinc-950/60 flex items-center space-x-2 overflow-x-auto scrollbar-none">
+              {[
+                "📸 How to blur background in portraits?",
+                "⚙️ Explain Exposure Triangle",
+                "📅 Shutter Stories Exhibition Info",
+                "🎨 Color grading Lightroom tips"
+              ].map((chip, idx) => (
+                <button
+                  key={idx}
+                  type="button"
+                  onClick={() => {
+                    setChatInput(chip.replace(/^[^\s]+\s/, ''));
+                  }}
+                  className="text-xs font-medium bg-zinc-900 hover:bg-zinc-800 border border-white/15 text-zinc-200 px-3.5 py-1.5 rounded-full whitespace-nowrap transition-colors cursor-pointer"
+                >
+                  {chip}
+                </button>
+              ))}
+            </div>
+
             {/* Chat form entry */}
-            <form onSubmit={handleSendMessage} className="p-4 border-t border-border/40 bg-zinc-950/80 flex gap-2">
+            <form onSubmit={handleSendMessage} className="p-4 border-t border-white/10 bg-[#0f0e0e] flex gap-2">
               <input
                 type="text"
                 required
                 value={chatInput}
                 onChange={(e) => setChatInput(e.target.value)}
                 placeholder="Ask about exposure settings, f-stops, leading lines, or Hinglish shoot guides..."
-                className="flex-1 bg-zinc-900/60 border border-border/40 focus:border-white/10 rounded px-4 py-2 text-xs focus:outline-none text-white"
+                className="flex-1 bg-[#161517] border border-white/15 focus:border-[#5885ff] rounded-lg px-4 py-2.5 text-sm font-medium focus:outline-none text-white placeholder:text-zinc-400"
               />
               <button
                 type="submit"
                 disabled={chatLoading}
-                className="bg-white text-black hover:bg-zinc-200 font-bold p-2.5 rounded transition-colors cursor-pointer flex items-center justify-center"
+                className="bg-[#5885ff] hover:bg-[#4372ef] text-white font-bold px-4 py-2.5 rounded-lg transition-colors cursor-pointer flex items-center justify-center shadow-md shadow-blue-900/30"
               >
-                <Send className="h-4.5 w-4.5 text-inherit" />
+                <Send className="h-4 w-4 text-white" />
               </button>
             </form>
           </div>

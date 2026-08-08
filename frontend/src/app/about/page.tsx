@@ -51,11 +51,35 @@ export default function AboutPage() {
 
       {/* 2. Our Story Section (Image 3 middle style) */}
       <section className="grid grid-cols-1 lg:grid-cols-12 gap-16 border-t border-border/30 pt-16">
-        {/* Left column - Title */}
-        <div className="lg:col-span-4">
-          <h2 className="text-3xl font-black text-white uppercase tracking-tight">
-            Our Story
-          </h2>
+        {/* Left column - Title & Polaroid Visual */}
+        <div className="lg:col-span-4 space-y-6">
+          <div className="space-y-2">
+            <h2 className="text-3xl font-black text-white uppercase tracking-tight">
+              Our Story
+            </h2>
+            <div className="h-0.5 w-12 bg-primary/80 rounded" />
+          </div>
+
+          <div className="relative block w-full max-w-[280px] bg-[#0c0b0b] border border-border/70 p-3 pb-6 shadow-2xl rounded-sm transition-all duration-500 hover:scale-103 hover:border-primary/45 group">
+            <div className="aspect-square bg-zinc-950 overflow-hidden relative border border-white/5 mb-3">
+              <div 
+                className="absolute inset-0 bg-cover bg-center transition-transform duration-700 ease-out group-hover:scale-105" 
+                style={{ backgroundImage: `url('/photowalk2.jpg')` }} 
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent opacity-80" />
+              
+              {/* Technical camera setting badge overlay on hover */}
+              <div className="absolute bottom-2 left-2 right-2 flex justify-between items-center text-[9px] font-mono text-zinc-300 bg-black/75 backdrop-blur-md px-2 py-1 rounded border border-white/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                <span>50mm</span>
+                <span>f/2.8</span>
+                <span>ISO 400</span>
+              </div>
+            </div>
+            <div className="space-y-1 font-mono text-left">
+              <p className="text-[9px] text-zinc-400 font-bold uppercase tracking-wider">HERITAGE PHOTOWALK</p>
+              <p className="text-[8px] text-zinc-600">BHOPAL, IN • EST. 2024</p>
+            </div>
+          </div>
         </div>
 
         {/* Right column - Story + Pillars */}

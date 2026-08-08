@@ -19,6 +19,22 @@ const Linkedin = (props: React.SVGProps<SVGSVGElement>) => (
   </svg>
 );
 
+const Instagram = (props: React.SVGProps<SVGSVGElement>) => (
+  <svg
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    {...props}
+  >
+    <rect width="20" height="20" x="2" y="2" rx="5" ry="5" />
+    <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
+    <line x1="17.5" x2="17.51" y1="6.5" y2="6.5" />
+  </svg>
+);
+
 export default function LeadershipPage() {
   const [selectedYear, setSelectedYear] = useState('2025-2026');
 
@@ -61,7 +77,13 @@ export default function LeadershipPage() {
                   {leader.role}
                 </span>
                 <h3 className="text-xl md:text-2xl font-black text-white uppercase tracking-tight">{leader.name}</h3>
-                <p className="text-[9px] text-zinc-500 font-mono mt-0.5">{leader.dept} • {leader.semester} Sem</p>
+                {(leader.dept || leader.semester) && (
+                  <p className="text-[9px] text-zinc-500 font-mono mt-0.5">
+                    {leader.dept}
+                    {leader.dept && leader.semester ? ' • ' : ''}
+                    {leader.semester ? `${leader.semester} Sem` : ''}
+                  </p>
+                )}
               </div>
 
               {/* Skills tags */}
@@ -79,6 +101,11 @@ export default function LeadershipPage() {
               <a href={leader.linkedin} target="_blank" rel="noreferrer" className="hover:text-white transition-colors">
                 <Linkedin className="h-4 w-4" />
               </a>
+              {leader.instagram && leader.instagram !== '#' && (
+                <a href={leader.instagram} target="_blank" rel="noreferrer" className="hover:text-[#ff5e95] transition-colors">
+                  <Instagram className="h-4 w-4" />
+                </a>
+              )}
               <a href={`mailto:${leader.email}`} className="hover:text-white transition-colors">
                 <Mail className="h-4 w-4" />
               </a>
@@ -190,13 +217,25 @@ export default function LeadershipPage() {
   );
 }
 
+interface Leader {
+  name: string;
+  role: string;
+  dept?: string;
+  semester?: number;
+  photo: string;
+  bio: string;
+  skills: string[];
+  email: string;
+  linkedin: string;
+  instagram?: string;
+  portfolio: string;
+}
+
 // Mock leaders array matching roles requested
-const LEADERS = [
+const LEADERS: Leader[] = [
   {
     name: 'Sarthak Gargav',
     role: 'Prime',
-    dept: 'CSE',
-    semester: 8,
     photo: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=300&auto=format&fit=crop&q=80',
     bio: 'Oversees overall club operations, sets equipment standards, and directs visual aftermovies for prime college events.',
     skills: ['Cinematography', 'DaVinci Resolve', 'Direction'],
@@ -207,26 +246,24 @@ const LEADERS = [
   {
     name: 'Anugya Jha',
     role: 'Co Prime',
-    dept: 'ECE',
-    semester: 6,
     photo: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=300&auto=format&fit=crop&q=80',
     bio: 'Curates photography guidelines, hosts campus photowalks, and supervises exhibition curation entries.',
     skills: ['Portraiture', 'Lightroom Classic', 'Curation'],
-    email: 'anugya@pixela.club',
-    linkedin: '#',
+    email: 'anugyajha0411@gmail.com',
+    linkedin: 'https://www.linkedin.com/in/anugya-jha-ba4a02342',
+    instagram: 'https://www.instagram.com/anugyajhaaaa',
     portfolio: '#',
   },
   {
     name: 'Ojashva Bhikonde',
     role: 'Chief',
-    dept: 'CSE',
-    semester: 6,
-    photo: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=300&auto=format&fit=crop&q=80',
+    photo: '/ojashva.jpg',
     bio: 'Directs full-stack web architectures, Pixie AI integration, and automates real-time event booking alerts.',
-    skills: ['Next.js', 'AI Engineering', 'Creative WebGL'],
-    email: 'ojashva@pixela.club',
-    linkedin: '#',
-    portfolio: '#',
+    skills: ['Photographer', 'Tech Guy', 'Event Planner'],
+    email: 'ojashva.bhikonde@gmail.com',
+    linkedin: 'https://www.linkedin.com/in/ojashva-bhikonde-947a48331',
+    instagram: 'https://www.instagram.com/mr_ojashva?igsh=emwwdGl4M2Nxd21u',
+    portfolio: 'https://portfolio-ojashva.vercel.app/',
   }
 ];
 
