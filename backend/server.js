@@ -189,13 +189,9 @@ const seedDatabase = async () => {
 };
 
 // Start Server
-app.use(async (req, res, next) => {
-  try {
-    await connectDB();
-    next();
-  } catch (error) {
-    next(error);
-  }
+connectDB().then(() => {
+  seedDatabase();
+  app.listen(PORT, () => {
+    console.log(`Server running in development mode on port ${PORT}`);
+  });
 });
-
-export default app;
