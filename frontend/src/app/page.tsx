@@ -244,7 +244,7 @@ export default function Home() {
               <div className="space-y-4 bg-muted/30 border border-border/40 rounded-lg p-5">
                 <div className="flex items-center space-x-3.5 text-zinc-300 text-sm">
                   <Calendar className="h-4.5 w-4.5 text-primary shrink-0" />
-                  <span>Friday, 21st August (10:00 AM Onwards)</span>
+                  <span>Friday, 11th September (10:00 AM Onwards)</span>
                 </div>
                 <div className="flex items-center space-x-3.5 text-zinc-300 text-sm">
                   <MapPin className="h-4.5 w-4.5 text-primary shrink-0" />
