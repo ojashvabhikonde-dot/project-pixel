@@ -151,8 +151,8 @@ export default function AboutPage() {
             <div className="p-6 space-y-3">
               <div>
                 <span className="text-[9px] font-bold text-primary uppercase tracking-widest font-mono">Faculty Coordinator</span>
-                <h3 className="text-xl font-bold text-white">Dr. Neelesh Gupta</h3>
-                <p className="text-[10px] text-zinc-500 mt-0.5">Professor & Head of CSE Department, OIST Bhopal</p>
+                <h3 className="text-xl font-bold text-white"> prof.  Nida Qureshi </h3>
+                <p className="text-[10px] text-zinc-500 mt-0.5">Professor of Management  Department, OCM Bhopal</p>
               </div>
               <p className="text-zinc-400 text-xs font-light leading-relaxed">
                 "At Pixela, we bridge engineering and creative expression. Our goal is to nurture students' artistic skills alongside technical camera precision."
@@ -176,8 +176,8 @@ export default function AboutPage() {
             <div className="p-6 space-y-3">
               <div>
                 <span className="text-[9px] font-bold text-primary uppercase tracking-widest font-mono">Co-Coordinator</span>
-                <h3 className="text-xl font-bold text-white">Prof. Shikha Agrawal</h3>
-                <p className="text-[10px] text-zinc-500 mt-0.5">Assistant Professor, IT Department, OIST Bhopal</p>
+                <h3 className="text-xl font-bold text-white">Prof. Sumit Vashishtha</h3>
+                <p className="text-[10px] text-zinc-500 mt-0.5"> Professor HOD of AIML Department, OIST Bhopal</p>
               </div>
               <p className="text-zinc-400 text-xs font-light leading-relaxed">
                 "Media and documentation are critical to any institution. We guide Pixela to capture the vibrant campus life and technical fests of Bhopal."
