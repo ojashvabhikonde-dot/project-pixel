@@ -71,7 +71,7 @@ export default function ShutterStoriesPage() {
               <Calendar className="h-4.5 w-4.5 text-primary shrink-0 mt-0.5" />
               <div>
                 <p className="font-bold text-white text-xs uppercase tracking-wider">Date</p>
-                <p className="text-zinc-400 text-xs mt-0.5">Friday, 21st Aug</p>
+                <p className="text-zinc-400 text-xs mt-0.5">Friday, 11th sep</p>
               </div>
             </div>
             
