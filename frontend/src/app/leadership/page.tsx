@@ -165,14 +165,17 @@ export default function LeadershipPage() {
       </section>
 
       {/* 3. Ex Leaders & Alumni Grid with Timeline Switcher */}
-      <div className="space-y-8 bg-card/25 border border-border/50 rounded p-6 sm:p-10 relative overflow-hidden text-left">
-        <div className="absolute top-0 right-0 w-32 h-32 rounded-full pixela-gradient-bg opacity-5 blur-2xl pointer-events-none" />
+      <div className="space-y-10 bg-card/25 border border-border/50 rounded-2xl p-6 sm:p-12 relative overflow-hidden text-left shadow-2xl">
+        <div className="absolute top-0 right-0 w-48 h-48 rounded-full pixela-gradient-bg opacity-10 blur-3xl pointer-events-none" />
         
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-4 border-b border-border/30">
-          <div className="space-y-1">
-            <h2 className="text-2xl font-bold text-white uppercase tracking-tight">Club Alumni</h2>
-            <p className="text-xs text-zinc-500 font-light">
-              Filtering ex-leaders who established Pixela's foundation.
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-6 border-b border-border/30">
+          <div className="space-y-2">
+            <span className="text-[10px] font-bold text-primary uppercase tracking-widest block font-mono">
+              Legacy & History
+            </span>
+            <h2 className="text-3xl sm:text-4xl font-black text-white uppercase tracking-tight">Club Alumni</h2>
+            <p className="text-xs sm:text-sm text-zinc-400 font-light">
+              Filtering ex-leaders who established Pixela's foundation and shaped its journey.
             </p>
           </div>
 
@@ -182,10 +185,10 @@ export default function LeadershipPage() {
               <button
                 key={year}
                 onClick={() => setSelectedYear(year)}
-                className={`text-[9px] font-bold uppercase tracking-wider px-5 py-2 rounded-full transition-all duration-200 cursor-pointer ${
+                className={`text-[10px] font-mono font-semibold uppercase tracking-wider px-3.5 py-1.5 rounded-full transition-all duration-200 cursor-pointer ${
                   selectedYear === year 
-                    ? 'bg-[#dce4ec] text-[#080707]' 
-                    : 'bg-zinc-900/60 border border-border/40 text-zinc-500 hover:text-white hover:border-white/10'
+                    ? 'bg-white text-zinc-950 shadow-md font-bold' 
+                    : 'bg-zinc-900/60 border border-border/40 text-zinc-400 hover:text-white hover:border-white/20'
                 }`}
               >
                 {year} Tenure
@@ -195,26 +198,46 @@ export default function LeadershipPage() {
         </div>
 
         {/* Display filtered alumni */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8 pt-2">
           {ALUMNI[selectedYear]?.map((alumnus, i) => (
-            <div key={i} className="bg-card/20 border border-border/40 rounded p-5 flex gap-5 items-start relative overflow-hidden">
-              <div 
-                className="h-16 w-16 rounded bg-zinc-900 shrink-0 overflow-hidden bg-cover bg-center border border-border/50"
-                style={{ backgroundImage: `url('${alumnus.photo}')` }}
-              />
-              <div className="space-y-3 flex-1">
+            <div key={i} className="bg-card/30 border border-border/50 rounded-xl p-6 sm:p-7 flex flex-col sm:flex-row gap-6 items-center relative overflow-hidden group hover:border-white/20 transition-all duration-300 shadow-xl">
+              <div className="relative h-28 w-28 sm:h-36 sm:w-36 rounded-lg bg-zinc-950 shrink-0 overflow-hidden border border-white/10 shadow-md group-hover:scale-102 transition-transform duration-300 mx-auto sm:mx-0">
+                <div 
+                  className="absolute inset-0 bg-cover bg-no-repeat"
+                  style={{ 
+                    backgroundImage: `url('${alumnus.photo}')`,
+                    backgroundPosition: alumnus.photoPosition || 'center center',
+                    backgroundSize: alumnus.photoSize || 'cover'
+                  }}
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent sm:hidden" />
+              </div>
+              <div className="space-y-3.5 flex-1 w-full">
                 <div>
-                  <h4 className="font-bold text-white text-sm">{alumnus.name}</h4>
-                  <p className="text-[9px] text-primary font-bold uppercase tracking-widest font-mono mt-0.5">{alumnus.role}</p>
+                  <span className="text-[10px] sm:text-xs text-primary font-bold uppercase tracking-widest font-mono block">
+                    {alumnus.role}
+                  </span>
+                  <h4 className="text-xl sm:text-2xl font-black text-white uppercase tracking-tight mt-0.5">{alumnus.name}</h4>
                 </div>
-                <p className="text-xs text-zinc-400 leading-relaxed font-light">
+                <p className="text-xs sm:text-sm text-zinc-300 leading-relaxed font-light">
                   <span className="text-white font-medium">Contribution:</span> {alumnus.contribution}
                 </p>
-                <div className="flex items-center justify-between text-[10px] text-zinc-500 border-t border-border/30 pt-3 mt-1">
-                  <span>Now: {alumnus.currentProfession}</span>
-                  <a href={alumnus.linkedin} target="_blank" rel="noreferrer" className="flex items-center text-primary hover:text-white transition-colors">
-                    <Linkedin className="h-3.5 w-3.5 mr-1" /> LinkedIn
-                  </a>
+                <div className="flex flex-wrap items-center justify-between gap-3 text-xs text-zinc-400 border-t border-border/30 pt-3.5 mt-2">
+                  <span className="font-mono text-[11px] sm:text-xs text-zinc-400">
+                    <span className="text-zinc-500">Now:</span> {alumnus.currentProfession}
+                  </span>
+                  <div className="flex items-center space-x-4">
+                    {alumnus.instagram && alumnus.instagram !== '#' && (
+                      <a href={alumnus.instagram} target="_blank" rel="noreferrer" className="flex items-center text-xs font-semibold text-zinc-400 hover:text-[#ff5e95] transition-colors" title="Instagram">
+                        <Instagram className="h-4 w-4 mr-1 text-[#ff5e95]" /> Insta
+                      </a>
+                    )}
+                    {alumnus.linkedin && alumnus.linkedin !== '#' && (
+                      <a href={alumnus.linkedin} target="_blank" rel="noreferrer" className="flex items-center text-xs font-semibold text-zinc-400 hover:text-[#0a66c2] transition-colors" title="LinkedIn">
+                        <Linkedin className="h-4 w-4 mr-1 text-[#0a66c2]" /> LinkedIn
+                      </a>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
@@ -465,62 +488,113 @@ const ALUMNI: Record<string, any[]> = {
     {
       name: 'Dev Bhagat',
       role: 'Ex Prime',
-      photo: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80',
+      photo: '/dev_bhagat.jpg',
+      photoPosition: '47% 26%',
+      photoSize: '260%',
       contribution: 'Led overall club expansions and hosted Bhopal heritage photowalk exhibitions.',
       currentProfession: 'Senior Media Director',
-      linkedin: '#'
+      linkedin: 'https://www.linkedin.com/in/dev-bhagat-386a27281?utm_source=share_via&utm_content=profile&utm_medium=member_android',
+      instagram: 'https://www.instagram.com/sirffdev?igsh=MWJwbm9rejk3M3prNg=='
     },
     {
       name: 'Vaishnavi Shukla',
       role: 'Ex Co Prime',
-      photo: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&auto=format&fit=crop&q=80',
+      photo: '/vaishnavi_shukla.jpg',
+      photoPosition: 'center 18%',
       contribution: 'Directed lighting workshops and color grading portfolios for active members.',
       currentProfession: 'Independent Cinematographer',
-      linkedin: '#'
+      linkedin: 'https://www.linkedin.com/in/vaishnavi-shukla-b623ab290?utm_source=share_via&utm_content=profile&utm_medium=member_android',
+      instagram: 'https://www.instagram.com/_thecurlylens_?igsh=MWNjZ2w2dDRrd21naA=='
     },
     {
       name: 'Anshul Kushvaha',
       role: 'Ex Chief',
-      photo: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80',
+      photo: '/anshul_kushvaha.jpg',
+      photoPosition: '50% 28%',
+      photoSize: '220%',
       contribution: 'Automated club registration portals and integrated Pixie AI assistant systems.',
       currentProfession: 'Lead Web Engineer',
-      linkedin: '#'
+      linkedin: 'https://www.linkedin.com/in/anshul-kushwaha-771430295?utm_source=share_via&utm_content=profile&utm_medium=member_android',
+      instagram: 'https://www.instagram.com/_anshhulerror404_?igsh=MWczdXQ0MXJ2MTV0YQ=='
     },
     {
-      name: 'Devarshish Jumle',
+      name: 'Devashish Jumle',
       role: 'Ex Chief',
-      photo: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=150&auto=format&fit=crop&q=80',
+      photo: '/devashish_jumle.jpg',
+      photoPosition: '7% 62%',
+      photoSize: '290%',
       contribution: 'Managed live event coverage systems and college booking pipelines.',
       currentProfession: 'Cloud Consultant',
-      linkedin: '#'
+      linkedin: 'https://www.linkedin.com/in/devashish-j-2512a7216?utm_source=share_via&utm_content=profile&utm_medium=member_android',
+      instagram: 'https://www.instagram.com/theshutterbug_devashish?igsh=N2EybmJyNm44MWNw'
+    },
+    {
+      name: 'Om Pachori',
+      role: 'Ex Chief',
+      photo: '/om_pachori.jpg',
+      photoPosition: '50% 15%',
+      photoSize: '160%',
+      contribution: 'Coordinated large-scale fest shoots and camera equipment logistics.',
+      currentProfession: 'Visual Designer & Editor',
+      linkedin: 'https://www.linkedin.com/in/om-pachori-b30b703b2?utm_source=share_via&utm_content=profile&utm_medium=member_android',
+      instagram: 'https://www.instagram.com/_ompachori?igsh=anlxb2E3aGlpeWZ2'
+    },
+    {
+      name: 'Prem Raj',
+      role: 'Ex Chief',
+      photo: '/prem_raj.jpg',
+      photoPosition: 'center 36%',
+      photoSize: 'cover',
+      contribution: 'Directed cinematic drone footage and studio lighting setups for club projects.',
+      currentProfession: 'Cinematographer & Media Specialist',
+      linkedin: 'https://www.linkedin.com/in/maipremraj?utm_source=share_via&utm_content=profile&utm_medium=member_android',
+      instagram: 'https://www.instagram.com/mai.premraj?igsh=MWJ2MW50eGd5ZWo2bQ=='
     }
   ],
   '2024-2025': [
     {
-      name: 'Mayank Kothari',
-      role: 'Ex President',
-      photo: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=150&auto=format&fit=crop&q=80',
-      contribution: 'Organized the initial three photo walks and set up equipment inventory standards.',
-      currentProfession: 'Photographer at Pixel Studio',
-      linkedin: '#'
+      name: 'Shivansh Yadav',
+      role: 'Ex Prime',
+      photo: '/shivansh_yadav.jpg',
+      photoPosition: '45% 22%',
+      photoSize: '210%',
+      contribution: 'Led statewide photowalk expeditions, expanded equipment assets, and organized major annual fest coverages.',
+      currentProfession: 'Cinematographer & Creative Producer',
+      linkedin: '#',
+      instagram: 'https://www.instagram.com/theshivanshyadav?igsh=MW50cmR3Zm03OGQ2aQ=='
     },
     {
-      name: 'Aditi Jain',
-      role: 'Ex Creative Head',
-      photo: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
-      contribution: 'Designed branding logo specifications and posters for campus events.',
-      currentProfession: 'UI Designer at Vercel',
-      linkedin: '#'
+      name: 'Shrey Shrivastava',
+      role: 'Ex Co Prime',
+      photo: '/shrey_shrivastava.jpg',
+      photoPosition: '50% 18%',
+      photoSize: '200%',
+      contribution: 'Curated member masterclasses on composition, lighting architecture, and creative visual editing.',
+      currentProfession: 'Visual Designer & Media Strategist',
+      linkedin: '#',
+      instagram: 'https://www.instagram.com/shrey.draft?igsh=MXV3a2FoMTVmbXh5Ng=='
     }
   ],
   '2023-2024': [
     {
-      name: 'Kabir Dev',
-      role: 'Ex Tech Head',
-      photo: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=150&auto=format&fit=crop&q=80',
-      contribution: 'Launched the first v1.0 portfolio page and automated member registrations.',
-      currentProfession: 'Backend Engineer at Stripe',
-      linkedin: '#'
+      name: 'Ishu Yadav',
+      role: 'Ex Prime',
+      photo: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300&auto=format&fit=crop&q=80',
+      photoPosition: 'center center',
+      contribution: 'Founded Pixela Club, conducted the inaugural photo walks, and established the core visual storytelling ethos.',
+      currentProfession: 'Founder & Creative Director',
+      linkedin: '#',
+      instagram: '#'
+    },
+    {
+      name: 'Gourav Choudhary',
+      role: 'Ex Co Prime',
+      photo: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&auto=format&fit=crop&q=80',
+      photoPosition: 'center center',
+      contribution: 'Spearheaded early team workshops, curation guidelines, and technical camera operations.',
+      currentProfession: 'Media Consultant & Visual Artist',
+      linkedin: '#',
+      instagram: '#'
     }
   ]
 };

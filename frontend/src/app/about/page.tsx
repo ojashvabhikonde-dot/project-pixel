@@ -7,14 +7,14 @@ import { ShieldCheck, Award, Heart, HelpCircle, Users, Target, BookOpen, Clock, 
 export default function AboutPage() {
   return (
     <div className="max-w-6xl mx-auto px-4 py-16 space-y-24 bg-background">
-      
+
       {/* 1. Hero / Page Header (Image 3) */}
       <section className="grid grid-cols-1 lg:grid-cols-12 gap-16 items-center">
         {/* Left Column - Pixela Brand Image */}
         <div className="lg:col-span-5">
           <div className="relative aspect-square rounded border border-border/40 overflow-hidden bg-zinc-950 shadow-2xl">
-            <div 
-              className="absolute inset-0 bg-cover bg-center" 
+            <div
+              className="absolute inset-0 bg-cover bg-center"
               style={{ backgroundImage: `url('/about_hero.png')` }}
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
@@ -62,12 +62,12 @@ export default function AboutPage() {
 
           <div className="relative block w-full max-w-[280px] bg-[#0c0b0b] border border-border/70 p-3 pb-6 shadow-2xl rounded-sm transition-all duration-500 hover:scale-103 hover:border-primary/45 group">
             <div className="aspect-square bg-zinc-950 overflow-hidden relative border border-white/5 mb-3">
-              <div 
-                className="absolute inset-0 bg-cover bg-center transition-transform duration-700 ease-out group-hover:scale-105" 
-                style={{ backgroundImage: `url('/photowalk2.jpg')` }} 
+              <div
+                className="absolute inset-0 bg-cover bg-center transition-transform duration-700 ease-out group-hover:scale-105"
+                style={{ backgroundImage: `url('/photowalk2.jpg')` }}
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent opacity-80" />
-              
+
               {/* Technical camera setting badge overlay on hover */}
               <div className="absolute bottom-2 left-2 right-2 flex justify-between items-center text-[9px] font-mono text-zinc-300 bg-black/75 backdrop-blur-md px-2 py-1 rounded border border-white/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                 <span>50mm</span>
@@ -118,19 +118,22 @@ export default function AboutPage() {
       </section>
 
       {/* 3. Faculty Coordinators Section */}
-      <section className="space-y-12 border-t border-border/30 pt-16">
-        <div className="flex justify-between items-end">
+      <section className="space-y-10 border-t border-border/30 pt-16">
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 max-w-5xl mx-auto">
           <div className="space-y-2">
+            <span className="text-[10px] font-bold text-primary uppercase tracking-widest block font-mono">
+              Mentorship
+            </span>
             <h2 className="text-3xl font-black text-white uppercase tracking-tight">
               Faculty Coordinators
             </h2>
             <p className="text-zinc-500 text-xs font-light">
-              Guiding minds behind the club's growth.
+              Guiding minds behind the club's growth and creative vision.
             </p>
           </div>
           <NextLink
             href="/leadership"
-            className="text-[10px] font-bold text-white uppercase tracking-wider flex items-center space-x-1.5 hover:opacity-85 transition-opacity"
+            className="text-[10px] font-bold text-white uppercase tracking-wider flex items-center space-x-1.5 hover:opacity-85 transition-opacity shrink-0"
           >
             <span>View student leads</span>
             <ArrowRight className="h-3.5 w-3.5 text-primary" />
@@ -138,59 +141,101 @@ export default function AboutPage() {
         </div>
 
         {/* Coordinators Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
           {/* Faculty Coordinator 1 */}
-          <div className="bg-card/25 border border-border/50 rounded overflow-hidden flex flex-col group shadow-2xl">
-            <div className="relative aspect-[16/10] bg-zinc-950 overflow-hidden">
-              <div 
-                className="absolute inset-0 bg-cover group-hover:scale-102 transition-transform duration-500" 
-                style={{ 
-                  backgroundImage: `url('/nida_qureshi.jpg')`,
-                  backgroundPosition: 'center 18%'
-                }}
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent" />
+          <div className="bg-card/25 border border-border/50 rounded overflow-hidden flex flex-col justify-between group hover:border-white/20 transition-all duration-300 shadow-xl">
+            <div>
+              <div className="relative aspect-[4/5] bg-zinc-950 overflow-hidden">
+                <div
+                  className="absolute inset-0 bg-cover group-hover:scale-102 transition-transform duration-500"
+                  style={{
+                    backgroundImage: `url('/nida_qureshi.jpg')`,
+                    backgroundPosition: 'center 12%'
+                  }}
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black via-black/30 to-transparent" />
+              </div>
+              <div className="p-5 space-y-2.5">
+                <div>
+                  <span className="text-[9px] font-bold text-primary uppercase tracking-widest font-mono">Faculty Coordinator</span>
+                  <h3 className="text-lg font-bold text-white mt-0.5">Prof. Nida Qureshi</h3>
+                  <p className="text-[10px] text-zinc-500">Department of Management, OCM Bhopal</p>
+                </div>
+                <p className="text-zinc-400 text-xs font-light leading-relaxed">
+                  "At Pixela, we bridge engineering and creative expression, nurturing students' artistic skills alongside camera precision."
+                </p>
+              </div>
             </div>
-            <div className="p-6 space-y-3">
-              <div>
-                <span className="text-[9px] font-bold text-primary uppercase tracking-widest font-mono">Faculty Coordinator</span>
-                <h3 className="text-xl font-bold text-white">Prof. Nida Qureshi</h3>
-                <p className="text-[10px] text-zinc-500 mt-0.5">Professor of Management Department, OCM Bhopal</p>
-              </div>
-              <p className="text-zinc-400 text-xs font-light leading-relaxed">
-                "At Pixela, we bridge engineering and creative expression. Our goal is to nurture students' artistic skills alongside technical camera precision."
-              </p>
-              <div className="pt-2 flex items-center space-x-2 text-[10px] text-zinc-500 font-mono">
-                <Mail className="h-3.5 w-3.5 text-primary" />
-                <a href="mailto:nidaqureshi@oriental.ac.in" className="hover:text-white transition-colors">
-                  nidaqureshi@oriental.ac.in
-                </a>
-              </div>
+            <div className="px-5 pb-5 pt-2 flex items-center space-x-2 text-[10px] text-zinc-500 font-mono border-t border-border/30">
+              <Mail className="h-3.5 w-3.5 text-primary shrink-0" />
+              <a href="mailto:nidaqureshi@oriental.ac.in" className="hover:text-white transition-colors truncate">
+                nidaqureshi@oriental.ac.in
+              </a>
             </div>
           </div>
 
           {/* Faculty Coordinator 2 */}
-          <div className="bg-card/25 border border-border/50 rounded overflow-hidden flex flex-col group shadow-2xl">
-            <div className="relative aspect-[16/10] bg-zinc-950 overflow-hidden">
-              <div 
-                className="absolute inset-0 bg-cover bg-center group-hover:scale-102 transition-transform duration-500" 
-                style={{ backgroundImage: `url('https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=800&auto=format&fit=crop&q=80')` }}
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent" />
+          <div className="bg-card/25 border border-border/50 rounded overflow-hidden flex flex-col justify-between group hover:border-white/20 transition-all duration-300 shadow-xl">
+            <div>
+              <div className="relative aspect-[4/5] bg-zinc-950 overflow-hidden">
+                <div
+                  className="absolute inset-0 bg-cover bg-no-repeat group-hover:scale-102 transition-transform duration-500"
+                  style={{
+                    backgroundImage: `url('/sumit_vashishtha.png')`,
+                    backgroundPosition: 'center 15%',
+                    backgroundSize: '138%'
+                  }}
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black via-black/30 to-transparent" />
+              </div>
+              <div className="p-5 space-y-2.5">
+                <div>
+                  <span className="text-[9px] font-bold text-primary uppercase tracking-widest font-mono">Faculty Coordinator</span>
+                  <h3 className="text-lg font-bold text-white mt-0.5">Prof. Sumit Vashishtha</h3>
+                  <p className="text-[10px] text-zinc-500">HOD of AIML Department, OIST Bhopal</p>
+                </div>
+                <p className="text-zinc-400 text-xs font-light leading-relaxed">
+                  "Media and documentation are critical to any institution. We guide Pixela to capture the vibrant campus life and technical fests of Bhopal."
+                </p>
+              </div>
             </div>
-            <div className="p-6 space-y-3">
-              <div>
-                <span className="text-[9px] font-bold text-primary uppercase tracking-widest font-mono">Faculty Coordinator</span>
-                <h3 className="text-xl font-bold text-white">Prof. Sumit Vashishtha</h3>
-                <p className="text-[10px] text-zinc-500 mt-0.5"> Professor HOD of AIML Department, OIST Bhopal</p>
+            <div className="px-5 pb-5 pt-2 flex items-center space-x-2 text-[10px] text-zinc-500 font-mono border-t border-border/30">
+              <Mail className="h-3.5 w-3.5 text-primary shrink-0" />
+              <a href="mailto:sumit_vashishtha@oriental.ac.in" className="hover:text-white transition-colors truncate">
+                sumit_vashishtha@oriental.ac.in
+              </a>
+            </div>
+          </div>
+
+          {/* Faculty Coordinator 3 */}
+          <div className="bg-card/25 border border-border/50 rounded overflow-hidden flex flex-col justify-between group hover:border-white/20 transition-all duration-300 shadow-xl">
+            <div>
+              <div className="relative aspect-[4/5] bg-zinc-950 overflow-hidden">
+                <div
+                  className="absolute inset-0 bg-cover group-hover:scale-102 transition-transform duration-500"
+                  style={{
+                    backgroundImage: `url('https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?w=800&auto=format&fit=crop&q=80')`,
+                    backgroundPosition: 'center 20%'
+                  }}
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black via-black/30 to-transparent" />
               </div>
-              <p className="text-zinc-400 text-xs font-light leading-relaxed">
-                "Media and documentation are critical to any institution. We guide Pixela to capture the vibrant campus life and technical fests of Bhopal."
-              </p>
-              <div className="pt-2 flex items-center space-x-2 text-[10px] text-zinc-500 font-mono">
-                <Mail className="h-3.5 w-3.5 text-primary" />
-                <span>shikha_it@oriental.ac.in</span>
+              <div className="p-5 space-y-2.5">
+                <div>
+                  <span className="text-[9px] font-bold text-primary uppercase tracking-widest font-mono">Faculty Coordinator</span>
+                  <h3 className="text-lg font-bold text-white mt-0.5">Prof. Sangeeta Kurukshetra</h3>
+                  <p className="text-[10px] text-zinc-500">Faculty Coordinator, Oriental Group, Bhopal</p>
+                </div>
+                <p className="text-zinc-400 text-xs font-light leading-relaxed">
+                  "Empowering students to blend technical acumen with visual storytelling, shaping passionate media innovators."
+                </p>
               </div>
+            </div>
+            <div className="px-5 pb-5 pt-2 flex items-center space-x-2 text-[10px] text-zinc-500 font-mono border-t border-border/30">
+              <Mail className="h-3.5 w-3.5 text-primary shrink-0" />
+              <a href="mailto:sangeeta_kurukshetra@oriental.ac.in" className="hover:text-white transition-colors truncate">
+                sangeeta_kurukshetra@oriental.ac.in
+              </a>
             </div>
           </div>
         </div>
