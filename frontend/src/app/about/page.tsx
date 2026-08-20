@@ -143,23 +143,28 @@ export default function AboutPage() {
           <div className="bg-card/25 border border-border/50 rounded overflow-hidden flex flex-col group shadow-2xl">
             <div className="relative aspect-[16/10] bg-zinc-950 overflow-hidden">
               <div 
-                className="absolute inset-0 bg-cover bg-center group-hover:scale-102 transition-transform duration-500" 
-                style={{ backgroundImage: `url('https://images.unsplash.com/photo-1560250097-0b93528c311a?w=800&auto=format&fit=crop&q=80')` }}
+                className="absolute inset-0 bg-cover group-hover:scale-102 transition-transform duration-500" 
+                style={{ 
+                  backgroundImage: `url('/nida_qureshi.jpg')`,
+                  backgroundPosition: 'center 18%'
+                }}
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent" />
             </div>
             <div className="p-6 space-y-3">
               <div>
                 <span className="text-[9px] font-bold text-primary uppercase tracking-widest font-mono">Faculty Coordinator</span>
-                <h3 className="text-xl font-bold text-white"> prof.  Nida Qureshi </h3>
-                <p className="text-[10px] text-zinc-500 mt-0.5">Professor of Management  Department, OCM Bhopal</p>
+                <h3 className="text-xl font-bold text-white">Prof. Nida Qureshi</h3>
+                <p className="text-[10px] text-zinc-500 mt-0.5">Professor of Management Department, OCM Bhopal</p>
               </div>
               <p className="text-zinc-400 text-xs font-light leading-relaxed">
                 "At Pixela, we bridge engineering and creative expression. Our goal is to nurture students' artistic skills alongside technical camera precision."
               </p>
               <div className="pt-2 flex items-center space-x-2 text-[10px] text-zinc-500 font-mono">
                 <Mail className="h-3.5 w-3.5 text-primary" />
-                <span>neelesh_gupta@oriental.ac.in</span>
+                <a href="mailto:nidaqureshi@oriental.ac.in" className="hover:text-white transition-colors">
+                  nidaqureshi@oriental.ac.in
+                </a>
               </div>
             </div>
           </div>

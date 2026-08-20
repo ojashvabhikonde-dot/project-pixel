@@ -64,8 +64,11 @@ export default function LeadershipPage() {
             {/* Image section with relative hover gradient overlay */}
             <div className="relative aspect-[4/5] bg-zinc-950 overflow-hidden">
               <div 
-                className="absolute inset-0 bg-cover bg-center group-hover:scale-102 transition-transform duration-500" 
-                style={{ backgroundImage: `url('${leader.photo}')` }}
+                className="absolute inset-0 bg-cover group-hover:scale-102 transition-transform duration-500" 
+                style={{ 
+                  backgroundImage: `url('${leader.photo}')`,
+                  backgroundPosition: leader.photoPosition || 'center center'
+                }}
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black via-black/30 to-transparent" />
             </div>
@@ -98,20 +101,26 @@ export default function LeadershipPage() {
 
             {/* Social linkages */}
             <div className="px-5 pb-5 pt-3 flex items-center space-x-4 border-t border-border/40 text-zinc-500">
-              <a href={leader.linkedin} target="_blank" rel="noreferrer" className="hover:text-white transition-colors">
-                <Linkedin className="h-4 w-4" />
-              </a>
+              {leader.linkedin && leader.linkedin !== '#' && (
+                <a href={leader.linkedin} target="_blank" rel="noreferrer" className="hover:text-[#0a66c2] transition-colors" title="LinkedIn">
+                  <Linkedin className="h-4 w-4" />
+                </a>
+              )}
               {leader.instagram && leader.instagram !== '#' && (
-                <a href={leader.instagram} target="_blank" rel="noreferrer" className="hover:text-[#ff5e95] transition-colors">
+                <a href={leader.instagram} target="_blank" rel="noreferrer" className="hover:text-[#ff5e95] transition-colors" title="Instagram">
                   <Instagram className="h-4 w-4" />
                 </a>
               )}
-              <a href={`mailto:${leader.email}`} className="hover:text-white transition-colors">
-                <Mail className="h-4 w-4" />
-              </a>
-              <a href={leader.portfolio} target="_blank" rel="noreferrer" className="hover:text-primary transition-colors">
-                <Globe className="h-4 w-4" />
-              </a>
+              {leader.email && leader.email !== '#' && (
+                <a href={`mailto:${leader.email}`} className="hover:text-white transition-colors" title="Email">
+                  <Mail className="h-4 w-4" />
+                </a>
+              )}
+              {leader.portfolio && leader.portfolio !== '#' && (
+                <a href={leader.portfolio} target="_blank" rel="noreferrer" className="hover:text-primary transition-colors" title="Portfolio">
+                  <Globe className="h-4 w-4" />
+                </a>
+              )}
             </div>
           </div>
         ))}
@@ -223,6 +232,7 @@ interface Leader {
   dept?: string;
   semester?: number;
   photo: string;
+  photoPosition?: string;
   bio: string;
   skills: string[];
   email: string;
@@ -236,17 +246,20 @@ const LEADERS: Leader[] = [
   {
     name: 'Sarthak Gargav',
     role: 'Prime',
-    photo: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=300&auto=format&fit=crop&q=80',
+    photo: '/sarthak.jpg',
+    photoPosition: 'center 15%',
     bio: 'Oversees overall club operations, sets equipment standards, and directs visual aftermovies for prime college events.',
     skills: ['Cinematography', 'DaVinci Resolve', 'Direction'],
-    email: 'sarthak@pixela.club',
-    linkedin: '#',
+    email: 'sarthakgargav3@gmail.com',
+    linkedin: 'https://www.linkedin.com/in/sarthak-gargav-6a95a42b7?utm_source=share_via&utm_content=profile&utm_medium=member_android',
+    instagram: 'https://www.instagram.com/shuttterbugg_?igsh=MTQ1aXh4Z2I3eWd6Zw==',
     portfolio: '#',
   },
   {
     name: 'Anugya Jha',
     role: 'Co Prime',
-    photo: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=300&auto=format&fit=crop&q=80',
+    photo: '/anugya.jpg',
+    photoPosition: 'center 18%',
     bio: 'Curates photography guidelines, hosts campus photowalks, and supervises exhibition curation entries.',
     skills: ['Portraiture', 'Lightroom Classic', 'Curation'],
     email: 'anugyajha0411@gmail.com',
@@ -258,6 +271,7 @@ const LEADERS: Leader[] = [
     name: 'Ojashva Bhikonde',
     role: 'Chief',
     photo: '/ojashva.jpg',
+    photoPosition: 'center 20%',
     bio: 'Directs full-stack web architectures, Pixie AI integration, and automates real-time event booking alerts.',
     skills: ['Photographer', 'Tech Guy', 'Event Planner'],
     email: 'ojashva.bhikonde@gmail.com',
