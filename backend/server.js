@@ -122,36 +122,58 @@ const seedDatabase = async () => {
       console.log('Seeding Gallery Photos...');
       const mockPhotos = [
         {
-          title: 'Majestic Peaks',
-          description: 'Sunset hitting the snow peaks in Manali.',
+          title: 'Himalayan Ridge Horizon',
+          description: 'Sunset hitting the mountain valley horizon in Mussoorie.',
           category: 'Nature',
-          imageUrl: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=800&auto=format&fit=crop&q=80',
+          imageUrl: '/hero_mountain.jpg',
           photographer: admin._id,
-          camera: 'Sony A7R III',
-          lens: 'FE 24-75mm f/2.8 GM',
-          settings: { aperture: 'f/8', shutterSpeed: '1/250s', iso: 100, focalLength: '24mm' },
+          camera: 'Nikon D750',
+          lens: 'NIKKOR 24-120mm f/4G',
+          settings: { aperture: 'f/8', shutterSpeed: '1/400s', iso: 100, focalLength: '35mm' },
           isApproved: true,
         },
         {
-          title: 'Neon Streets',
-          description: 'Rainy street reflections in Tokyo.',
+          title: 'Ghat Street Rhythms',
+          description: 'Vibrant street scene and bazaars at the ghat entrance.',
           category: 'Street',
-          imageUrl: 'https://images.unsplash.com/photo-1506157786151-b8491531f063?w=800&auto=format&fit=crop&q=80',
+          imageUrl: '/hero_street.jpg',
           photographer: createdLeaders[0]._id,
           camera: 'Sony A7 III',
-          lens: 'FE 50mm f/1.8',
-          settings: { aperture: 'f/1.8', shutterSpeed: '1/160s', iso: 800, focalLength: '50mm' },
+          lens: 'FE 35mm f/1.4 GM',
+          settings: { aperture: 'f/2.8', shutterSpeed: '1/250s', iso: 200, focalLength: '35mm' },
           isApproved: true,
         },
         {
-          title: 'The Blue Kingfisher',
-          description: 'A close flight frame of a kingfisher.',
-          category: 'Wildlife',
-          imageUrl: 'https://images.unsplash.com/photo-1470240731273-7821a6eeb6bd?w=800&auto=format&fit=crop&q=80',
+          title: 'Flora & Camouflage',
+          description: 'Macro perspective of a chameleon resting inside a shoe on a jackfruit tree.',
+          category: 'Macro',
+          imageUrl: '/hero_nature.jpg',
           photographer: createdLeaders[1]._id,
           camera: 'Canon EOS R5',
-          lens: 'RF 100-500mm f/4.5-7.1',
-          settings: { aperture: 'f/7.1', shutterSpeed: '1/2000s', iso: 400, focalLength: '500mm' },
+          lens: 'RF 100mm f/2.8L Macro',
+          settings: { aperture: 'f/2.8', shutterSpeed: '1/320s', iso: 200, focalLength: '100mm' },
+          isApproved: true,
+        },
+        {
+          title: 'Holy Ganga Promenade',
+          description: 'Pilgrims and visitors walking along the sacred river walkway at dusk.',
+          category: 'Events',
+          imageUrl: '/hero_river.jpg',
+          photographer: createdLeaders[2]._id,
+          camera: 'Fujifilm X-T4',
+          lens: 'XF 16-55mm f/2.8',
+          settings: { aperture: 'f/5.6', shutterSpeed: '1/500s', iso: 160, focalLength: '23mm' },
+          isApproved: true,
+        },
+        {
+          title: 'Hillside Haven Estate',
+          description: 'Bird-eye top view of hillside cottage and green rooflines.',
+          category: 'Architecture',
+          imageUrl: '/hero_villa.jpg',
+          photographer: admin._id,
+          camera: 'Sony A7R IV',
+          lens: 'FE 16-35mm f/2.8 GM',
+          settings: { aperture: 'f/7.1', shutterSpeed: '1/320s', iso: 100, focalLength: '24mm' },
           isApproved: true,
         }
       ];
@@ -188,10 +210,14 @@ const seedDatabase = async () => {
   }
 };
 
-// Start Server
-connectDB().then(() => {
-  seedDatabase();
-  app.listen(PORT, () => {
-    console.log(`Server running in development mode on port ${PORT}`);
-  });
+// Start Server immediately so APIs are accessible
+const server = app.listen(PORT, () => {
+  console.log(`Pixela API Server running on port ${PORT}`);
+});
+
+// Connect to MongoDB in background
+connectDB().then((connected) => {
+  if (connected) {
+    seedDatabase();
+  }
 });

@@ -223,7 +223,7 @@ export default function AboutPage() {
               <div className="p-5 space-y-2.5">
                 <div>
                   <span className="text-[9px] font-bold text-primary uppercase tracking-widest font-mono">Faculty Coordinator</span>
-                  <h3 className="text-lg font-bold text-white mt-0.5">Prof. Sangeeta Kurukshetra</h3>
+                  <h3 className="text-lg font-bold text-white mt-0.5">Prof. Sangeeta Kulshreshtha</h3>
                   <p className="text-[10px] text-zinc-500">Faculty Coordinator, Oriental Group, Bhopal</p>
                 </div>
                 <p className="text-zinc-400 text-xs font-light leading-relaxed">
@@ -233,8 +233,8 @@ export default function AboutPage() {
             </div>
             <div className="px-5 pb-5 pt-2 flex items-center space-x-2 text-[10px] text-zinc-500 font-mono border-t border-border/30">
               <Mail className="h-3.5 w-3.5 text-primary shrink-0" />
-              <a href="mailto:sangeeta_kurukshetra@oriental.ac.in" className="hover:text-white transition-colors truncate">
-                sangeeta_kurukshetra@oriental.ac.in
+              <a href="mailto:sangeetakulshreshtha@oriental.ac.in" className="hover:text-white transition-colors truncate">
+                sangeetakulshreshtha@oriental.ac.in
               </a>
             </div>
           </div>

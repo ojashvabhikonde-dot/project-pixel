@@ -116,6 +116,118 @@ export default function ShutterStoriesPage() {
         </div>
       </section>
 
+      {/* Official Categories & Pricing Tiers from Poster */}
+      <section className="border-t border-border/30 pt-16 space-y-12">
+        <div className="text-center max-w-2xl mx-auto space-y-3">
+          <span className="text-[10px] font-bold text-primary uppercase tracking-widest block font-mono">
+            Participation Plans
+          </span>
+          <h2 className="text-3xl font-black text-white uppercase tracking-tight">
+            Event Categories & Pricing
+          </h2>
+          <p className="text-zinc-400 text-sm font-light">
+            Choose your submission tier and showcase your finest photographs on public exhibition frames.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
+          {/* Plan 1 */}
+          <div className="bg-card/35 border border-border/60 rounded-xl p-6 text-center space-y-4 hover:border-primary/50 transition-all duration-300 relative group shadow-xl">
+            <div className="h-8 w-8 rounded-full bg-primary/15 border border-primary/30 text-primary font-mono font-bold text-xs flex items-center justify-center mx-auto">
+              1
+            </div>
+            <div className="space-y-1">
+              <h3 className="font-bold text-white text-base uppercase tracking-wider font-display">Single Entry</h3>
+              <p className="text-zinc-500 text-xs">(1 Entry)</p>
+            </div>
+            <div className="text-3xl font-black text-white py-2 font-mono">
+              ₹79
+            </div>
+            <p className="text-zinc-400 text-xs font-light">
+              Ideal for single portfolio master frames and standalone story entries.
+            </p>
+          </div>
+
+          {/* Plan 2 */}
+          <div className="bg-card/45 border-2 border-primary/40 rounded-xl p-6 text-center space-y-4 hover:border-primary transition-all duration-300 relative group shadow-2xl scale-[1.03]">
+            <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary text-white text-[9px] font-bold uppercase tracking-widest px-3 py-0.5 rounded-full font-mono">
+              Most Popular
+            </div>
+            <div className="h-8 w-8 rounded-full bg-primary text-white font-mono font-bold text-xs flex items-center justify-center mx-auto mt-2">
+              2
+            </div>
+            <div className="space-y-1">
+              <h3 className="font-bold text-white text-base uppercase tracking-wider font-display">Up to 3 Entries</h3>
+              <p className="text-zinc-500 text-xs">(Max 3 Entries)</p>
+            </div>
+            <div className="text-3xl font-black text-primary py-2 font-mono">
+              ₹149
+            </div>
+            <p className="text-zinc-400 text-xs font-light">
+              Showcase a cohesive series across landscapes, street, or portraiture.
+            </p>
+          </div>
+
+          {/* Plan 3 */}
+          <div className="bg-card/35 border border-border/60 rounded-xl p-6 text-center space-y-4 hover:border-secondary/50 transition-all duration-300 relative group shadow-xl">
+            <div className="h-8 w-8 rounded-full bg-secondary/15 border border-secondary/30 text-secondary font-mono font-bold text-xs flex items-center justify-center mx-auto">
+              3
+            </div>
+            <div className="space-y-1">
+              <h3 className="font-bold text-white text-base uppercase tracking-wider font-display">Up to 8 Entries</h3>
+              <p className="text-zinc-500 text-xs">(Max 8 Entries)</p>
+            </div>
+            <div className="text-3xl font-black text-white py-2 font-mono">
+              ₹309
+            </div>
+            <p className="text-zinc-400 text-xs font-light">
+              Full creative gallery spread with maximum visibility and competition advantage.
+            </p>
+          </div>
+        </div>
+
+        {/* Free Workshop & Attractions Banner */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto pt-4">
+          <div className="bg-muted/20 border border-border/40 rounded-xl p-6 space-y-3">
+            <h4 className="font-bold text-white text-sm uppercase tracking-wider flex items-center space-x-2">
+              <Sparkles className="h-4 w-4 text-primary" />
+              <span>Event Highlights & Free Workshops</span>
+            </h4>
+            <p className="text-zinc-400 text-xs font-light leading-relaxed">
+              Interact with industry experts and receive a <strong className="text-white">FREE workshop session</strong> upon participation covering:
+            </p>
+            <div className="flex flex-wrap gap-2 pt-1">
+              {['Animation', 'VFX', 'Graphic Designing', 'Video Editing', 'Photo Editing'].map((w, i) => (
+                <span key={i} className="text-[10px] bg-primary/10 border border-primary/25 text-primary-foreground font-mono px-2.5 py-1 rounded">
+                  • {w}
+                </span>
+              ))}
+            </div>
+          </div>
+
+          <div className="bg-muted/20 border border-border/40 rounded-xl p-6 space-y-3">
+            <h4 className="font-bold text-white text-sm uppercase tracking-wider flex items-center space-x-2">
+              <Award className="h-4 w-4 text-[#ffaa5e]" />
+              <span>Event Attractions</span>
+            </h4>
+            <div className="grid grid-cols-3 gap-3 pt-2 text-center">
+              <div className="p-3 bg-zinc-950/40 rounded border border-white/5 space-y-1">
+                <span className="text-xl">🎨</span>
+                <p className="text-[10px] font-bold text-zinc-300 uppercase">Artist Showcase</p>
+              </div>
+              <div className="p-3 bg-zinc-950/40 rounded border border-white/5 space-y-1">
+                <span className="text-xl">🍲</span>
+                <p className="text-[10px] font-bold text-zinc-300 uppercase">Food Stalls</p>
+              </div>
+              <div className="p-3 bg-zinc-950/40 rounded border border-white/5 space-y-1">
+                <span className="text-xl">🎮</span>
+                <p className="text-[10px] font-bold text-zinc-300 uppercase">Fun Games</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* 2. Why Should You Be a Part of Shutter Stories 2026? */}
       <section className="border-t border-border/30 pt-16 space-y-12">
         <div className="text-center max-w-2xl mx-auto space-y-3">

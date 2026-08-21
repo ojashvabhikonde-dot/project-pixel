@@ -212,17 +212,14 @@ export default function LeadershipPage() {
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent sm:hidden" />
               </div>
-              <div className="space-y-3.5 flex-1 w-full">
+              <div className="space-y-3 flex-1 w-full">
                 <div>
                   <span className="text-[10px] sm:text-xs text-primary font-bold uppercase tracking-widest font-mono block">
                     {alumnus.role}
                   </span>
                   <h4 className="text-xl sm:text-2xl font-black text-white uppercase tracking-tight mt-0.5">{alumnus.name}</h4>
                 </div>
-                <p className="text-xs sm:text-sm text-zinc-300 leading-relaxed font-light">
-                  <span className="text-white font-medium">Contribution:</span> {alumnus.contribution}
-                </p>
-                <div className="flex flex-wrap items-center justify-between gap-3 text-xs text-zinc-400 border-t border-border/30 pt-3.5 mt-2">
+                <div className="flex flex-wrap items-center justify-between gap-3 text-xs text-zinc-400 border-t border-border/30 pt-3 mt-1">
                   <span className="font-mono text-[11px] sm:text-xs text-zinc-400">
                     <span className="text-zinc-500">Now:</span> {alumnus.currentProfession}
                   </span>
@@ -491,7 +488,6 @@ const ALUMNI: Record<string, any[]> = {
       photo: '/dev_bhagat.jpg',
       photoPosition: '47% 26%',
       photoSize: '260%',
-      contribution: 'Led overall club expansions and hosted Bhopal heritage photowalk exhibitions.',
       currentProfession: 'Senior Media Director',
       linkedin: 'https://www.linkedin.com/in/dev-bhagat-386a27281?utm_source=share_via&utm_content=profile&utm_medium=member_android',
       instagram: 'https://www.instagram.com/sirffdev?igsh=MWJwbm9rejk3M3prNg=='
@@ -501,7 +497,6 @@ const ALUMNI: Record<string, any[]> = {
       role: 'Ex Co Prime',
       photo: '/vaishnavi_shukla.jpg',
       photoPosition: 'center 18%',
-      contribution: 'Directed lighting workshops and color grading portfolios for active members.',
       currentProfession: 'Independent Cinematographer',
       linkedin: 'https://www.linkedin.com/in/vaishnavi-shukla-b623ab290?utm_source=share_via&utm_content=profile&utm_medium=member_android',
       instagram: 'https://www.instagram.com/_thecurlylens_?igsh=MWNjZ2w2dDRrd21naA=='
@@ -512,7 +507,6 @@ const ALUMNI: Record<string, any[]> = {
       photo: '/anshul_kushwaha.jpg',
       photoPosition: '50% 28%',
       photoSize: '220%',
-      contribution: 'Automated club registration portals and integrated Pixie AI assistant systems.',
       currentProfession: 'Lead Web Engineer',
       linkedin: 'https://www.linkedin.com/in/anshul-kushwaha-771430295?utm_source=share_via&utm_content=profile&utm_medium=member_android',
       instagram: 'https://www.instagram.com/_anshhulerror404_?igsh=MWczdXQ0MXJ2MTV0YQ=='
@@ -523,7 +517,6 @@ const ALUMNI: Record<string, any[]> = {
       photo: '/devashish_jumle.jpg',
       photoPosition: 'center 48%',
       photoSize: '240%',
-      contribution: 'Managed live event coverage systems and college booking pipelines.',
       currentProfession: 'Cloud Consultant',
       linkedin: 'https://www.linkedin.com/in/devashish-j-2512a7216?utm_source=share_via&utm_content=profile&utm_medium=member_android',
       instagram: 'https://www.instagram.com/theshutterbug_devashish?igsh=N2EybmJyNm44MWNw'
@@ -534,7 +527,6 @@ const ALUMNI: Record<string, any[]> = {
       photo: '/om_pachori.jpg',
       photoPosition: '50% 15%',
       photoSize: '160%',
-      contribution: 'Coordinated large-scale fest shoots and camera equipment logistics.',
       currentProfession: 'Visual Designer & Editor',
       linkedin: 'https://www.linkedin.com/in/om-pachori-b30b703b2?utm_source=share_via&utm_content=profile&utm_medium=member_android',
       instagram: 'https://www.instagram.com/_ompachori?igsh=anlxb2E3aGlpeWZ2'
@@ -545,7 +537,6 @@ const ALUMNI: Record<string, any[]> = {
       photo: '/prem_raj.jpg',
       photoPosition: 'center 36%',
       photoSize: 'cover',
-      contribution: 'Directed cinematic drone footage and studio lighting setups for club projects.',
       currentProfession: 'Cinematographer & Media Specialist',
       linkedin: 'https://www.linkedin.com/in/maipremraj?utm_source=share_via&utm_content=profile&utm_medium=member_android',
       instagram: 'https://www.instagram.com/mai.premraj?igsh=MWJ2MW50eGd5ZWo2bQ=='
@@ -558,7 +549,6 @@ const ALUMNI: Record<string, any[]> = {
       photo: '/shivansh_yadav.jpg',
       photoPosition: '45% 22%',
       photoSize: '210%',
-      contribution: 'Led statewide photowalk expeditions, expanded equipment assets, and organized major annual fest coverages.',
       currentProfession: 'Cinematographer & Creative Producer',
       linkedin: '#',
       instagram: 'https://www.instagram.com/theshivanshyadav?igsh=MW50cmR3Zm03OGQ2aQ=='
@@ -569,7 +559,6 @@ const ALUMNI: Record<string, any[]> = {
       photo: '/shrey_shrivastava.jpg',
       photoPosition: '50% 18%',
       photoSize: '200%',
-      contribution: 'Curated member masterclasses on composition, lighting architecture, and creative visual editing.',
       currentProfession: 'Visual Designer & Media Strategist',
       linkedin: '#',
       instagram: 'https://www.instagram.com/shrey.draft?igsh=MXV3a2FoMTVmbXh5Ng=='
@@ -581,7 +570,6 @@ const ALUMNI: Record<string, any[]> = {
       role: 'Ex Prime',
       photo: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300&auto=format&fit=crop&q=80',
       photoPosition: 'center center',
-      contribution: 'Founded Pixela Club, conducted the inaugural photo walks, and established the core visual storytelling ethos.',
       currentProfession: 'Founder & Creative Director',
       linkedin: '#',
       instagram: '#'
@@ -591,7 +579,6 @@ const ALUMNI: Record<string, any[]> = {
       role: 'Ex Co Prime',
       photo: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&auto=format&fit=crop&q=80',
       photoPosition: 'center center',
-      contribution: 'Spearheaded early team workshops, curation guidelines, and technical camera operations.',
       currentProfession: 'Media Consultant & Visual Artist',
       linkedin: '#',
       instagram: '#'

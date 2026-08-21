@@ -133,48 +133,48 @@ export default function Home() {
         </div>
         
         {/* Floating Polaroid Left */}
-        <div className="absolute left-[3%] lg:left-[8%] top-[22%] hidden md:block w-[160px] lg:w-[185px] bg-[#0c0b0b] border border-border/70 p-3 pb-6 shadow-2xl z-20 float-polaroid-left">
+        <div className="absolute left-[3%] lg:left-[8%] top-[22%] hidden md:block w-[160px] lg:w-[185px] bg-[#0c0b0b] border border-border/70 p-3 pb-6 shadow-2xl z-20 float-polaroid-left hover:scale-105 hover:border-primary/40 transition-all duration-300">
           <div className="aspect-square bg-zinc-950 overflow-hidden relative border border-white/5 mb-3">
-            <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url('https://images.unsplash.com/photo-1542038784456-1ea8e935640e?w=400&auto=format&fit=crop&q=80')` }} />
+            <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url('/hero_river.jpg')` }} />
           </div>
           <div className="space-y-0.5 text-left font-mono">
-            <p className="text-[8px] text-zinc-500 font-bold uppercase tracking-wider">EXP // 1/250S</p>
-            <p className="text-[7px] text-zinc-600">ISO 100 • 35MM</p>
+            <p className="text-[8px] text-zinc-400 font-bold uppercase tracking-wider">EXP // 1/500S</p>
+            <p className="text-[7px] text-zinc-500">ISO 100 • 24MM</p>
           </div>
         </div>
 
         {/* Floating Polaroid Right */}
-        <div className="absolute right-[3%] lg:right-[8%] top-[26%] hidden md:block w-[160px] lg:w-[185px] bg-[#0c0b0b] border border-border/70 p-3 pb-6 shadow-2xl z-20 float-polaroid-right">
+        <div className="absolute right-[3%] lg:right-[8%] top-[26%] hidden md:block w-[160px] lg:w-[185px] bg-[#0c0b0b] border border-border/70 p-3 pb-6 shadow-2xl z-20 float-polaroid-right hover:scale-105 hover:border-secondary/40 transition-all duration-300">
           <div className="aspect-square bg-zinc-950 overflow-hidden relative border border-white/5 mb-3">
-            <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url('https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?w=400&auto=format&fit=crop&q=80')` }} />
+            <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url('/hero_nature.jpg')` }} />
           </div>
           <div className="space-y-0.5 text-left font-mono">
-            <p className="text-[8px] text-zinc-500 font-bold uppercase tracking-wider">SHUTTER // F/2.8</p>
-            <p className="text-[7px] text-zinc-650">ISO 400 • 50MM</p>
+            <p className="text-[8px] text-zinc-400 font-bold uppercase tracking-wider">SHUTTER // F/2.8</p>
+            <p className="text-[7px] text-zinc-500">ISO 200 • 50MM</p>
           </div>
         </div>
 
-        {/* 4 Background Portraits (Behind the Text) */}
+        {/* 4 Background Photographs (Behind the Text) */}
         <div className="absolute inset-0 z-0 pointer-events-none select-none overflow-hidden">
-          {/* Portrait 1 - Top Left */}
+          {/* Photograph 1 - Top Left */}
           <div 
-            className="absolute left-[14%] top-[12%] w-[130px] md:w-[170px] aspect-[3/4] bg-cover bg-center rounded border border-white/10 opacity-[0.15] rotate-[-10deg] float-polaroid-left" 
-            style={{ backgroundImage: `url('https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500&auto=format&fit=crop&q=80')` }}
+            className="absolute left-[12%] top-[10%] w-[140px] md:w-[185px] aspect-[4/3] bg-cover bg-center rounded-lg border border-white/15 opacity-[0.25] shadow-2xl rotate-[-10deg] float-polaroid-left" 
+            style={{ backgroundImage: `url('/hero_mountain.jpg')` }}
           />
-          {/* Portrait 2 - Bottom Left */}
+          {/* Photograph 2 - Bottom Left */}
           <div 
-            className="absolute left-[24%] bottom-[15%] w-[110px] md:w-[150px] aspect-[3/4] bg-cover bg-center rounded border border-white/10 opacity-[0.15] rotate-[8deg] float-polaroid-right" 
-            style={{ backgroundImage: `url('https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=500&auto=format&fit=crop&q=80')` }}
+            className="absolute left-[22%] bottom-[12%] w-[130px] md:w-[170px] aspect-[3/4] bg-cover bg-center rounded-lg border border-white/15 opacity-[0.25] shadow-2xl rotate-[8deg] float-polaroid-right" 
+            style={{ backgroundImage: `url('/hero_street.jpg')` }}
           />
-          {/* Portrait 3 - Top Right */}
+          {/* Photograph 3 - Top Right */}
           <div 
-            className="absolute right-[14%] top-[14%] w-[120px] md:w-[160px] aspect-[3/4] bg-cover bg-center rounded border border-white/10 opacity-[0.15] rotate-[12deg] float-polaroid-left" 
-            style={{ backgroundImage: `url('https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=500&auto=format&fit=crop&q=80')` }}
+            className="absolute right-[12%] top-[12%] w-[135px] md:w-[180px] aspect-[4/3] bg-cover bg-center rounded-lg border border-white/15 opacity-[0.25] shadow-2xl rotate-[12deg] float-polaroid-left" 
+            style={{ backgroundImage: `url('/hero_villa.jpg')` }}
           />
-          {/* Portrait 4 - Bottom Right */}
+          {/* Photograph 4 - Bottom Right */}
           <div 
-            className="absolute right-[22%] bottom-[12%] w-[130px] md:w-[170px] aspect-[3/4] bg-cover bg-center rounded border border-white/10 opacity-[0.15] rotate-[-6deg] float-polaroid-right" 
-            style={{ backgroundImage: `url('https://images.unsplash.com/photo-1501196354995-cbb51c65aaea?w=500&auto=format&fit=crop&q=80')` }}
+            className="absolute right-[20%] bottom-[10%] w-[140px] md:w-[180px] aspect-[4/3] bg-cover bg-center rounded-lg border border-white/15 opacity-[0.25] shadow-2xl rotate-[-6deg] float-polaroid-right" 
+            style={{ backgroundImage: `url('/hero_river.jpg')` }}
           />
         </div>
 
@@ -375,8 +375,8 @@ export default function Home() {
             <div className="lg:col-span-6">
               <div className="relative aspect-[4/3] rounded-lg border border-border/40 overflow-hidden bg-zinc-950 shadow-2xl">
                 <div 
-                  className="absolute inset-0 bg-cover bg-center" 
-                  style={{ backgroundImage: `url('https://images.unsplash.com/photo-1617005082133-548c4dd27f35?w=800&auto=format&fit=crop&q=80')` }}
+                  className="absolute inset-0 bg-cover bg-center hover:scale-105 transition-transform duration-700" 
+                  style={{ backgroundImage: `url('/hero_villa.jpg')` }}
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
               </div>
@@ -553,39 +553,39 @@ export default function Home() {
 
 const MOCK_PHOTOS = [
   {
-    title: 'Himalayan Ridge',
-    category: 'Nature',
-    imageUrl: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=800&auto=format&fit=crop&q=80',
-    photographer: { name: 'Aarav Sharma' },
-    camera: 'Sony A7R III',
+    title: 'Himalayan Ridge Horizon',
+    category: 'Landscape',
+    imageUrl: '/hero_mountain.jpg',
+    photographer: { name: 'Pixela Crew' },
+    camera: 'Nikon D750',
   },
   {
-    title: 'Rainy Neon Reflex',
+    title: 'Ghat Street Rhythms',
     category: 'Street',
-    imageUrl: 'https://images.unsplash.com/photo-1506157786151-b8491531f063?w=800&auto=format&fit=crop&q=80',
-    photographer: { name: 'Rohan Mehra' },
+    imageUrl: '/hero_street.jpg',
+    photographer: { name: 'Pixela Crew' },
     camera: 'Sony A7 III',
   },
   {
-    title: 'Aperture Geometry',
-    category: 'Architecture',
-    imageUrl: 'https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=800&auto=format&fit=crop&q=80',
-    photographer: { name: 'Nisha Verma' },
+    title: 'Flora & Camouflage',
+    category: 'Macro & Nature',
+    imageUrl: '/hero_nature.jpg',
+    photographer: { name: 'Pixela Crew' },
     camera: 'Canon EOS R5',
   },
   {
-    title: 'Golden Hour Dunes',
-    category: 'Nature',
-    imageUrl: 'https://images.unsplash.com/photo-1509316975850-ff9c5deb0cd9?w=800&auto=format&fit=crop&q=80',
-    photographer: { name: 'Ishaan Sen' },
-    camera: 'Sony A7 III',
+    title: 'Holy Ganga Promenade',
+    category: 'Travel',
+    imageUrl: '/hero_river.jpg',
+    photographer: { name: 'Pixela Crew' },
+    camera: 'Fujifilm X-T4',
   },
   {
-    title: 'The Watcher',
-    category: 'Wildlife',
-    imageUrl: 'https://images.unsplash.com/photo-1564349683136-77e08dba1ef7?w=800&auto=format&fit=crop&q=80',
-    photographer: { name: 'Aarav Sharma' },
-    camera: 'Sony A7R III',
+    title: 'Hillside Haven Estate',
+    category: 'Architecture',
+    imageUrl: '/hero_villa.jpg',
+    photographer: { name: 'Pixela Crew' },
+    camera: 'Sony A7R IV',
   },
   {
     title: 'Cosmic Trails',
@@ -595,17 +595,10 @@ const MOCK_PHOTOS = [
     camera: 'Sony A7 III',
   },
   {
-    title: 'Sleek Architecture',
-    category: 'Architecture',
-    imageUrl: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=800&auto=format&fit=crop&q=80',
-    photographer: { name: 'Nisha Verma' },
-    camera: 'Canon EOS R5',
-  },
-  {
-    title: 'Neon Night Market',
-    category: 'Street',
-    imageUrl: 'https://images.unsplash.com/photo-1543007630-9710e4a00a20?w=800&auto=format&fit=crop&q=80',
-    photographer: { name: 'Rohan Mehra' },
+    title: 'Golden Hour Dunes',
+    category: 'Nature',
+    imageUrl: 'https://images.unsplash.com/photo-1509316975850-ff9c5deb0cd9?w=800&auto=format&fit=crop&q=80',
+    photographer: { name: 'Ishaan Sen' },
     camera: 'Sony A7 III',
   },
   {

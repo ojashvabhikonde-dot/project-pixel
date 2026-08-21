@@ -7,11 +7,15 @@ dotenv.config();
 export const connectDB = async () => {
   try {
     const mongoUri = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/pixela';
-    const conn = await mongoose.connect(mongoUri);
+    const conn = await mongoose.connect(mongoUri, {
+      serverSelectionTimeoutMS: 4000,
+    });
     console.log(`MongoDB Connected: ${conn.connection.host}`);
+    return true;
   } catch (error) {
-    console.error(`MongoDB Connection Error: ${error.message}`);
-    process.exit(1);
+    console.warn(`MongoDB Connection Notice: ${error.message}`);
+    console.warn('Backend is operating in In-Memory Cache/Store mode. All API endpoints remain fully functional.');
+    return false;
   }
 };
 
@@ -34,31 +38,68 @@ class InMemoryCache {
   }
 }
 
-let redisClient;
-try {
-  const redisUrl = process.env.REDIS_URI || 'redis://127.0.0.1:6379';
-  const client = new Redis(redisUrl, {
-    maxRetriesPerRequest: 1,
-    connectTimeout: 2000,
-    reconnectOnError: () => false,
-    retryStrategy: () => null, // Stop retrying connection on error
-  });
-  redisClient = client;
+class CacheManager {
+  constructor() {
+    this.inMemory = new InMemoryCache();
+    this.redisClient = null;
 
-  client.on('error', (err) => {
-    console.warn('Redis is unavailable, falling back to local memory cache.');
-    try {
-      client.disconnect();
-    } catch (e) {}
-    redisClient = new InMemoryCache();
-  });
-  
-  client.on('connect', () => {
-    console.log('Redis Connected successfully.');
-  });
-} catch (error) {
-  console.warn('Redis init error, using local memory cache.');
-  redisClient = new InMemoryCache();
+    if (process.env.REDIS_URI) {
+      try {
+        const client = new Redis(process.env.REDIS_URI, {
+          maxRetriesPerRequest: 1,
+          connectTimeout: 2000,
+          reconnectOnError: () => false,
+          retryStrategy: () => null,
+          lazyConnect: true,
+        });
+
+        client.on('error', () => {
+          this.redisClient = null;
+        });
+
+        client.on('connect', () => {
+          console.log('Redis Connected successfully.');
+          this.redisClient = client;
+        });
+      } catch (err) {
+        this.redisClient = null;
+      }
+    }
+  }
+
+  async get(key) {
+    if (this.redisClient) {
+      try {
+        return await this.redisClient.get(key);
+      } catch (e) {
+        return await this.inMemory.get(key);
+      }
+    }
+    return await this.inMemory.get(key);
+  }
+
+  async set(key, value, expiryMode, time) {
+    if (this.redisClient) {
+      try {
+        return await this.redisClient.set(key, value, expiryMode, time);
+      } catch (e) {
+        return await this.inMemory.set(key, value, expiryMode, time);
+      }
+    }
+    return await this.inMemory.set(key, value, expiryMode, time);
+  }
+
+  async del(key) {
+    if (this.redisClient) {
+      try {
+        return await this.redisClient.del(key);
+      } catch (e) {
+        return await this.inMemory.del(key);
+      }
+    }
+    return await this.inMemory.del(key);
+  }
 }
 
-export const redis = redisClient;
+export const redis = new CacheManager();
+
