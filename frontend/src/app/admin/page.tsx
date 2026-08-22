@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { ShieldCheck, Calendar, Image as ImageIcon, Users, BookOpen, AlertCircle, Check, X, Send, Database, BarChart3 } from 'lucide-react';
+import { API_URL } from '@/config/api';
 
 export default function AdminPage() {
   const [bookings, setBookings] = useState<any[]>([]);
@@ -35,7 +36,7 @@ export default function AdminPage() {
   const loadAdminData = async (authToken: string) => {
     try {
       // 1. Fetch bookings
-      const bookingsRes = await fetch('http://localhost:5000/api/bookings', {
+      const bookingsRes = await fetch(`${API_URL}/api/bookings`, {
         headers: { 'Authorization': `Bearer ${authToken}` }
       });
       if (bookingsRes.ok) {
@@ -44,7 +45,7 @@ export default function AdminPage() {
       }
 
       // 2. Fetch pending photos
-      const photosRes = await fetch('http://localhost:5000/api/gallery/pending', {
+      const photosRes = await fetch(`${API_URL}/api/gallery/pending`, {
         headers: { 'Authorization': `Bearer ${authToken}` }
       });
       if (photosRes.ok) {
@@ -53,7 +54,7 @@ export default function AdminPage() {
       }
 
       // 3. Fetch pending members
-      const membersRes = await fetch('http://localhost:5000/api/members/pending', {
+      const membersRes = await fetch(`${API_URL}/api/members/pending`, {
         headers: { 'Authorization': `Bearer ${authToken}` }
       });
       if (membersRes.ok) {
@@ -69,7 +70,7 @@ export default function AdminPage() {
 
   const handleApprovePhoto = async (photoId: string) => {
     try {
-      const res = await fetch(`http://localhost:5000/api/gallery/${photoId}/approve`, {
+      const res = await fetch(`${API_URL}/api/gallery/${photoId}/approve`, {
         method: 'PATCH',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -85,7 +86,7 @@ export default function AdminPage() {
 
   const handleApproveMember = async (memberId: string) => {
     try {
-      const res = await fetch(`http://localhost:5000/api/members/${memberId}/approve`, {
+      const res = await fetch(`${API_URL}/api/members/${memberId}/approve`, {
         method: 'PATCH',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -101,7 +102,7 @@ export default function AdminPage() {
 
   const handleUpdateBookingStatus = async (bookingId: string, status: string) => {
     try {
-      const res = await fetch(`http://localhost:5000/api/bookings/${bookingId}`, {
+      const res = await fetch(`${API_URL}/api/bookings/${bookingId}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -122,7 +123,7 @@ export default function AdminPage() {
     if (!kbTitle.trim() || !kbContent.trim() || !token) return;
 
     try {
-      const res = await fetch('http://localhost:5000/api/resources', { // Seeding chatbot knowledge segments
+      const res = await fetch(`${API_URL}/api/resources`, { // Seeding chatbot knowledge segments
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

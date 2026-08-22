@@ -2,6 +2,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { MessageSquare, Camera, Sparkles, Send, Upload, Copy, AlertCircle, RefreshCw, Layers, Sliders, Hash } from 'lucide-react';
+import { API_URL } from '@/config/api';
 
 export default function AssistantPage() {
   const [activeTab, setActiveTab] = useState<'chat' | 'critique'>('chat');
@@ -34,7 +35,7 @@ export default function AssistantPage() {
     setChatLoading(true);
 
     try {
-      const res = await fetch('http://localhost:5000/api/ai/chat', {
+      const res = await fetch(`${API_URL}/api/ai/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ message: userMsg }),
@@ -67,7 +68,7 @@ export default function AssistantPage() {
     formData.append('image', selectedImage);
 
     try {
-      const res = await fetch('http://localhost:5000/api/ai/critique', {
+      const res = await fetch(`${API_URL}/api/ai/critique`, {
         method: 'POST',
         body: formData,
       });

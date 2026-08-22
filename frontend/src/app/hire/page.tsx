@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { Mail, Calendar, MapPin, Send, HelpCircle, CheckCircle, Clock } from 'lucide-react';
 import LoginModal from '@/components/LoginModal';
+import { API_URL } from '@/config/api';
 
 export default function HirePage() {
   const [name, setName] = useState('');
@@ -35,7 +36,7 @@ export default function HirePage() {
 
     setLoading(true);
     try {
-      const res = await fetch('http://localhost:5000/api/bookings', {
+      const res = await fetch(`${API_URL}/api/bookings`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

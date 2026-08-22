@@ -19,10 +19,11 @@ const userSchema = new mongoose.Schema(
         'photography_head',
         'social_media_head',
         'member',
+        'viewer',
         'alumni',
         'faculty'
       ],
-      default: 'member',
+      default: 'viewer',
     },
     semester: { type: Number },
     year: { type: String }, // e.g., '1st Year', '2nd Year', '3rd Year', '4th Year'

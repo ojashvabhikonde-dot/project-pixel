@@ -303,8 +303,8 @@ router.post('/auth/register', async (req, res) => {
         }
 
         const count = await User.countDocuments();
-        const finalRole = count === 0 ? 'admin' : (role || 'member');
-        const finalApproval = finalRole === 'member' || finalRole === 'admin';
+        const finalRole = count === 0 ? 'admin' : (role || 'viewer');
+        const finalApproval = finalRole === 'member' || finalRole === 'viewer' || finalRole === 'admin';
 
         const user = await User.create({
           name,
@@ -335,8 +335,8 @@ router.post('/auth/register', async (req, res) => {
       return res.status(400).json({ error: 'User already exists with this email.' });
     }
 
-    const finalRole = memoryStore.users.length === 0 ? 'admin' : (role || 'member');
-    const finalApproval = finalRole === 'member' || finalRole === 'admin';
+    const finalRole = memoryStore.users.length === 0 ? 'admin' : (role || 'viewer');
+    const finalApproval = finalRole === 'member' || finalRole === 'viewer' || finalRole === 'admin';
     const newId = `user_${Date.now()}`;
     const passwordHash = bcrypt.hashSync(password || 'password123', 8);
 

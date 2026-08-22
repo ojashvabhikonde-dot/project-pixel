@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import NextLink from 'next/link';
 import { Camera, Calendar, MapPin, Clock, ArrowRight, Image as ImageIcon, Flame, ChevronRight, Mail, Heart, ChevronLeft } from 'lucide-react';
+import { API_URL } from '@/config/api';
 
 const AperturePLogo = () => (
   <svg
@@ -47,7 +48,7 @@ export default function Home() {
   const [shutterFlash, setShutterFlash] = useState(false);
 
   useEffect(() => {
-    fetch('http://localhost:5000/api/gallery')
+    fetch(`${API_URL}/api/gallery`)
       .then((res) => res.json())
       .then((data) => {
         if (data && data.length > 0) {

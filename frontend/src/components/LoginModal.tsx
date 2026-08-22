@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { X, Lock, Mail, User, ShieldCheck } from 'lucide-react';
+import { API_URL } from '@/config/api';
 
 interface LoginModalProps {
   isOpen: boolean;
@@ -34,7 +35,7 @@ export default function LoginModal({ isOpen, onClose, onSuccess }: LoginModalPro
       : { email, password };
 
     try {
-      const res = await fetch(`http://localhost:5000${url}`, {
+      const res = await fetch(`${API_URL}${url}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
@@ -158,6 +159,7 @@ export default function LoginModal({ isOpen, onClose, onSuccess }: LoginModalPro
                   className="w-full bg-zinc-950 border border-zinc-800 rounded-md py-1.5 px-3 text-xs text-zinc-300 focus:outline-none focus:border-primary"
                 >
                   <option value="member">Active Crew Member</option>
+                  <option value="viewer">Viewer / Audience</option>
                   <option value="alumni">Club Alumni</option>
                   <option value="faculty">Faculty Coordinator</option>
                 </select>

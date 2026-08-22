@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { Camera, Image as ImageIcon, Heart, Download, Share2, Upload, X, Sliders, CheckCircle, Trash2 } from 'lucide-react';
 import LoginModal from '@/components/LoginModal';
+import { API_URL } from '@/config/api';
 
 const CATEGORIES = [
   'All', 'Nature', 'Street', 'Portrait', 'Wildlife', 'Architecture', 'Macro', 'Drone', 'Events', 'Night', 'Black and White'
@@ -45,7 +46,7 @@ export default function GalleryPage() {
   }, []);
 
   const fetchPhotos = () => {
-    fetch('http://localhost:5000/api/gallery')
+    fetch(`${API_URL}/api/gallery`)
       .then((res) => res.json())
       .then((data) => {
         if (data && data.length > 0) {
@@ -75,7 +76,7 @@ export default function GalleryPage() {
     }
 
     try {
-      const res = await fetch(`http://localhost:5000/api/gallery/${photoId}/like`, {
+      const res = await fetch(`${API_URL}/api/gallery/${photoId}/like`, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${token}` }
       });
@@ -116,7 +117,7 @@ export default function GalleryPage() {
     }
 
     try {
-      const res = await fetch('http://localhost:5000/api/gallery/upload', {
+      const res = await fetch(`${API_URL}/api/gallery/upload`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -163,7 +164,7 @@ export default function GalleryPage() {
 
     try {
       if (token) {
-        await fetch(`http://localhost:5000/api/gallery/${photoId}`, {
+        await fetch(`${API_URL}/api/gallery/${photoId}`, {
           method: 'DELETE',
           headers: { 'Authorization': `Bearer ${token}` }
         });
