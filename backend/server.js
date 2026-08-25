@@ -16,7 +16,8 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 app.use(cors({ origin: '*' }));
-app.use(express.json());
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
 // Routes mapping
 app.use('/api', apiRouter);
@@ -33,21 +34,23 @@ const seedDatabase = async () => {
     if (userCount === 0) {
       console.log('Seeding initial crew database...');
       
-      // 1. Create Default Admin user
-      const admin = await User.create({
-        name: 'Ojas Shutter',
-        email: 'admin@pixela.club',
-        password: 'password123',
+      // 1. Create Default Super Admin user
+      const superAdmin = await User.create({
+        name: 'Pixela Super Admin',
+        email: 'pixela@oriental.ac.in',
+        password: 'pixela@2026',
         role: 'admin',
         semester: 6,
         year: '3rd Year',
         department: 'Information Technology',
-        skills: ['Portraiture', 'Post-processing', 'Lighting'],
-        photographyGenre: ['Street', 'Portrait'],
-        bio: 'Lead coordinator and Admin of Pixela Photography Club.',
-        avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300&auto=format&fit=crop&q=80',
+        skills: ['Club Lead', 'Direction', 'Management', 'Curation'],
+        photographyGenre: ['Street', 'Portrait', 'Exhibition'],
+        bio: 'Super Administrator & Coordinator of Pixela Photography Club.',
+        avatarUrl: '/ojashva.jpg',
         isApproved: true,
       });
+
+      const admin = superAdmin;
 
       // 2. Create Leaders
       const leadersData = [

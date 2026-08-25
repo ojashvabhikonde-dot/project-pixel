@@ -146,8 +146,25 @@ export default function GalleryPage() {
     }
   };
 
+  const canUserDeletePhoto = (photo: any) => {
+    if (!user) return false;
+    const isSuperAdmin = user.email?.toLowerCase() === 'pixela@oriental.ac.in' || user.role === 'admin';
+    if (isSuperAdmin) return true;
+
+    const photoUserId = String(photo.photographer?._id || photo.photographer?.id || photo.photographer || '');
+    const currentUserId = String(user.id || user._id || '');
+    const photoEmail = photo.photographer?.email?.toLowerCase();
+    const currentEmail = user.email?.toLowerCase();
+
+    return (photoUserId && photoUserId === currentUserId) || (photoEmail && photoEmail === currentEmail);
+  };
+
   const handleDeletePhoto = (photo: any, e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
+    if (!canUserDeletePhoto(photo)) {
+      alert("You are only allowed to delete photographs uploaded from your own account.");
+      return;
+    }
     setPhotoToDelete(photo);
   };
 
@@ -164,10 +181,15 @@ export default function GalleryPage() {
 
     try {
       if (token) {
-        await fetch(`${API_URL}/api/gallery/${photoId}`, {
+        const res = await fetch(`${API_URL}/api/gallery/${photoId}`, {
           method: 'DELETE',
           headers: { 'Authorization': `Bearer ${token}` }
         });
+        if (!res.ok) {
+          const errData = await res.json();
+          alert(errData.error || 'Failed to delete photo.');
+          fetchPhotos();
+        }
       }
     } catch (err) {
       console.error('Error deleting photo:', err);
@@ -236,48 +258,53 @@ export default function GalleryPage() {
         </div>
       ) : (
         <div className="columns-1 sm:columns-2 md:columns-3 lg:columns-4 gap-6 space-y-6 pt-6">
-          {filteredPhotos.map((photo, index) => (
-            <div
-              key={photo._id || photo.id || index}
-              onClick={() => setSelectedPhoto(photo)}
-              className="break-inside-avoid relative overflow-hidden rounded bg-card border border-border/40 group cursor-pointer hover:border-white/20 transition-all duration-300 shadow-md"
-            >
-              <img
-                src={photo.imageUrl}
-                alt={photo.title}
-                className="w-full object-cover group-hover:scale-[1.01] transition-transform duration-500"
-              />
-
-              {/* Quick Delete button top-right on hover */}
-              <button
-                onClick={(e) => handleDeletePhoto(photo, e)}
-                className="absolute top-2.5 right-2.5 z-20 opacity-0 group-hover:opacity-100 p-2 bg-red-950/80 hover:bg-red-600 text-white rounded-full transition-all duration-200 shadow-lg cursor-pointer border border-red-500/30"
-                title="Delete Photo"
+          {filteredPhotos.map((photo, index) => {
+            const hasDeleteAccess = canUserDeletePhoto(photo);
+            return (
+              <div
+                key={photo._id || photo.id || index}
+                onClick={() => setSelectedPhoto(photo)}
+                className="break-inside-avoid relative overflow-hidden rounded bg-card border border-border/40 group cursor-pointer hover:border-white/20 transition-all duration-300 shadow-md"
               >
-                <Trash2 className="h-3.5 w-3.5" />
-              </button>
+                <img
+                  src={photo.imageUrl}
+                  alt={photo.title}
+                  className="w-full object-cover group-hover:scale-[1.01] transition-transform duration-500"
+                />
 
-              <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-4 text-left">
-                <span className="text-[9px] bg-zinc-900/80 text-zinc-300 px-2 py-0.5 rounded-sm w-max mb-1.5 font-medium tracking-wider uppercase font-mono border border-white/5">
-                  {photo.category}
-                </span>
-                <h4 className="font-bold text-white text-sm leading-tight truncate">{photo.title}</h4>
-                <p className="text-[10px] text-zinc-450 mt-0.5">By {photo.photographer?.name || 'Pixela Crew'}</p>
-                
-                {/* Meta options overlay */}
-                <div className="flex items-center justify-between border-t border-white/10 pt-2 mt-2 text-zinc-300 text-[10px]">
-                  <button 
-                    onClick={(e) => handleLike(photo._id, e)}
-                    className="flex items-center space-x-1.5 hover:text-white"
+                {/* Quick Delete button top-right on hover (ONLY if owner or Super Admin) */}
+                {hasDeleteAccess && (
+                  <button
+                    onClick={(e) => handleDeletePhoto(photo, e)}
+                    className="absolute top-2.5 right-2.5 z-20 opacity-0 group-hover:opacity-100 p-2 bg-red-950/80 hover:bg-red-600 text-white rounded-full transition-all duration-200 shadow-lg cursor-pointer border border-red-500/30"
+                    title={user?.email === 'pixela@oriental.ac.in' || user?.role === 'admin' ? "Delete Photo (Super Admin Access)" : "Delete Your Photo"}
                   >
-                    <Heart className={`h-3.5 w-3.5 ${photo.likes?.includes(user?.id) ? 'fill-red-500 text-red-500' : ''}`} />
-                    <span>{photo.likes?.length || 0}</span>
+                    <Trash2 className="h-3.5 w-3.5" />
                   </button>
-                  <span className="text-[9px] text-zinc-450 uppercase font-mono">{photo.camera || 'Sony'}</span>
+                )}
+
+                <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-4 text-left">
+                  <span className="text-[9px] bg-zinc-900/80 text-zinc-300 px-2 py-0.5 rounded-sm w-max mb-1.5 font-medium tracking-wider uppercase font-mono border border-white/5">
+                    {photo.category}
+                  </span>
+                  <h4 className="font-bold text-white text-sm leading-tight truncate">{photo.title}</h4>
+                  <p className="text-[10px] text-zinc-450 mt-0.5">By {photo.photographer?.name || 'Pixela Crew'}</p>
+                  
+                  {/* Meta options overlay */}
+                  <div className="flex items-center justify-between border-t border-white/10 pt-2 mt-2 text-zinc-300 text-[10px]">
+                    <button 
+                      onClick={(e) => handleLike(photo._id, e)}
+                      className="flex items-center space-x-1.5 hover:text-white"
+                    >
+                      <Heart className={`h-3.5 w-3.5 ${photo.likes?.includes(user?.id) ? 'fill-red-500 text-red-500' : ''}`} />
+                      <span>{photo.likes?.length || 0}</span>
+                    </button>
+                    <span className="text-[9px] text-zinc-450 uppercase font-mono">{photo.camera || 'Sony'}</span>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 
@@ -396,14 +423,16 @@ export default function GalleryPage() {
                 >
                   <Share2 className="h-4 w-4" />
                 </button>
-                <button
-                  onClick={(e) => handleDeletePhoto(selectedPhoto, e)}
-                  className="flex items-center space-x-1.5 px-3 py-2 bg-red-950/70 hover:bg-red-900 border border-red-800/60 text-red-300 hover:text-white rounded text-xs font-semibold transition-colors cursor-pointer"
-                  title="Delete Photo"
-                >
-                  <Trash2 className="h-4 w-4" />
-                  <span>Delete</span>
-                </button>
+                {canUserDeletePhoto(selectedPhoto) && (
+                  <button
+                    onClick={(e) => handleDeletePhoto(selectedPhoto, e)}
+                    className="flex items-center space-x-1.5 px-3 py-2 bg-red-950/70 hover:bg-red-900 border border-red-800/60 text-red-300 hover:text-white rounded text-xs font-semibold transition-colors cursor-pointer"
+                    title={user?.email === 'pixela@oriental.ac.in' || user?.role === 'admin' ? "Delete Photo (Super Admin Access)" : "Delete Your Photo"}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                    <span>Delete</span>
+                  </button>
+                )}
               </div>
             </div>
           </div>

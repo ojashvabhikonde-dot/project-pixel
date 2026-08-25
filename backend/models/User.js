@@ -19,12 +19,14 @@ const userSchema = new mongoose.Schema(
         'photography_head',
         'social_media_head',
         'member',
+        'crew',
         'viewer',
         'alumni',
         'faculty'
       ],
       default: 'viewer',
     },
+    specialization: { type: String, default: 'Visual Creator' },
     semester: { type: Number },
     year: { type: String }, // e.g., '1st Year', '2nd Year', '3rd Year', '4th Year'
     department: { type: String },

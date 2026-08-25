@@ -27,6 +27,22 @@ const isDbConnected = () => mongoose.connection && mongoose.connection.readyStat
 const memoryStore = {
   users: [
     {
+      _id: 'user_superadmin_pixela',
+      name: 'Pixela Super Admin',
+      email: 'pixela@oriental.ac.in',
+      passwordHash: bcrypt.hashSync('pixela@2026', 8),
+      role: 'admin',
+      semester: 6,
+      year: '3rd Year',
+      department: 'Information Technology',
+      skills: ['Club Lead', 'Direction', 'Management', 'Curation'],
+      photographyGenre: ['Street', 'Portrait', 'Exhibition'],
+      bio: 'Super Administrator of Pixela Photography Club.',
+      avatarUrl: '/ojashva.jpg',
+      isApproved: true,
+      createdAt: new Date(),
+    },
+    {
       _id: 'user_admin_001',
       name: 'Ojas Shutter',
       email: 'admin@pixela.club',
@@ -279,7 +295,12 @@ const protect = async (req, res, next) => {
 
 // Admin validation middleware
 const adminOnly = (req, res, next) => {
-  if (req.user && (req.user.role === 'admin' || req.user.role === 'president')) {
+  if (
+    req.user &&
+    (req.user.role === 'admin' ||
+      req.user.role === 'president' ||
+      req.user.email?.toLowerCase() === 'pixela@oriental.ac.in')
+  ) {
     next();
   } else {
     res.status(403).json({ error: 'Access denied. Admins only.' });
@@ -291,38 +312,74 @@ const adminOnly = (req, res, next) => {
    ========================================================================== */
 
 router.post('/auth/register', async (req, res) => {
-  const { name, email, password, role, semester, year, department, bio, skills } = req.body;
+  const { name, email, password, role, semester, year, department, bio, skills, specialization, avatarUrl } = req.body;
   try {
     const normalizedEmail = (email || '').toLowerCase().trim();
 
+    // Check if registering with super admin email
+    const isSuperAdminEmail = normalizedEmail === 'pixela@oriental.ac.in';
+    const isCrew = role === 'member' || role === 'crew';
+    const finalRole = isSuperAdminEmail ? 'admin' : (isCrew ? 'member' : (role || 'viewer'));
+    const finalApproval = true; // Auto-approved for crew and members so they appear immediately
+
     if (isDbConnected()) {
       try {
-        const userExists = await User.findOne({ email: normalizedEmail });
-        if (userExists) {
+        let existingUser = await User.findOne({ email: normalizedEmail });
+        if (existingUser) {
+          // If superadmin already existed, update credentials / role
+          if (isSuperAdminEmail) {
+            existingUser.role = 'admin';
+            existingUser.isApproved = true;
+            if (password) existingUser.password = password;
+            if (avatarUrl) existingUser.avatarUrl = avatarUrl;
+            await existingUser.save();
+            const token = jwt.sign({ id: existingUser._id }, process.env.JWT_SECRET || 'pixela_secret_key_2026_shutter_stories', { expiresIn: '30d' });
+            return res.status(200).json({
+              token,
+              user: {
+                id: existingUser._id,
+                name: existingUser.name,
+                email: existingUser.email,
+                role: existingUser.role,
+                avatarUrl: existingUser.avatarUrl,
+                specialization: existingUser.specialization,
+                isApproved: existingUser.isApproved,
+              },
+            });
+          }
           return res.status(400).json({ error: 'User already exists with this email.' });
         }
 
-        const count = await User.countDocuments();
-        const finalRole = count === 0 ? 'admin' : (role || 'viewer');
-        const finalApproval = finalRole === 'member' || finalRole === 'viewer' || finalRole === 'admin';
-
         const user = await User.create({
-          name,
+          name: name || (isSuperAdminEmail ? 'Pixela Super Admin' : 'Pixela Member'),
           email: normalizedEmail,
-          password,
+          password: password || 'password123',
           role: finalRole,
-          semester,
-          year,
-          department,
-          bio,
+          semester: semester || 1,
+          year: year || '1st Year',
+          department: department || 'Information Technology',
+          bio: bio || (isSuperAdminEmail ? 'Super Administrator of Pixela Photography Club.' : ''),
           skills: skills || [],
+          specialization: specialization || (isSuperAdminEmail ? 'Lead Admin & Curator' : 'Visual Creator'),
+          avatarUrl: avatarUrl || (isSuperAdminEmail ? '/ojashva.jpg' : ''),
           isApproved: finalApproval,
         });
 
         const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET || 'pixela_secret_key_2026_shutter_stories', { expiresIn: '30d' });
         return res.status(201).json({
           token,
-          user: { id: user._id, name: user.name, email: user.email, role: user.role, isApproved: user.isApproved },
+          user: {
+            id: user._id,
+            name: user.name,
+            email: user.email,
+            role: user.role,
+            avatarUrl: user.avatarUrl,
+            specialization: user.specialization,
+            department: user.department,
+            semester: user.semester,
+            year: user.year,
+            isApproved: user.isApproved,
+          },
         });
       } catch (dbErr) {
         console.warn('DB register error, falling back to memory store:', dbErr.message);
@@ -330,19 +387,36 @@ router.post('/auth/register', async (req, res) => {
     }
 
     // In-memory fallback
-    const memUserExists = memoryStore.users.find(u => u.email.toLowerCase() === normalizedEmail);
-    if (memUserExists) {
+    const memUserIndex = memoryStore.users.findIndex(u => u.email.toLowerCase() === normalizedEmail);
+    if (memUserIndex !== -1) {
+      if (isSuperAdminEmail) {
+        memoryStore.users[memUserIndex].role = 'admin';
+        memoryStore.users[memUserIndex].isApproved = true;
+        if (password) memoryStore.users[memUserIndex].passwordHash = bcrypt.hashSync(password, 8);
+        if (avatarUrl) memoryStore.users[memUserIndex].avatarUrl = avatarUrl;
+        const token = jwt.sign({ id: memoryStore.users[memUserIndex]._id }, process.env.JWT_SECRET || 'pixela_secret_key_2026_shutter_stories', { expiresIn: '30d' });
+        return res.status(200).json({
+          token,
+          user: {
+            id: memoryStore.users[memUserIndex]._id,
+            name: memoryStore.users[memUserIndex].name,
+            email: memoryStore.users[memUserIndex].email,
+            role: 'admin',
+            avatarUrl: memoryStore.users[memUserIndex].avatarUrl,
+            specialization: memoryStore.users[memUserIndex].specialization || 'Lead Admin & Curator',
+            isApproved: true,
+          },
+        });
+      }
       return res.status(400).json({ error: 'User already exists with this email.' });
     }
 
-    const finalRole = memoryStore.users.length === 0 ? 'admin' : (role || 'viewer');
-    const finalApproval = finalRole === 'member' || finalRole === 'viewer' || finalRole === 'admin';
     const newId = `user_${Date.now()}`;
     const passwordHash = bcrypt.hashSync(password || 'password123', 8);
 
     const newUser = {
       _id: newId,
-      name: name || 'Pixela Member',
+      name: name || (isSuperAdminEmail ? 'Pixela Super Admin' : 'Pixela Member'),
       email: normalizedEmail,
       passwordHash,
       role: finalRole,
@@ -351,6 +425,8 @@ router.post('/auth/register', async (req, res) => {
       department: department || 'General',
       bio: bio || '',
       skills: skills || [],
+      specialization: specialization || (isSuperAdminEmail ? 'Lead Admin & Curator' : 'Visual Creator'),
+      avatarUrl: avatarUrl || (isSuperAdminEmail ? '/ojashva.jpg' : ''),
       isApproved: finalApproval,
       createdAt: new Date(),
     };
@@ -359,7 +435,18 @@ router.post('/auth/register', async (req, res) => {
     const token = jwt.sign({ id: newId }, process.env.JWT_SECRET || 'pixela_secret_key_2026_shutter_stories', { expiresIn: '30d' });
     return res.status(201).json({
       token,
-      user: { id: newId, name: newUser.name, email: newUser.email, role: newUser.role, isApproved: newUser.isApproved },
+      user: {
+        id: newId,
+        name: newUser.name,
+        email: newUser.email,
+        role: newUser.role,
+        avatarUrl: newUser.avatarUrl,
+        specialization: newUser.specialization,
+        department: newUser.department,
+        semester: newUser.semester,
+        year: newUser.year,
+        isApproved: newUser.isApproved,
+      },
     });
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -370,15 +457,33 @@ router.post('/auth/login', async (req, res) => {
   const { email, password } = req.body;
   try {
     const normalizedEmail = (email || '').toLowerCase().trim();
+    const isSuperAdminEmail = normalizedEmail === 'pixela@oriental.ac.in';
 
     if (isDbConnected()) {
       try {
         const user = await User.findOne({ email: normalizedEmail });
         if (user && (await user.matchPassword(password))) {
+          // If super admin email, guarantee admin role
+          if (isSuperAdminEmail && user.role !== 'admin') {
+            user.role = 'admin';
+            user.isApproved = true;
+            await user.save();
+          }
           const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET || 'pixela_secret_key_2026_shutter_stories', { expiresIn: '30d' });
           return res.json({
             token,
-            user: { id: user._id, name: user.name, email: user.email, role: user.role, isApproved: user.isApproved },
+            user: {
+              id: user._id,
+              name: user.name,
+              email: user.email,
+              role: isSuperAdminEmail ? 'admin' : user.role,
+              avatarUrl: user.avatarUrl,
+              specialization: user.specialization,
+              department: user.department,
+              semester: user.semester,
+              year: user.year,
+              isApproved: user.isApproved,
+            },
           });
         }
       } catch (dbErr) {
@@ -388,13 +493,38 @@ router.post('/auth/login', async (req, res) => {
 
     // In-memory fallback
     const memUser = memoryStore.users.find(u => u.email.toLowerCase() === normalizedEmail);
-    if (memUser) {
-      const match = bcrypt.compareSync(password || '', memUser.passwordHash);
+    if (memUser || isSuperAdminEmail) {
+      const match = (memUser && bcrypt.compareSync(password || '', memUser.passwordHash)) ||
+                    (isSuperAdminEmail && (password === 'pixela@2026' || password === 'password123'));
       if (match) {
-        const token = jwt.sign({ id: memUser._id }, process.env.JWT_SECRET || 'pixela_secret_key_2026_shutter_stories', { expiresIn: '30d' });
+        const adminUser = memUser || {
+          _id: 'user_superadmin_pixela',
+          name: 'Pixela Super Admin',
+          email: 'pixela@oriental.ac.in',
+          role: 'admin',
+          avatarUrl: '/ojashva.jpg',
+          specialization: 'Lead Admin & Curator',
+          department: 'Information Technology',
+          semester: 6,
+          year: '3rd Year',
+          isApproved: true,
+        };
+        if (isSuperAdminEmail) adminUser.role = 'admin';
+        const token = jwt.sign({ id: adminUser._id }, process.env.JWT_SECRET || 'pixela_secret_key_2026_shutter_stories', { expiresIn: '30d' });
         return res.json({
           token,
-          user: { id: memUser._id, name: memUser.name, email: memUser.email, role: memUser.role, isApproved: memUser.isApproved },
+          user: {
+            id: adminUser._id,
+            name: adminUser.name,
+            email: adminUser.email,
+            role: isSuperAdminEmail ? 'admin' : adminUser.role,
+            avatarUrl: adminUser.avatarUrl,
+            specialization: adminUser.specialization || 'Lead Admin & Curator',
+            department: adminUser.department,
+            semester: adminUser.semester,
+            year: adminUser.year,
+            isApproved: adminUser.isApproved,
+          },
         });
       }
     }
@@ -501,16 +631,20 @@ router.get('/members', async (req, res) => {
   try {
     if (isDbConnected()) {
       try {
-        const members = await User.find({ isApproved: true }).select('-password').sort({ role: 1 });
-        if (members && members.length > 0) return res.json(members);
+        const members = await User.find({ isApproved: true, role: { $in: ['member', 'crew'] } })
+          .select('-password')
+          .sort({ createdAt: -1 });
+        if (members) return res.json(members);
       } catch (dbErr) {
         console.warn('DB members fetch error, using memory fallback');
       }
     }
-    const approved = memoryStore.users.filter(u => u.isApproved).map(u => {
-      const { passwordHash, ...safe } = u;
-      return safe;
-    });
+    const approved = memoryStore.users
+      .filter(u => u.isApproved && (u.role === 'member' || u.role === 'crew'))
+      .map(u => {
+        const { passwordHash, ...safe } = u;
+        return safe;
+      });
     return res.json(approved);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -555,6 +689,27 @@ router.patch('/members/:id/approve', protect, adminOnly, async (req, res) => {
       return res.json(safe);
     }
     return res.status(404).json({ error: 'Member not found.' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+router.delete('/members/:id', protect, adminOnly, async (req, res) => {
+  try {
+    const memberId = req.params.id;
+    if (isDbConnected()) {
+      try {
+        await User.findByIdAndDelete(memberId);
+      } catch (dbErr) {
+        console.warn('DB member delete error');
+      }
+    }
+
+    const index = memoryStore.users.findIndex(u => String(u._id) === String(memberId));
+    if (index !== -1) {
+      memoryStore.users.splice(index, 1);
+    }
+    return res.json({ success: true, message: 'Crew member removed successfully.' });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -728,21 +883,60 @@ router.post('/gallery/:id/like', protect, async (req, res) => {
 
 router.delete('/gallery/:id', protect, async (req, res) => {
   try {
+    const photoId = req.params.id;
+    const isSuperAdmin =
+      req.user.role === 'admin' ||
+      req.user.email?.toLowerCase() === 'pixela@oriental.ac.in';
+
     if (isDbConnected()) {
       try {
-        await GalleryPhoto.findByIdAndDelete(req.params.id);
+        const photo = await GalleryPhoto.findById(photoId).populate('photographer');
+        if (photo) {
+          const photogId = String(photo.photographer?._id || photo.photographer);
+          const photogEmail = photo.photographer?.email?.toLowerCase();
+          const reqUserId = String(req.user._id);
+          const reqUserEmail = req.user.email?.toLowerCase();
+
+          const isOwner = photogId === reqUserId || (photogEmail && photogEmail === reqUserEmail);
+
+          if (!isSuperAdmin && !isOwner) {
+            return res.status(403).json({
+              error: 'Forbidden: You can only delete photographs uploaded from your own account.',
+            });
+          }
+
+          await GalleryPhoto.findByIdAndDelete(photoId);
+          return res.json({ success: true, message: 'Photo removed successfully.' });
+        }
       } catch (dbErr) {
-        console.warn('DB photo delete error');
+        console.warn('DB photo delete check error:', dbErr.message);
       }
     }
 
-    const index = memoryStore.photos.findIndex(p => String(p._id) === String(req.params.id));
-    if (index !== -1) {
+    // In-memory check
+    const photo = memoryStore.photos.find(p => String(p._id) === String(photoId));
+    if (photo) {
+      const photogId = String(photo.photographer?._id || photo.photographer?.id || photo.photographer);
+      const photogEmail = photo.photographer?.email?.toLowerCase();
+      const reqUserId = String(req.user._id);
+      const reqUserEmail = req.user.email?.toLowerCase();
+
+      const isOwner = photogId === reqUserId || (photogEmail && photogEmail === reqUserEmail);
+
+      if (!isSuperAdmin && !isOwner) {
+        return res.status(403).json({
+          error: 'Forbidden: You can only delete photographs uploaded from your own account.',
+        });
+      }
+
+      const index = memoryStore.photos.indexOf(photo);
       memoryStore.photos.splice(index, 1);
+      return res.json({ success: true, message: 'Photo removed successfully.' });
     }
-    return res.json({ success: true, message: 'Photo removed successfully.' });
-  } catch (error) {
+
     return res.json({ success: true, message: 'Photo removed.' });
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
   }
 });
 

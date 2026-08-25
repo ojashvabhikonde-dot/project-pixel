@@ -1,7 +1,9 @@
 'use client';
 
-import React, { useState } from 'react';
-import { Mail, Globe, Camera, Layers, Calendar, ChevronRight } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Mail, Globe, Camera, Layers, Calendar, ChevronRight, Trash2, Plus, Users, ShieldAlert, Sparkles, UserPlus } from 'lucide-react';
+import LoginModal from '@/components/LoginModal';
+import { API_URL } from '@/config/api';
 
 const Linkedin = (props: React.SVGProps<SVGSVGElement>) => (
   <svg
@@ -37,6 +39,57 @@ const Instagram = (props: React.SVGProps<SVGSVGElement>) => (
 
 export default function LeadershipPage() {
   const [selectedYear, setSelectedYear] = useState('2025-2026');
+  const [crewMembers, setCrewMembers] = useState<any[]>([]);
+  const [loadingCrew, setLoadingCrew] = useState(true);
+  const [token, setToken] = useState<string | null>(null);
+  const [user, setUser] = useState<any>(null);
+  const [crewToDelete, setCrewToDelete] = useState<any | null>(null);
+  const [isLoginOpen, setIsLoginOpen] = useState(false);
+
+  useEffect(() => {
+    const savedToken = localStorage.getItem('pixela_token');
+    const savedUser = localStorage.getItem('pixela_user');
+    if (savedToken) setToken(savedToken);
+    if (savedUser) setUser(JSON.parse(savedUser));
+
+    fetchCrewMembers();
+  }, []);
+
+  const fetchCrewMembers = async () => {
+    setLoadingCrew(true);
+    try {
+      const res = await fetch(`${API_URL}/api/members`);
+      if (res.ok) {
+        const data = await res.json();
+        setCrewMembers(data || []);
+      }
+    } catch (err) {
+      console.error('Failed to fetch crew members:', err);
+    } finally {
+      setLoadingCrew(false);
+    }
+  };
+
+  const isSuperAdmin = user?.email?.toLowerCase() === 'pixela@oriental.ac.in' || user?.role === 'admin';
+
+  const confirmDeleteCrew = async () => {
+    if (!crewToDelete) return;
+    const memberId = crewToDelete._id || crewToDelete.id;
+
+    setCrewMembers(prev => prev.filter(m => (m._id !== memberId && m.id !== memberId)));
+    setCrewToDelete(null);
+
+    try {
+      if (token) {
+        await fetch(`${API_URL}/api/members/${memberId}`, {
+          method: 'DELETE',
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+      }
+    } catch (err) {
+      console.error('Failed to delete crew member:', err);
+    }
+  };
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-16 space-y-20 bg-background">
@@ -126,43 +179,145 @@ export default function LeadershipPage() {
         ))}
       </div>
 
-      {/* 2.5 Active Crew Section */}
-      <section className="space-y-8 border-t border-border/30 pt-16">
-        <div className="space-y-1">
-          <span className="text-[10px] font-bold text-primary uppercase tracking-widest block font-mono">
-            Active Members
-          </span>
-          <h2 className="text-3xl font-black text-white uppercase tracking-tight">
-            The Pixela Crew
-          </h2>
-          <p className="text-zinc-500 text-xs font-light">
-            Talented visual creators and technicians driving our everyday captures.
-          </p>
+      {/* 2.5 Active Crew Section (Dynamic Crew List) */}
+      <section className="space-y-8 border-t border-border/30 pt-16 text-left">
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+          <div className="space-y-1">
+            <span className="text-[10px] font-bold text-primary uppercase tracking-widest block font-mono">
+              Active Members
+            </span>
+            <h2 className="text-3xl font-black text-white uppercase tracking-tight flex items-center gap-2.5">
+              <span>The Pixela Crew</span>
+              <span className="text-xs px-2.5 py-0.5 bg-primary/10 border border-primary/30 text-primary rounded-full font-mono font-bold">
+                {crewMembers.length}
+              </span>
+            </h2>
+            <p className="text-zinc-500 text-xs font-light">
+              Registered visual creators and technicians driving our everyday captures.
+            </p>
+          </div>
+
+          <div className="flex items-center gap-3">
+            {isSuperAdmin && (
+              <span className="text-[10px] bg-primary/20 text-primary border border-primary/30 px-3 py-1 rounded-full font-mono font-bold flex items-center gap-1.5">
+                <Sparkles className="h-3 w-3" />
+                <span>Super Admin: Delete Permissions Enabled</span>
+              </span>
+            )}
+            <button
+              onClick={() => setIsLoginOpen(true)}
+              className="inline-flex items-center space-x-1.5 px-4 py-2 rounded-full bg-white text-zinc-950 hover:bg-zinc-200 text-xs font-bold uppercase tracking-wider transition-colors cursor-pointer shadow-md"
+            >
+              <UserPlus className="h-3.5 w-3.5" />
+              <span>Join as Crew</span>
+            </button>
+          </div>
         </div>
 
-        <div className="flex overflow-x-auto gap-4 pb-6 scrollbar-thin scrollbar-thumb-zinc-800 scrollbar-track-transparent snap-x snap-mandatory">
-          {CREW_MEMBERS.map((member, i) => (
-            <div 
-              key={i} 
-              className="flex-shrink-0 w-[150px] bg-card/25 border border-border/50 rounded p-4 text-center group hover:border-white/20 transition-all duration-300 flex flex-col justify-between shadow-lg snap-start"
-            >
-              <div className="relative aspect-square w-full rounded overflow-hidden bg-zinc-950 mb-3">
-                <div 
-                  className="absolute inset-0 bg-cover bg-center group-hover:scale-105 transition-transform duration-500" 
-                  style={{ backgroundImage: `url('${member.photo}')` }}
-                />
-              </div>
-              <div>
-                <span className="text-[8px] font-bold text-primary uppercase tracking-wider font-mono block">
-                  {member.specialization}
-                </span>
-                <h4 className="text-xs font-bold text-white mt-1 truncate">{member.name}</h4>
-                <p className="text-[8px] text-zinc-500 font-mono mt-0.5">{member.dept} • {member.semester} Sem</p>
-              </div>
+        {/* Dynamic Crew Display */}
+        {loadingCrew ? (
+          <div className="py-16 text-center text-zinc-500 font-mono text-xs animate-pulse">
+            Loading active crew members...
+          </div>
+        ) : crewMembers.length === 0 ? (
+          <div className="bg-card/20 border border-dashed border-border/60 rounded-xl p-12 text-center space-y-4">
+            <div className="h-12 w-12 rounded-full bg-zinc-900 border border-zinc-800 flex items-center justify-center mx-auto text-zinc-500">
+              <Users className="h-6 w-6" />
             </div>
-          ))}
-        </div>
+            <div className="space-y-1">
+              <h4 className="text-base font-bold text-white uppercase tracking-tight">No Crew Members Registered Yet</h4>
+              <p className="text-xs text-zinc-400 max-w-md mx-auto font-light leading-relaxed">
+                Register as an Active Crew Member with your profile photo and specialization to be featured on this official roster.
+              </p>
+            </div>
+            <button
+              onClick={() => setIsLoginOpen(true)}
+              className="inline-flex items-center space-x-2 px-5 py-2.5 bg-primary text-primary-foreground hover:opacity-90 rounded-full text-xs font-bold uppercase tracking-wider transition-all cursor-pointer shadow-lg shadow-primary/20"
+            >
+              <Plus className="h-4 w-4" />
+              <span>Register Now</span>
+            </button>
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+            {crewMembers.map((member, i) => {
+              const photoUrl = member.avatarUrl || member.photo || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300&auto=format&fit=crop&q=80';
+              return (
+                <div 
+                  key={member._id || member.id || i} 
+                  className="bg-card/30 border border-border/50 rounded-xl p-3.5 text-center group hover:border-white/20 transition-all duration-300 flex flex-col justify-between shadow-lg relative overflow-hidden"
+                >
+                  {/* Super Admin Delete Button */}
+                  {isSuperAdmin && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setCrewToDelete(member);
+                      }}
+                      className="absolute top-2 right-2 z-20 p-1.5 bg-red-950/90 hover:bg-red-600 text-white rounded-full transition-all duration-200 shadow-md cursor-pointer border border-red-500/40 opacity-0 group-hover:opacity-100"
+                      title={`Delete crew profile of ${member.name}`}
+                    >
+                      <Trash2 className="h-3 w-3" />
+                    </button>
+                  )}
+
+                  <div className="relative aspect-square w-full rounded-lg overflow-hidden bg-zinc-950 mb-3 border border-white/5">
+                    <img 
+                      src={photoUrl} 
+                      alt={member.name}
+                      className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-500" 
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+                  </div>
+
+                  <div className="space-y-1">
+                    <span className="text-[8px] font-bold text-primary uppercase tracking-wider font-mono block truncate">
+                      {member.specialization || member.role || 'Visual Creator'}
+                    </span>
+                    <h4 className="text-xs font-bold text-white truncate" title={member.name}>{member.name}</h4>
+                    <p className="text-[8px] text-zinc-500 font-mono truncate">
+                      {member.department || member.dept || 'General'}
+                      {(member.department || member.dept) && (member.semester || member.year) ? ' • ' : ''}
+                      {member.semester ? `${member.semester} Sem` : member.year || ''}
+                    </p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </section>
+
+      {/* Delete Crew Confirmation Modal */}
+      {crewToDelete && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/85 backdrop-blur-sm p-4">
+          <div className="bg-zinc-950 border border-zinc-800 rounded-xl p-6 max-w-sm w-full space-y-5 text-white shadow-2xl text-left">
+            <div className="space-y-2">
+              <h3 className="text-lg font-bold text-white flex items-center space-x-2">
+                <Trash2 className="h-5 w-5 text-red-500" />
+                <span>Delete Crew Member</span>
+              </h3>
+              <p className="text-zinc-400 text-xs font-light leading-relaxed">
+                As Super Admin, are you sure you want to delete <span className="font-semibold text-white">"{crewToDelete.name}"</span> from the Pixela crew roster? This action cannot be undone.
+              </p>
+            </div>
+            <div className="flex space-x-3 pt-2">
+              <button
+                onClick={() => setCrewToDelete(null)}
+                className="flex-1 py-2 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 rounded-lg text-xs font-semibold transition-colors cursor-pointer text-zinc-300"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmDeleteCrew}
+                className="flex-1 py-2 bg-red-600 hover:bg-red-500 text-white rounded-lg text-xs font-semibold transition-colors cursor-pointer shadow-lg shadow-red-900/20"
+              >
+                Confirm Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* 3. Ex Leaders & Alumni Grid with Timeline Switcher */}
       <div className="space-y-10 bg-card/25 border border-border/50 rounded-2xl p-6 sm:p-12 relative overflow-hidden text-left shadow-2xl">
@@ -242,6 +397,17 @@ export default function LeadershipPage() {
         </div>
       </div>
 
+      {/* Global Login Interceptor wrapper */}
+      <LoginModal
+        isOpen={isLoginOpen}
+        onClose={() => setIsLoginOpen(false)}
+        onSuccess={(newToken, newUser) => {
+          setToken(newToken);
+          setUser(newUser);
+          fetchCrewMembers();
+        }}
+      />
+
     </div>
   );
 }
@@ -298,184 +464,6 @@ const LEADERS: Leader[] = [
     linkedin: 'https://www.linkedin.com/in/ojashva-bhikonde-947a48331',
     instagram: 'https://www.instagram.com/mr_ojashva?igsh=emwwdGl4M2Nxd21u',
     portfolio: 'https://portfolio-ojashva.vercel.app/',
-  }
-];
-
-const CREW_MEMBERS = [
-  {
-    name: 'Piyush Sen',
-    specialization: 'Lead Cinematographer',
-    dept: 'IT',
-    semester: 6,
-    photo: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=300&auto=format&fit=crop&q=80',
-  },
-  {
-    name: 'Karan Verma',
-    specialization: 'Street Photo',
-    dept: 'CSE',
-    semester: 6,
-    photo: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=300&auto=format&fit=crop&q=80',
-  },
-  {
-    name: 'Riya Sharma',
-    specialization: 'Portrait Specialist',
-    dept: 'ECE',
-    semester: 4,
-    photo: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=300&auto=format&fit=crop&q=80',
-  },
-  {
-    name: 'Harsh Patidar',
-    specialization: 'Creative Editor',
-    dept: 'EX',
-    semester: 6,
-    photo: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=300&auto=format&fit=crop&q=80',
-  },
-  {
-    name: 'Divya Gupta',
-    specialization: 'Event Coordinator',
-    dept: 'IT',
-    semester: 4,
-    photo: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=300&auto=format&fit=crop&q=80',
-  },
-  {
-    name: 'Mayank Soni',
-    specialization: 'Landscape & Drone',
-    dept: 'ME',
-    semester: 8,
-    photo: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=300&auto=format&fit=crop&q=80',
-  },
-  {
-    name: 'Amit Saxena',
-    specialization: 'Astro Photography',
-    dept: 'CSE',
-    semester: 6,
-    photo: 'https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=300&auto=format&fit=crop&q=80',
-  },
-  {
-    name: 'Sneha Patel',
-    specialization: 'Wildlife Specialist',
-    dept: 'ECE',
-    semester: 4,
-    photo: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300&auto=format&fit=crop&q=80',
-  },
-  {
-    name: 'Rahul Nair',
-    specialization: 'Macro & Close-up',
-    dept: 'IT',
-    semester: 6,
-    photo: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&auto=format&fit=crop&q=80',
-  },
-  {
-    name: 'Priya Das',
-    specialization: 'Fashion Lead',
-    dept: 'CSE',
-    semester: 8,
-    photo: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=300&auto=format&fit=crop&q=80',
-  },
-  {
-    name: 'Rohit Joshi',
-    specialization: 'Sports Coverage',
-    dept: 'ME',
-    semester: 6,
-    photo: 'https://images.unsplash.com/photo-1488161628813-04466f872be2?w=300&auto=format&fit=crop&q=80',
-  },
-  {
-    name: 'Ananya Rao',
-    specialization: 'Event Manager',
-    dept: 'ECE',
-    semester: 6,
-    photo: 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=300&auto=format&fit=crop&q=80',
-  },
-  {
-    name: 'Vivek Singh',
-    specialization: 'Cinematic Colorist',
-    dept: 'IT',
-    semester: 6,
-    photo: 'https://images.unsplash.com/photo-1531427186611-ecfd6d936c79?w=300&auto=format&fit=crop&q=80',
-  },
-  {
-    name: 'Kavya Mishra',
-    specialization: 'Studio Lighting',
-    dept: 'EX',
-    semester: 4,
-    photo: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=300&auto=format&fit=crop&q=80',
-  },
-  {
-    name: 'Siddharth Shah',
-    specialization: 'Drone Specialist',
-    dept: 'CE',
-    semester: 6,
-    photo: 'https://images.unsplash.com/photo-1501196354995-cbb51c65aaea?w=300&auto=format&fit=crop&q=80',
-  },
-  {
-    name: 'Tanvi Joshi',
-    specialization: 'Product Shoot',
-    dept: 'CSE',
-    semester: 4,
-    photo: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=300&auto=format&fit=crop&q=80',
-  },
-  {
-    name: 'Yash Vyas',
-    specialization: 'Storyteller & PR',
-    dept: 'IT',
-    semester: 6,
-    photo: 'https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?w=300&auto=format&fit=crop&q=80',
-  },
-  {
-    name: 'Ritu Agrawal',
-    specialization: 'Fine Art Photo',
-    dept: 'ECE',
-    semester: 6,
-    photo: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=300&auto=format&fit=crop&q=80',
-  },
-  {
-    name: 'Naman Gupta',
-    specialization: 'Action & Sports',
-    dept: 'ME',
-    semester: 6,
-    photo: 'https://images.unsplash.com/photo-1519345182560-3f2917c472ef?w=300&auto=format&fit=crop&q=80',
-  },
-  {
-    name: 'Shalini Dubey',
-    specialization: 'Fashion & Studio',
-    dept: 'EX',
-    semester: 6,
-    photo: 'https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?w=300&auto=format&fit=crop&q=80',
-  },
-  {
-    name: 'Kunal Sen',
-    specialization: 'Architectural Shoot',
-    dept: 'CE',
-    semester: 8,
-    photo: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=300&auto=format&fit=crop&q=80',
-  },
-  {
-    name: 'Megha Jain',
-    specialization: 'Documentary Lead',
-    dept: 'IT',
-    semester: 6,
-    photo: 'https://images.unsplash.com/photo-1551836022-d5d88e9218df?w=300&auto=format&fit=crop&q=80',
-  },
-  {
-    name: 'Aditya Sharma',
-    specialization: 'Visual Director',
-    dept: 'CSE',
-    semester: 6,
-    photo: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=300&auto=format&fit=crop&q=80',
-  },
-  {
-    name: 'Shruti Pandey',
-    specialization: 'Exhibition Curation',
-    dept: 'ECE',
-    semester: 4,
-    photo: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=300&auto=format&fit=crop&q=80',
-  },
-  {
-    name: 'Ayush Saxena',
-    specialization: 'Post Processing',
-    dept: 'ME',
-    semester: 8,
-    photo: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=300&auto=format&fit=crop&q=80',
   }
 ];
 

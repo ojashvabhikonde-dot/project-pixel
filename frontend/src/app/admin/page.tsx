@@ -8,6 +8,7 @@ export default function AdminPage() {
   const [bookings, setBookings] = useState<any[]>([]);
   const [pendingPhotos, setPendingPhotos] = useState<any[]>([]);
   const [pendingMembers, setPendingMembers] = useState<any[]>([]);
+  const [activeMembers, setActiveMembers] = useState<any[]>([]);
   
   // RAG Chatbot Seeder state
   const [kbTitle, setKbTitle] = useState('');
@@ -61,6 +62,13 @@ export default function AdminPage() {
         const membersData = await membersRes.json();
         setPendingMembers(membersData);
       }
+
+      // 4. Fetch active registered crew members
+      const activeMembersRes = await fetch(`${API_URL}/api/members`);
+      if (activeMembersRes.ok) {
+        const activeMembersData = await activeMembersRes.json();
+        setActiveMembers(activeMembersData);
+      }
     } catch (err) {
       console.error('Failed to load admin panel data', err);
     } finally {
@@ -94,9 +102,27 @@ export default function AdminPage() {
       });
       if (res.ok) {
         setPendingMembers(prev => prev.filter(m => m._id !== memberId));
+        loadAdminData(token || '');
       }
     } catch (err) {
       alert('Failed to approve crew member.');
+    }
+  };
+
+  const handleDeleteMember = async (memberId: string) => {
+    if (!confirm('Are you sure you want to delete this crew member?')) return;
+    try {
+      const res = await fetch(`${API_URL}/api/members/${memberId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      if (res.ok) {
+        setActiveMembers(prev => prev.filter(m => (m._id !== memberId && m.id !== memberId)));
+      }
+    } catch (err) {
+      alert('Failed to delete crew member.');
     }
   };
 
@@ -123,17 +149,15 @@ export default function AdminPage() {
     if (!kbTitle.trim() || !kbContent.trim() || !token) return;
 
     try {
-      const res = await fetch(`${API_URL}/api/resources`, { // Seeding chatbot knowledge segments
+      const res = await fetch(`${API_URL}/api/resources`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify({ title: kbTitle, content: kbContent, category: kbCategory }) // Stores segment
+        body: JSON.stringify({ title: kbTitle, content: kbContent, category: kbCategory })
       });
 
-      // Wait, we also want to seed ChatbotKnowledge DB directly, wait, does `/api/resources` save to resources or we can just mock/simulate?
-      // Actually we have MongoDB schema ChatbotKnowledge. Let's make sure it handles it or we print log
       console.log(`[RAG DB ADD] Fact added to Pixie KB: ${kbTitle}`);
       setKbSuccess(true);
       setTimeout(() => {
@@ -146,13 +170,15 @@ export default function AdminPage() {
     }
   };
 
-  if (!token || (user && user.role !== 'admin')) {
+  const isSuperAdmin = user?.email?.toLowerCase() === 'pixela@oriental.ac.in' || user?.role === 'admin';
+
+  if (!token || !isSuperAdmin) {
     return (
       <div className="max-w-md mx-auto px-4 py-20 text-center space-y-4">
         <AlertCircle className="h-10 w-10 text-red-500 mx-auto" />
         <h2 className="text-xl font-bold text-white">Access Denied</h2>
         <p className="text-xs text-zinc-400 font-light">
-          Only approved Pixela Administrators can view the database analytics dashboard. Please sign in as admin@pixela.club.
+          Only approved Pixela Administrators or Super Admin (pixela@oriental.ac.in) can view the database analytics dashboard.
         </p>
       </div>
     );
@@ -322,6 +348,49 @@ export default function AdminPage() {
                     >
                       <Check className="h-3.5 w-3.5" />
                       <span>Approve Access</span>
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* 4. Active Registered Crew Members Roster */}
+          <div className="bg-card border border-border/40 rounded-lg p-6 space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-bold text-white flex items-center space-x-2">
+                <Users className="h-5 w-5 text-primary" />
+                <span>Active Crew Members Roster ({activeMembers.length})</span>
+              </h3>
+              <span className="text-[10px] font-mono text-zinc-500">Super Admin Controls</span>
+            </div>
+
+            {activeMembers.length === 0 ? (
+              <p className="text-xs text-zinc-500 italic">No crew members registered yet.</p>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {activeMembers.map((member) => (
+                  <div key={member._id || member.id} className="bg-zinc-900/40 border border-zinc-800/50 p-3 rounded-xl flex items-center justify-between gap-3">
+                    <div className="flex items-center space-x-3 min-w-0">
+                      <div className="h-10 w-10 rounded-lg bg-zinc-950 overflow-hidden border border-zinc-700 shrink-0">
+                        <img 
+                          src={member.avatarUrl || member.photo || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300&auto=format&fit=crop&q=80'} 
+                          alt={member.name}
+                          className="h-full w-full object-cover"
+                        />
+                      </div>
+                      <div className="min-w-0">
+                        <h4 className="font-bold text-white text-xs truncate">{member.name}</h4>
+                        <p className="text-[9px] text-primary font-mono truncate">{member.specialization || 'Visual Creator'}</p>
+                        <p className="text-[8px] text-zinc-400 truncate">{member.department || 'IT'} • {member.semester ? `${member.semester} Sem` : member.year || ''}</p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => handleDeleteMember(member._id || member.id)}
+                      className="p-1.5 bg-red-950/80 hover:bg-red-600 text-red-300 hover:text-white rounded-lg transition-colors border border-red-800/40 shrink-0"
+                      title="Delete Crew Profile"
+                    >
+                      <X className="h-3.5 w-3.5" />
                     </button>
                   </div>
                 ))}
