@@ -229,62 +229,53 @@ export default function Home() {
             
             {/* Left side details */}
             <div className="lg:col-span-6 space-y-6">
-              <span className="text-[10px] font-bold text-primary uppercase tracking-widest block">
-                Flagship Organized Event
-              </span>
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-bold text-emerald-400 uppercase tracking-widest px-2.5 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 font-mono flex items-center gap-1.5">
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                  Successfully Concluded • Event Showcase
+                </span>
+              </div>
               <h2 className="text-4xl md:text-5xl font-black text-white leading-tight uppercase">
                 Shutter Stories <br />
-                <span className="text-zinc-500 font-light text-2xl md:text-3xl lowercase italic">photography exhibition</span>
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary via-[#ff5e95] to-[#ffaa5e] font-light text-2xl md:text-3xl lowercase italic">
+                  photography exhibition 2026
+                </span>
               </h2>
 
               <p className="text-zinc-400 text-sm md:text-base font-light leading-relaxed">
-                For years, Pixela has covered tech fests, seminars, and sports fests. Now, we are proud to announce our <span className="text-white font-semibold">first-ever self-organized public photography exhibition</span>! Come witness polaroids, landscape stories, and bird profiles frozen in glass frames.
+                Pixela's landmark first self-organized public photography exhibition at Oriental Campus was a massive success! Explore the curated prints, photo walk moments, and upcoming winner hall of fame.
               </p>
 
-              {/* Event card detail details */}
-              <div className="space-y-4 bg-muted/30 border border-border/40 rounded-lg p-5">
-                <div className="flex items-center space-x-3.5 text-zinc-300 text-sm">
-                  <Calendar className="h-4.5 w-4.5 text-primary shrink-0" />
-                  <span>Friday, 11th September (10:00 AM Onwards)</span>
+              {/* Event stats / highlights summary */}
+              <div className="grid grid-cols-3 gap-3 bg-muted/30 border border-border/40 rounded-lg p-4 text-center">
+                <div className="space-y-0.5">
+                  <p className="text-xl font-black text-white font-mono">120+</p>
+                  <p className="text-[9px] text-zinc-500 uppercase tracking-wider font-semibold">Exhibited Prints</p>
                 </div>
-                <div className="flex items-center space-x-3.5 text-zinc-300 text-sm">
-                  <MapPin className="h-4.5 w-4.5 text-primary shrink-0" />
-                  <span>Auditorium Hall, Oriental Campus, Bhopal</span>
+                <div className="space-y-0.5 border-x border-border/40">
+                  <p className="text-xl font-black text-primary font-mono">600+</p>
+                  <p className="text-[9px] text-zinc-500 uppercase tracking-wider font-semibold">Attendees</p>
                 </div>
-                <div className="flex items-center space-x-3.5 text-zinc-300 text-sm">
-                  <Clock className="h-4.5 w-4.5 text-primary shrink-0" />
-                  <span>Inauguration Ceremony followed by Gallery Walk</span>
+                <div className="space-y-0.5">
+                  <p className="text-xl font-black text-[#ffaa5e] font-mono">6</p>
+                  <p className="text-[9px] text-zinc-500 uppercase tracking-wider font-semibold">Award Categories</p>
                 </div>
               </div>
 
-              <div className="pt-4 flex flex-wrap gap-4 items-center">
-                <a
-                  href="https://forms.gle/ZB759a1cnmREZFYQA"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="px-6 py-3 bg-primary text-white font-bold uppercase tracking-wider text-xs hover:bg-primary/90 transition-all flex items-center justify-center space-x-2 rounded shadow-lg shadow-primary/10"
-                >
-                  <span>Register as Participant</span>
-                  <ArrowRight className="h-3.5 w-3.5 shrink-0" />
-                </a>
-                
-                <a
-                  href="https://forms.gle/ZB759a1cnmREZFYQA"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="px-6 py-3 bg-transparent border border-white/20 text-white font-bold uppercase tracking-wider text-xs hover:bg-white/5 hover:border-white transition-all flex items-center justify-center space-x-2 rounded"
-                >
-                  <span>Register as Audience</span>
-                </a>
-              </div>
-
-              <div className="pt-3">
+              <div className="pt-2 flex flex-wrap gap-4 items-center">
                 <NextLink
                   href="/shutter-stories"
-                  className="inline-flex items-center space-x-2 text-xs font-bold uppercase tracking-wider text-primary hover:text-white transition-colors"
+                  className="px-6 py-3 bg-primary text-white font-bold uppercase tracking-wider text-xs hover:bg-primary/90 transition-all flex items-center justify-center space-x-2 rounded shadow-lg shadow-primary/20"
                 >
-                  <span>View Exhibition Details & Schedule</span>
-                  <ArrowRight className="h-3.5 w-3.5" />
+                  <span>Explore Exhibition Showcase</span>
+                  <ArrowRight className="h-3.5 w-3.5 shrink-0" />
+                </NextLink>
+                
+                <NextLink
+                  href="/gallery"
+                  className="px-6 py-3 bg-transparent border border-white/20 text-white font-bold uppercase tracking-wider text-xs hover:bg-white/5 hover:border-white transition-all flex items-center justify-center space-x-2 rounded"
+                >
+                  <span>View Club Portfolio</span>
                 </NextLink>
               </div>
             </div>

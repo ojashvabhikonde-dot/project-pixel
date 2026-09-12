@@ -5,18 +5,29 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 export const connectDB = async () => {
-  try {
-    const mongoUri = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/pixela';
-    const conn = await mongoose.connect(mongoUri, {
-      serverSelectionTimeoutMS: 4000,
-    });
-    console.log(`MongoDB Connected: ${conn.connection.host}`);
-    return true;
-  } catch (error) {
-    console.warn(`MongoDB Connection Notice: ${error.message}`);
-    console.warn('Backend is operating in In-Memory Cache/Store mode. All API endpoints remain fully functional.');
-    return false;
+  const urisToTry = [
+    process.env.MONGODB_URI,
+    'mongodb://127.0.0.1:27017/pixela',
+    'mongodb://localhost:27017/pixela'
+  ].filter(Boolean);
+
+  // Remove duplicates
+  const uniqueUris = Array.from(new Set(urisToTry));
+
+  for (const uri of uniqueUris) {
+    try {
+      const conn = await mongoose.connect(uri, {
+        serverSelectionTimeoutMS: 3000,
+      });
+      console.log(`MongoDB Connected successfully to: ${conn.connection.host}/${conn.connection.name}`);
+      return true;
+    } catch (error) {
+      // Continue to next fallback
+    }
   }
+
+  console.warn('MongoDB Connection Notice: Operating in In-Memory Cache/Store mode. All API endpoints remain fully functional.');
+  return false;
 };
 
 // Fallback Cache class if Redis is unavailable

@@ -43,20 +43,40 @@ export default function GalleryPage() {
     if (savedUser) setUser(JSON.parse(savedUser));
 
     fetchPhotos();
+
+    // Auto real-time sync polling every 5 seconds for all users
+    const pollInterval = setInterval(() => {
+      fetchPhotos(true);
+    }, 5000);
+
+    const onFocus = () => fetchPhotos(true);
+    window.addEventListener('focus', onFocus);
+    window.addEventListener('visibilitychange', onFocus);
+
+    return () => {
+      clearInterval(pollInterval);
+      window.removeEventListener('focus', onFocus);
+      window.removeEventListener('visibilitychange', onFocus);
+    };
   }, []);
 
-  const fetchPhotos = () => {
-    fetch(`${API_URL}/api/gallery`)
+  const fetchPhotos = (isBackgroundSync = false) => {
+    fetch(`${API_URL}/api/gallery?t=${Date.now()}`, {
+      cache: 'no-store',
+      headers: { 'Cache-Control': 'no-cache' }
+    })
       .then((res) => res.json())
       .then((data) => {
-        if (data && data.length > 0) {
+        if (data && Array.isArray(data) && data.length > 0) {
           setPhotos(data);
-        } else {
+        } else if (!isBackgroundSync) {
           setPhotos(MOCK_PHOTOS);
         }
       })
       .catch(() => {
-        setPhotos(MOCK_PHOTOS);
+        if (!isBackgroundSync) {
+          setPhotos(MOCK_PHOTOS);
+        }
       });
   };
 

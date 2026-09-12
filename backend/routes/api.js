@@ -624,14 +624,186 @@ router.patch('/bookings/:id', protect, adminOnly, async (req, res) => {
 });
 
 /* ==========================================================================
-   CREW MEMBERS ENDPOINTS
+   USER & CREW MANAGEMENT ENDPOINTS (SUPER ADMIN ACCESS)
    ========================================================================== */
 
-router.get('/members', async (req, res) => {
+// Get all users in the system (Admins, Leaders, Crew, Members, Viewers)
+router.get('/users', protect, adminOnly, async (req, res) => {
   try {
     if (isDbConnected()) {
       try {
-        const members = await User.find({ isApproved: true, role: { $in: ['member', 'crew'] } })
+        const users = await User.find().select('-password').sort({ createdAt: -1 });
+        if (users && users.length > 0) return res.json(users);
+      } catch (dbErr) {
+        console.warn('DB all users fetch error, using memory fallback');
+      }
+    }
+    const allUsers = memoryStore.users.map(u => {
+      const { passwordHash, ...safe } = u;
+      return safe;
+    });
+    return res.json(allUsers);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Super Admin add any user/member/leader directly
+router.post('/users', protect, adminOnly, async (req, res) => {
+  const { name, email, password, role, semester, year, department, bio, skills, specialization, avatarUrl } = req.body;
+  try {
+    if (!name || !email) {
+      return res.status(400).json({ error: 'Name and email are required.' });
+    }
+    const normalizedEmail = email.toLowerCase().trim();
+
+    if (isDbConnected()) {
+      try {
+        const existing = await User.findOne({ email: normalizedEmail });
+        if (existing) {
+          return res.status(400).json({ error: 'User with this email already exists.' });
+        }
+        const user = await User.create({
+          name,
+          email: normalizedEmail,
+          password: password || 'pixela@2026',
+          role: role || 'member',
+          semester: Number(semester) || 1,
+          year: year || '1st Year',
+          department: department || 'Information Technology',
+          bio: bio || '',
+          skills: Array.isArray(skills) ? skills : (typeof skills === 'string' ? skills.split(',').map(s => s.trim()) : []),
+          specialization: specialization || 'Visual Creator',
+          avatarUrl: avatarUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300&auto=format&fit=crop&q=80',
+          isApproved: true,
+        });
+
+        return res.status(201).json({
+          success: true,
+          message: 'User created successfully.',
+          user: {
+            _id: user._id,
+            id: user._id,
+            name: user.name,
+            email: user.email,
+            role: user.role,
+            avatarUrl: user.avatarUrl,
+            specialization: user.specialization,
+            department: user.department,
+            semester: user.semester,
+            year: user.year,
+            isApproved: user.isApproved,
+          }
+        });
+      } catch (dbErr) {
+        console.warn('DB user creation error, using memory fallback:', dbErr.message);
+      }
+    }
+
+    const memUserIndex = memoryStore.users.findIndex(u => u.email.toLowerCase() === normalizedEmail);
+    if (memUserIndex !== -1) {
+      return res.status(400).json({ error: 'User with this email already exists in memory store.' });
+    }
+
+    const newId = `user_${Date.now()}`;
+    const newUser = {
+      _id: newId,
+      id: newId,
+      name,
+      email: normalizedEmail,
+      passwordHash: bcrypt.hashSync(password || 'pixela@2026', 8),
+      role: role || 'member',
+      semester: Number(semester) || 1,
+      year: year || '1st Year',
+      department: department || 'Information Technology',
+      bio: bio || '',
+      skills: Array.isArray(skills) ? skills : (typeof skills === 'string' ? skills.split(',').map(s => s.trim()) : []),
+      specialization: specialization || 'Visual Creator',
+      avatarUrl: avatarUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300&auto=format&fit=crop&q=80',
+      isApproved: true,
+      createdAt: new Date(),
+    };
+    memoryStore.users.push(newUser);
+
+    const { passwordHash, ...safeUser } = newUser;
+    return res.status(201).json({
+      success: true,
+      message: 'User created successfully in store.',
+      user: safeUser,
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Update any user (Role change, bio, specialization, details)
+router.patch('/users/:id', protect, adminOnly, async (req, res) => {
+  try {
+    const userId = req.params.id;
+    const updateData = { ...req.body };
+    delete updateData.password; // Do not overwrite password directly here
+
+    if (isDbConnected()) {
+      try {
+        const updatedUser = await User.findByIdAndUpdate(userId, updateData, { new: true }).select('-password');
+        if (updatedUser) return res.json({ success: true, user: updatedUser });
+      } catch (dbErr) {
+        console.warn('DB user update error, fallback to memory');
+      }
+    }
+
+    const userIndex = memoryStore.users.findIndex(u => String(u._id) === String(userId) || String(u.id) === String(userId));
+    if (userIndex !== -1) {
+      Object.assign(memoryStore.users[userIndex], updateData);
+      const { passwordHash, ...safe } = memoryStore.users[userIndex];
+      return res.json({ success: true, user: safe });
+    }
+    return res.status(404).json({ error: 'User not found.' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Delete ANY user (Super Admin permission)
+router.delete('/users/:id', protect, adminOnly, async (req, res) => {
+  try {
+    const targetId = req.params.id;
+
+    if (isDbConnected()) {
+      try {
+        const targetUser = await User.findById(targetId);
+        if (targetUser && targetUser.email?.toLowerCase() === 'pixela@oriental.ac.in') {
+          return res.status(403).json({ error: 'Cannot delete the Primary Super Admin root account.' });
+        }
+        await User.findByIdAndDelete(targetId);
+      } catch (dbErr) {
+        console.warn('DB user delete error');
+      }
+    }
+
+    const index = memoryStore.users.findIndex(u => String(u._id) === String(targetId) || String(u.id) === String(targetId));
+    if (index !== -1) {
+      if (memoryStore.users[index].email?.toLowerCase() === 'pixela@oriental.ac.in') {
+        return res.status(403).json({ error: 'Cannot delete the Primary Super Admin root account.' });
+      }
+      memoryStore.users.splice(index, 1);
+    }
+
+    return res.json({ success: true, message: 'User deleted successfully.' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Public Crew list (Real-time synced for all users)
+router.get('/members', async (req, res) => {
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
+  try {
+    if (isDbConnected()) {
+      try {
+        const members = await User.find({ isApproved: true, role: { $in: ['member', 'crew', 'photographer'] } })
           .select('-password')
           .sort({ createdAt: -1 });
         if (members) return res.json(members);
@@ -640,7 +812,7 @@ router.get('/members', async (req, res) => {
       }
     }
     const approved = memoryStore.users
-      .filter(u => u.isApproved && (u.role === 'member' || u.role === 'crew'))
+      .filter(u => u.isApproved && (u.role === 'member' || u.role === 'crew' || u.role === 'photographer'))
       .map(u => {
         const { passwordHash, ...safe } = u;
         return safe;
@@ -652,6 +824,7 @@ router.get('/members', async (req, res) => {
 });
 
 router.get('/members/pending', protect, adminOnly, async (req, res) => {
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
   try {
     if (isDbConnected()) {
       try {
@@ -699,14 +872,21 @@ router.delete('/members/:id', protect, adminOnly, async (req, res) => {
     const memberId = req.params.id;
     if (isDbConnected()) {
       try {
+        const targetUser = await User.findById(memberId);
+        if (targetUser && targetUser.email?.toLowerCase() === 'pixela@oriental.ac.in') {
+          return res.status(403).json({ error: 'Cannot delete the Primary Super Admin root account.' });
+        }
         await User.findByIdAndDelete(memberId);
       } catch (dbErr) {
         console.warn('DB member delete error');
       }
     }
 
-    const index = memoryStore.users.findIndex(u => String(u._id) === String(memberId));
+    const index = memoryStore.users.findIndex(u => String(u._id) === String(memberId) || String(u.id) === String(memberId));
     if (index !== -1) {
+      if (memoryStore.users[index].email?.toLowerCase() === 'pixela@oriental.ac.in') {
+        return res.status(403).json({ error: 'Cannot delete the Primary Super Admin root account.' });
+      }
       memoryStore.users.splice(index, 1);
     }
     return res.json({ success: true, message: 'Crew member removed successfully.' });
@@ -716,10 +896,13 @@ router.delete('/members/:id', protect, adminOnly, async (req, res) => {
 });
 
 /* ==========================================================================
-   GALLERY ENDPOINTS
+   GALLERY ENDPOINTS (REAL-TIME SYNCED)
    ========================================================================== */
 
 router.get('/gallery', async (req, res) => {
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
   try {
     if (isDbConnected()) {
       try {

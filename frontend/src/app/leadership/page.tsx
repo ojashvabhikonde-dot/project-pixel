@@ -53,12 +53,30 @@ export default function LeadershipPage() {
     if (savedUser) setUser(JSON.parse(savedUser));
 
     fetchCrewMembers();
+
+    // Auto real-time sync polling every 5 seconds so new crew members appear instantly for all users
+    const pollInterval = setInterval(() => {
+      fetchCrewMembers(true);
+    }, 5000);
+
+    const onFocus = () => fetchCrewMembers(true);
+    window.addEventListener('focus', onFocus);
+    window.addEventListener('visibilitychange', onFocus);
+
+    return () => {
+      clearInterval(pollInterval);
+      window.removeEventListener('focus', onFocus);
+      window.removeEventListener('visibilitychange', onFocus);
+    };
   }, []);
 
-  const fetchCrewMembers = async () => {
-    setLoadingCrew(true);
+  const fetchCrewMembers = async (isBackgroundSync = false) => {
+    if (!isBackgroundSync) setLoadingCrew(true);
     try {
-      const res = await fetch(`${API_URL}/api/members`);
+      const res = await fetch(`${API_URL}/api/members?t=${Date.now()}`, {
+        cache: 'no-store',
+        headers: { 'Cache-Control': 'no-cache' }
+      });
       if (res.ok) {
         const data = await res.json();
         setCrewMembers(data || []);
@@ -66,7 +84,7 @@ export default function LeadershipPage() {
     } catch (err) {
       console.error('Failed to fetch crew members:', err);
     } finally {
-      setLoadingCrew(false);
+      if (!isBackgroundSync) setLoadingCrew(false);
     }
   };
 

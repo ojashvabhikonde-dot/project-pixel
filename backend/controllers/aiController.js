@@ -42,13 +42,13 @@ const generateSmartFallbackReply = (query, ragDocs = []) => {
   }
 
   // Shutter Stories Exhibition / Events / Oriental Campus
-  if (q.includes('shutter stories') || q.includes('event') || q.includes('exhibition') || q.includes('oriental') || q.includes('august')) {
-    return "📸 **Shutter Stories Exhibition Details:**\n\n" +
-           "Pixela is proud to present its first self-organized public photography exhibition!\n\n" +
-           "• **Date:** Friday, 21st August (10:00 AM Onwards)\n" +
+  if (q.includes('shutter stories') || q.includes('event') || q.includes('exhibition') || q.includes('oriental')) {
+    return "📸 **Shutter Stories 2026 Exhibition Showcase:**\n\n" +
+           "Pixela's first self-organized public photography exhibition was a huge success!\n\n" +
+           "• **Status:** Concluded & Showcased 🎉\n" +
            "• **Venue:** Auditorium Hall, Oriental Campus, Bhopal\n" +
-           "• **Highlights:** Curated polaroids, high-altitude landscape prints, bird profiles, and interactive gallery walks.\n" +
-           "• **Registration:** You can register as a participant or audience via our website buttons or Google Forms!";
+           "• **Highlights:** 120+ Curated Prints, Masterclasses (VFX, Editing, Animation), Food Stalls & Creative Gallery Walk.\n" +
+           "• **Exhibition Showcase & Winners:** Check out the `/shutter-stories` page on our website to explore the exhibition gallery frames and upcoming Winners Hall of Fame!";
   }
 
   // Editing / Lightroom / Presets / LUTs
