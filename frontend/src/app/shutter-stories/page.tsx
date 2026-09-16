@@ -42,12 +42,12 @@ interface ExhibitionFrame {
 const EXHIBITION_FRAMES: ExhibitionFrame[] = [
   {
     id: 'frame-1',
-    title: 'The Silent Pilgrim of Upper Lake',
+    title: 'Fishermen through the Nets',
     category: 'nature',
-    photographer: 'Exhibition Curated Selection',
-    story: 'Captured at dawn amidst the mist of Bhopal waters, freezing the calm ripple of morning fishermen.',
-    image: '/hero_mountain.jpg',
-    focalLength: '70mm',
+    photographer: 'Aritra Bhattacharya (1st Place Grand Champion)',
+    story: 'Captured amidst the waters, framing the calm routine of fishermen through the circular weave of fishing nets.',
+    image: '/shutter_stories_winner_1.jpg',
+    focalLength: '24mm',
     aperture: 'f/4.0',
     shutter: '1/800s',
     iso: '100',
@@ -55,42 +55,42 @@ const EXHIBITION_FRAMES: ExhibitionFrame[] = [
   },
   {
     id: 'frame-2',
-    title: 'Monochrome Echoes & Old City Walls',
+    title: 'Embrace of Resilience',
     category: 'street',
-    photographer: 'Exhibition Curated Selection',
-    story: 'Shadows cutting across the heritage alleyways during our pre-event club photowalk.',
-    image: '/photowalk1.jpg',
-    focalLength: '35mm',
-    aperture: 'f/2.8',
-    shutter: '1/250s',
-    iso: '400',
-    likes: 189
+    photographer: 'Atishay Jain (2nd Place Winner)',
+    story: 'A deeply moving monochrome street portrait capturing maternal strength and raw familial bonds.',
+    image: '/shutter_stories_winner_2_atishay.jpg',
+    focalLength: '50mm',
+    aperture: 'f/2.0',
+    shutter: '1/400s',
+    iso: '200',
+    likes: 218
   },
   {
     id: 'frame-3',
-    title: 'Heritage Arches & Golden Hour Glow',
-    category: 'campus',
-    photographer: 'Exhibition Curated Selection',
-    story: 'An architectural perspective highlighting symmetry, warm stone textures, and ambient autumn light.',
-    image: '/photowalk2.jpg',
-    focalLength: '24mm',
-    aperture: 'f/5.6',
-    shutter: '1/400s',
-    iso: '200',
-    likes: 165
+    title: 'Sparkles of Wonder',
+    category: 'portraits',
+    photographer: 'Nayan Anand (2nd Place Winner)',
+    story: 'An emotional night frame capturing a father and child gazing up at golden fireworks exploding in the dark sky.',
+    image: '/shutter_stories_winner_2_nayan.jpg',
+    focalLength: '50mm',
+    aperture: 'f/1.8',
+    shutter: '1/60s',
+    iso: '800',
+    likes: 215
   },
   {
     id: 'frame-4',
-    title: 'Rhythms of Urban Motion',
-    category: 'street',
-    photographer: 'Exhibition Curated Selection',
-    story: 'Dynamic low-angle street frame depicting everyday velocity and vibrant neon contrast.',
-    image: '/hero_street.jpg',
-    focalLength: '50mm',
-    aperture: 'f/1.8',
-    shutter: '1/1250s',
-    iso: '160',
-    likes: 210
+    title: 'Golden Rays of Heritage',
+    category: 'campus',
+    photographer: 'Ayush Malviya (3rd Place Winner)',
+    story: 'Golden afternoon sunbeams slicing through historic domed arches, illuminating the weathered corridor textures.',
+    image: '/shutter_stories_winner_3_ayush.jpg',
+    focalLength: '18mm',
+    aperture: 'f/5.6',
+    shutter: '1/320s',
+    iso: '100',
+    likes: 198
   },
   {
     id: 'frame-5',
@@ -289,131 +289,202 @@ export default function ShutterStoriesPage() {
           </div>
         </div>
 
-        {/* Podium Champions Display (1st, 2nd, 3rd) */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-stretch">
-          
-          {/* 2nd Place / First Runner-Up */}
-          <div className="bg-card/30 border border-zinc-700/60 rounded-xl p-6 flex flex-col justify-between space-y-6 hover:border-white/30 transition-all relative overflow-hidden group shadow-xl">
-            <div className="absolute top-0 right-0 w-24 h-24 bg-zinc-400/10 rounded-full blur-2xl pointer-events-none" />
+        {/* Podium Champions Display */}
+        <div className="space-y-8">
+          {/* Top: 1st Place / Grand Champion */}
+          <div className="bg-gradient-to-r from-card/80 via-card/50 to-card/80 border-2 border-primary/60 rounded-2xl p-6 md:p-8 hover:border-primary transition-all relative overflow-hidden group shadow-2xl">
+            <div className="absolute top-0 right-0 w-48 h-48 bg-primary/20 rounded-full blur-3xl pointer-events-none" />
             
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <span className="text-[9px] font-bold text-zinc-300 uppercase tracking-widest font-mono px-2.5 py-1 rounded bg-zinc-800 border border-zinc-700 flex items-center gap-1.5">
-                  <Medal className="h-3.5 w-3.5 text-zinc-300" />
-                  <span>1st Runner-Up (2nd Place)</span>
-                </span>
-                <span className="text-xl">🥈</span>
-              </div>
-
-              {/* Photo Frame Container */}
-              <div className="aspect-[4/3] rounded-lg bg-zinc-950 border border-zinc-800 overflow-hidden relative group-hover:border-zinc-500 transition-colors">
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
+              {/* Image Frame */}
+              <div className="md:col-span-6 lg:col-span-5 h-72 md:h-80 w-full rounded-xl bg-zinc-950 border-2 border-primary/40 overflow-hidden relative group-hover:border-primary transition-colors shadow-2xl flex items-center justify-center p-2">
                 <div 
-                  className="w-full h-full bg-cover bg-center" 
-                  style={{ backgroundImage: `url('/photowalk1.jpg')` }}
+                  className="absolute inset-0 bg-cover bg-center blur-xl opacity-30 scale-110" 
+                  style={{ backgroundImage: `url('/shutter_stories_winner_1.jpg')` }}
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex items-end p-3">
-                  <p className="text-[10px] font-mono text-zinc-300 font-semibold">Award: Best Narrative Series</p>
+                <img 
+                  src="/shutter_stories_winner_1.jpg" 
+                  alt="Fishermen through the Nets - Aritra Bhattacharya"
+                  className="relative z-10 w-full h-full object-contain drop-shadow-2xl rounded"
+                />
+                <div className="absolute bottom-3 left-3 z-20">
+                  <span className="text-[8px] bg-primary text-white font-bold uppercase px-2.5 py-1 rounded font-mono shadow-md backdrop-blur-md">
+                    Grand Trophy • 1st Place
+                  </span>
                 </div>
               </div>
 
-              <div className="space-y-1 text-left">
-                <span className="text-[9px] font-mono text-primary font-bold uppercase tracking-wider block">Winner Profile</span>
-                <h3 className="text-lg font-bold text-white">To Be Updated Shortly</h3>
-                <p className="text-xs text-zinc-400 font-light leading-relaxed">
-                  The official winner announcement and winning photograph details will be published here.
-                </p>
-              </div>
-            </div>
+              {/* Champion Details */}
+              <div className="md:col-span-6 lg:col-span-7 space-y-4 text-left">
+                <div className="flex items-center justify-between">
+                  <span className="text-[9px] font-bold text-primary uppercase tracking-widest font-mono px-3 py-1 rounded bg-primary/20 border border-primary/40 flex items-center gap-1.5">
+                    <Trophy className="h-3.5 w-3.5 text-primary" />
+                    <span>Grand Champion (1st Place)</span>
+                  </span>
+                  <span className="text-3xl">👑</span>
+                </div>
 
-            <div className="pt-3 border-t border-border/30 flex items-center justify-between text-[10px] text-zinc-500 font-mono">
-              <span>Category: Narrative Street</span>
-              <span className="text-white font-bold">Certificate & Trophy</span>
+                <div className="space-y-1.5">
+                  <span className="text-[10px] font-mono text-primary font-bold uppercase tracking-wider block">Winner</span>
+                  <h3 className="text-2xl md:text-3xl font-black text-white">Aritra Bhattacharya</h3>
+                  <p className="text-xs md:text-sm text-primary/90 font-medium">Frame: Fishermen through the Nets</p>
+                  <p className="text-xs md:text-sm text-zinc-300 font-light leading-relaxed pt-1">
+                    Congratulations to Aritra Bhattacharya for extraordinary visual depth, natural perspective framing, and capturing the authentic essence of river life.
+                  </p>
+                </div>
+
+                <div className="pt-3 border-t border-primary/25 flex flex-wrap items-center justify-between gap-2 text-xs font-mono">
+                  <span className="text-primary font-semibold">Grand Jury Award</span>
+                  <span className="text-white font-bold bg-primary/10 border border-primary/30 px-3 py-1 rounded-full">Gold Trophy + Certificate</span>
+                </div>
+              </div>
             </div>
           </div>
 
-          {/* 1st Place / Grand Champion (Center Highlight) */}
-          <div className="bg-gradient-to-b from-card/60 to-card/20 border-2 border-primary/60 rounded-xl p-6 flex flex-col justify-between space-y-6 hover:border-primary transition-all relative overflow-hidden group shadow-2xl md:-translate-y-2">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-primary/20 rounded-full blur-3xl pointer-events-none" />
-            <div className="absolute top-3 right-3">
-              <span className="text-2xl">👑</span>
+          {/* Section: 2nd Place / Joint 1st Runners-Up (2 Winners) */}
+          <div className="space-y-3">
+            <div className="flex items-center space-x-2 text-zinc-300">
+              <Medal className="h-4 w-4 text-zinc-300" />
+              <span className="text-[10px] font-bold text-zinc-300 uppercase tracking-widest font-mono">
+                Joint 1st Runners-Up • 2nd Position Winners
+              </span>
             </div>
 
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <span className="text-[9px] font-bold text-primary uppercase tracking-widest font-mono px-3 py-1 rounded bg-primary/20 border border-primary/40 flex items-center gap-1.5">
-                  <Trophy className="h-3.5 w-3.5 text-primary" />
-                  <span>Grand Champion (1st Place)</span>
-                </span>
-              </div>
-
-              {/* Photo Frame Container */}
-              <div className="aspect-[4/3] rounded-lg bg-zinc-950 border-2 border-primary/40 overflow-hidden relative group-hover:border-primary transition-colors shadow-lg">
-                <div 
-                  className="w-full h-full bg-cover bg-center" 
-                  style={{ backgroundImage: `url('/hero_mountain.jpg')` }}
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent flex items-end p-3">
-                  <div>
-                    <span className="text-[8px] bg-primary text-white font-bold uppercase px-2 py-0.5 rounded font-mono">Grand Trophy</span>
-                    <p className="text-xs font-bold text-white mt-1">Best Frame of Shutter Stories 2026</p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch">
+              {/* 2nd Place Winner A: Atishay Jain */}
+              <div className="bg-card/40 border border-zinc-700/60 rounded-xl p-6 flex flex-col justify-between space-y-6 hover:border-white/40 transition-all relative overflow-hidden group shadow-xl">
+                <div className="absolute top-0 right-0 w-28 h-28 bg-zinc-400/10 rounded-full blur-2xl pointer-events-none" />
+                
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[9px] font-bold text-zinc-300 uppercase tracking-widest font-mono px-2.5 py-1 rounded bg-zinc-800 border border-zinc-700 flex items-center gap-1.5">
+                      <Medal className="h-3.5 w-3.5 text-zinc-300" />
+                      <span>Joint 1st Runner-Up (2nd Place)</span>
+                    </span>
+                    <span className="text-xl">🥈</span>
                   </div>
+
+                  {/* Photo Frame Container */}
+                  <div className="h-72 w-full rounded-lg bg-zinc-950 border border-zinc-800 overflow-hidden relative group-hover:border-zinc-500 transition-colors shadow-md flex items-center justify-center p-2">
+                    <div 
+                      className="absolute inset-0 bg-cover bg-center blur-xl opacity-25 scale-110" 
+                      style={{ backgroundImage: `url('/shutter_stories_winner_2_atishay.jpg')` }}
+                    />
+                    <img 
+                      src="/shutter_stories_winner_2_atishay.jpg" 
+                      alt="Embrace of Resilience - Atishay Jain"
+                      className="relative z-10 w-full h-full object-contain drop-shadow-xl rounded"
+                    />
+                    <div className="absolute bottom-2 left-2 z-20">
+                      <span className="text-[8px] bg-black/85 border border-white/10 text-zinc-300 font-mono px-2 py-0.5 rounded backdrop-blur-sm">
+                        Award: Human Interest & Documentary
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="space-y-1 text-left">
+                    <span className="text-[9px] font-mono text-primary font-bold uppercase tracking-wider block">Winner</span>
+                    <h3 className="text-xl font-bold text-white">Atishay Jain</h3>
+                    <p className="text-xs text-primary/90 font-medium">Frame: Embrace of Resilience</p>
+                    <p className="text-xs text-zinc-400 font-light leading-relaxed pt-1">
+                      A deeply evocative monochrome documentary capture depicting maternal protection, innocence, and unspoken emotions on the streets.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="pt-3 border-t border-border/30 flex items-center justify-between text-[10px] text-zinc-400 font-mono">
+                  <span>Category: Street & Documentary</span>
+                  <span className="text-white font-bold">Silver Trophy + Certificate</span>
                 </div>
               </div>
 
-              <div className="space-y-1 text-left">
-                <span className="text-[9px] font-mono text-primary font-bold uppercase tracking-wider block">Winner Profile</span>
-                <h3 className="text-xl font-extrabold text-white">To Be Updated Shortly</h3>
-                <p className="text-xs text-zinc-300 font-light leading-relaxed">
-                  Congratulations to our Grand Champion for extraordinary storytelling, color grading, and framing mastery.
-                </p>
-              </div>
-            </div>
+              {/* 2nd Place Winner B: Nayan Anand */}
+              <div className="bg-card/40 border border-zinc-700/60 rounded-xl p-6 flex flex-col justify-between space-y-6 hover:border-white/40 transition-all relative overflow-hidden group shadow-xl">
+                <div className="absolute top-0 right-0 w-28 h-28 bg-zinc-400/10 rounded-full blur-2xl pointer-events-none" />
+                
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[9px] font-bold text-zinc-300 uppercase tracking-widest font-mono px-2.5 py-1 rounded bg-zinc-800 border border-zinc-700 flex items-center gap-1.5">
+                      <Medal className="h-3.5 w-3.5 text-zinc-300" />
+                      <span>Joint 1st Runner-Up (2nd Place)</span>
+                    </span>
+                    <span className="text-xl">🥈</span>
+                  </div>
 
-            <div className="pt-3 border-t border-primary/25 flex items-center justify-between text-[10px] text-zinc-400 font-mono">
-              <span className="text-primary font-semibold">Grand Jury Award</span>
-              <span className="text-white font-bold">Gold Trophy + Certificate</span>
+                  {/* Photo Frame Container */}
+                  <div className="h-72 w-full rounded-lg bg-zinc-950 border border-zinc-800 overflow-hidden relative group-hover:border-zinc-500 transition-colors shadow-md flex items-center justify-center p-2">
+                    <div 
+                      className="absolute inset-0 bg-cover bg-center blur-xl opacity-25 scale-110" 
+                      style={{ backgroundImage: `url('/shutter_stories_winner_2_nayan.jpg')` }}
+                    />
+                    <img 
+                      src="/shutter_stories_winner_2_nayan.jpg" 
+                      alt="Sparkles of Wonder - Nayan Anand"
+                      className="relative z-10 w-full h-full object-contain drop-shadow-xl rounded"
+                    />
+                    <div className="absolute bottom-2 left-2 z-20">
+                      <span className="text-[8px] bg-black/85 border border-white/10 text-zinc-300 font-mono px-2 py-0.5 rounded backdrop-blur-sm">
+                        Award: Night Emotion & Light
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="space-y-1 text-left">
+                    <span className="text-[9px] font-mono text-primary font-bold uppercase tracking-wider block">Winner</span>
+                    <h3 className="text-xl font-bold text-white">Nayan Anand</h3>
+                    <p className="text-xs text-primary/90 font-medium">Frame: Sparkles of Wonder</p>
+                    <p className="text-xs text-zinc-400 font-light leading-relaxed pt-1">
+                      A poignant night documentary frame capturing innocent wonder and warmth as a father and child gaze at golden fireworks.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="pt-3 border-t border-border/30 flex items-center justify-between text-[10px] text-zinc-400 font-mono">
+                  <span>Category: Night Documentary</span>
+                  <span className="text-white font-bold">Silver Trophy + Certificate</span>
+                </div>
+              </div>
             </div>
           </div>
 
           {/* 3rd Place / Second Runner-Up */}
-          <div className="bg-card/30 border border-[#ffaa5e]/30 rounded-xl p-6 flex flex-col justify-between space-y-6 hover:border-[#ffaa5e]/60 transition-all relative overflow-hidden group shadow-xl">
+          <div className="bg-card/30 border border-[#ffaa5e]/30 rounded-xl p-6 flex flex-col md:flex-row md:items-center justify-between gap-6 hover:border-[#ffaa5e]/60 transition-all relative overflow-hidden group shadow-xl">
             <div className="absolute top-0 right-0 w-24 h-24 bg-[#ffaa5e]/10 rounded-full blur-2xl pointer-events-none" />
             
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <span className="text-[9px] font-bold text-[#ffaa5e] uppercase tracking-widest font-mono px-2.5 py-1 rounded bg-[#ffaa5e]/15 border border-[#ffaa5e]/30 flex items-center gap-1.5">
-                  <Medal className="h-3.5 w-3.5 text-[#ffaa5e]" />
-                  <span>2nd Runner-Up (3rd Place)</span>
-                </span>
-                <span className="text-xl">🥉</span>
-              </div>
-
-              {/* Photo Frame Container */}
-              <div className="aspect-[4/3] rounded-lg bg-zinc-950 border border-zinc-800 overflow-hidden relative group-hover:border-[#ffaa5e]/50 transition-colors">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6">
+              <div className="w-full sm:w-64 h-64 sm:h-72 rounded-lg bg-zinc-950 border border-zinc-800 overflow-hidden relative shrink-0 shadow-md flex items-center justify-center p-2">
                 <div 
-                  className="w-full h-full bg-cover bg-center" 
-                  style={{ backgroundImage: `url('/hero_nature.jpg')` }}
+                  className="absolute inset-0 bg-cover bg-center blur-xl opacity-25 scale-110" 
+                  style={{ backgroundImage: `url('/shutter_stories_winner_3_ayush.jpg')` }}
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex items-end p-3">
-                  <p className="text-[10px] font-mono text-zinc-300 font-semibold">Award: Technical Composition</p>
-                </div>
+                <img 
+                  src="/shutter_stories_winner_3_ayush.jpg" 
+                  alt="Golden Rays of Heritage - Ayush Malviya"
+                  className="relative z-10 w-full h-full object-contain drop-shadow-xl rounded"
+                />
               </div>
 
-              <div className="space-y-1 text-left">
-                <span className="text-[9px] font-mono text-primary font-bold uppercase tracking-wider block">Winner Profile</span>
-                <h3 className="text-lg font-bold text-white">To Be Updated Shortly</h3>
-                <p className="text-xs text-zinc-400 font-light leading-relaxed">
-                  Recognized for pristine exposure balance, optical clarity, and impeccable timing.
+              <div className="space-y-2 text-left">
+                <div className="flex items-center gap-2">
+                  <span className="text-[9px] font-bold text-[#ffaa5e] uppercase tracking-widest font-mono px-2.5 py-1 rounded bg-[#ffaa5e]/15 border border-[#ffaa5e]/30 flex items-center gap-1.5">
+                    <Medal className="h-3.5 w-3.5 text-[#ffaa5e]" />
+                    <span>2nd Runner-Up (3rd Place)</span>
+                  </span>
+                  <span className="text-lg">🥉</span>
+                </div>
+                <h3 className="text-xl font-bold text-white">Ayush Malviya</h3>
+                <p className="text-xs text-primary/90 font-medium">Frame: Golden Rays of Heritage</p>
+                <p className="text-xs text-zinc-400 font-light max-w-xl">
+                  An enchanting heritage perspective capturing afternoon sunbeams cutting through domed arches with warm golden radiance and weathered textures.
                 </p>
               </div>
             </div>
 
-            <div className="pt-3 border-t border-border/30 flex items-center justify-between text-[10px] text-zinc-500 font-mono">
-              <span>Category: Macro & Nature</span>
-              <span className="text-white font-bold">Certificate & Trophy</span>
+            <div className="shrink-0 text-left sm:text-right border-t sm:border-t-0 pt-3 sm:pt-0 border-border/30 text-[10px] font-mono space-y-1">
+              <span className="text-zinc-500 block">Category: Heritage & Light</span>
+              <span className="text-white font-bold block">Bronze Trophy + Certificate</span>
             </div>
           </div>
-
         </div>
 
         {/* Special Category Recognitions (Grid of 4) */}
@@ -495,14 +566,19 @@ export default function ShutterStoriesPage() {
               className="bg-[#0b0a0a] border border-border/70 rounded-xl p-3 pb-4 space-y-3 shadow-xl hover:border-primary/50 transition-all duration-300 group cursor-pointer flex flex-col justify-between hover:scale-[1.02]"
             >
               {/* Museum Matted Frame Container */}
-              <div className="relative aspect-square w-full rounded-lg bg-zinc-950 overflow-hidden border border-white/10">
+              <div className="relative aspect-square w-full rounded-lg bg-zinc-950 overflow-hidden border border-white/10 flex items-center justify-center p-2">
                 <div 
-                  className="w-full h-full bg-cover bg-center transition-transform duration-500 group-hover:scale-105"
+                  className="absolute inset-0 bg-cover bg-center blur-md opacity-25 scale-110" 
                   style={{ backgroundImage: `url('${frame.image}')` }}
+                />
+                <img 
+                  src={frame.image} 
+                  alt={frame.title}
+                  className="relative z-10 w-full h-full object-contain transition-transform duration-500 group-hover:scale-105 drop-shadow-md rounded"
                 />
                 
                 {/* Hover zoom icon & EXIF overlay */}
-                <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-between p-3">
+                <div className="absolute inset-0 z-20 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-between p-3">
                   <div className="flex justify-end">
                     <span className="p-1.5 rounded-full bg-black/80 text-white backdrop-blur-sm">
                       <ZoomIn className="h-4 w-4" />
