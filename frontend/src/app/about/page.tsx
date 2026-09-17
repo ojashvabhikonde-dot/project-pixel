@@ -125,10 +125,10 @@ export default function AboutPage() {
               Mentorship
             </span>
             <h2 className="text-3xl font-black text-white uppercase tracking-tight">
-              Faculty Coordinators
+              Faculty Coordinator
             </h2>
             <p className="text-zinc-500 text-xs font-light">
-              Guiding minds behind the club's growth and creative vision.
+              Guiding mind behind the club's growth and creative vision.
             </p>
           </div>
           <NextLink
@@ -141,40 +141,8 @@ export default function AboutPage() {
         </div>
 
         {/* Coordinators Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-          {/* Faculty Coordinator 1 */}
-          <div className="bg-card/25 border border-border/50 rounded overflow-hidden flex flex-col justify-between group hover:border-white/20 transition-all duration-300 shadow-xl">
-            <div>
-              <div className="relative aspect-[4/5] bg-zinc-950 overflow-hidden">
-                <div
-                  className="absolute inset-0 bg-cover group-hover:scale-102 transition-transform duration-500"
-                  style={{
-                    backgroundImage: `url('/nida_qureshi.jpg')`,
-                    backgroundPosition: 'center 12%'
-                  }}
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black via-black/30 to-transparent" />
-              </div>
-              <div className="p-5 space-y-2.5">
-                <div>
-                  <span className="text-[9px] font-bold text-primary uppercase tracking-widest font-mono">Faculty Coordinator</span>
-                  <h3 className="text-lg font-bold text-white mt-0.5">Prof. Nida Qureshi</h3>
-                  <p className="text-[10px] text-zinc-500">Department of Management, OCM Bhopal</p>
-                </div>
-                <p className="text-zinc-400 text-xs font-light leading-relaxed">
-                  "At Pixela, we bridge engineering and creative expression, nurturing students' artistic skills alongside camera precision."
-                </p>
-              </div>
-            </div>
-            <div className="px-5 pb-5 pt-2 flex items-center space-x-2 text-[10px] text-zinc-500 font-mono border-t border-border/30">
-              <Mail className="h-3.5 w-3.5 text-primary shrink-0" />
-              <a href="mailto:nidaqureshi@oriental.ac.in" className="hover:text-white transition-colors truncate">
-                nidaqureshi@oriental.ac.in
-              </a>
-            </div>
-          </div>
-
-          {/* Faculty Coordinator 2 */}
+        <div className="max-w-md mx-auto">
+          {/* Faculty Coordinator */}
           <div className="bg-card/25 border border-border/50 rounded overflow-hidden flex flex-col justify-between group hover:border-white/20 transition-all duration-300 shadow-xl">
             <div>
               <div className="relative aspect-[4/5] bg-zinc-950 overflow-hidden">

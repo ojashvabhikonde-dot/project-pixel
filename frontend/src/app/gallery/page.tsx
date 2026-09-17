@@ -80,12 +80,35 @@ export default function GalleryPage() {
       });
   };
 
+  const [permissionNotice, setPermissionNotice] = useState<{ title: string; message: string } | null>(null);
+
   const handleUploadClick = () => {
-    if (!token) {
+    if (!token || !user) {
       setIsLoginOpen(true);
-    } else {
-      setIsUploadOpen(true);
+      return;
     }
+
+    const isSuperAdmin = user.email?.toLowerCase() === 'pixela@oriental.ac.in' || user.role === 'admin';
+    const isViewer = user.role === 'viewer';
+    const isCrew = ['member', 'crew', 'photographer'].includes(user.role);
+
+    if (isViewer) {
+      setPermissionNotice({
+        title: 'Audience View-Only Access',
+        message: 'Audience accounts have full access to explore, like, and view all photographs in the Gallery. Upload permissions are reserved for Pixela Crew members, Alumni, and Leaders.'
+      });
+      return;
+    }
+
+    if (isCrew && !user.isApproved && !isSuperAdmin) {
+      setPermissionNotice({
+        title: 'Crew Registration Pending Approval',
+        message: 'Your Crew registration is currently waiting for Super Admin approval. Once approved, your profile will appear on the Leadership page and photo upload permissions will be active!'
+      });
+      return;
+    }
+
+    setIsUploadOpen(true);
   };
 
   const handleLike = async (photoId: string, e: React.MouseEvent) => {
@@ -145,7 +168,10 @@ export default function GalleryPage() {
         body: formData
       });
 
-      if (!res.ok) throw new Error('Upload failed');
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'Upload failed');
+      }
       
       setUploadSuccess(true);
       setTimeout(() => {
@@ -159,8 +185,8 @@ export default function GalleryPage() {
         setSelectedFile(null);
         fetchPhotos();
       }, 1500);
-    } catch (err) {
-      alert('Photo upload failed. Please try again.');
+    } catch (err: any) {
+      alert(err.message || 'Photo upload failed. Please try again.');
     } finally {
       setUploading(false);
     }
@@ -624,6 +650,42 @@ export default function GalleryPage() {
         </div>
       )}
 
+      {/* Upload Permission Notice Modal */}
+      {permissionNotice && (
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4"
+          onClick={() => setPermissionNotice(null)}
+        >
+          <div 
+            className="bg-[#0e0d0d] border border-border/80 rounded-xl max-w-md w-full p-6 space-y-4 shadow-2xl relative"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center space-x-3">
+              <div className="h-10 w-10 rounded-full bg-primary/10 border border-primary/30 flex items-center justify-center text-primary shrink-0">
+                <Camera className="h-5 w-5" />
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-white">{permissionNotice.title}</h3>
+                <span className="text-[10px] font-mono text-zinc-500 uppercase">Gallery Policy</span>
+              </div>
+            </div>
+            
+            <p className="text-xs text-zinc-400 font-light leading-relaxed">
+              {permissionNotice.message}
+            </p>
+
+            <div className="pt-2">
+              <button
+                onClick={() => setPermissionNotice(null)}
+                className="w-full py-2.5 bg-white text-black font-bold text-xs uppercase tracking-wider rounded hover:bg-zinc-200 transition-colors cursor-pointer"
+              >
+                Understood
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Global Login Interceptor wrapper */}
       <LoginModal
         isOpen={isLoginOpen}
@@ -631,7 +693,9 @@ export default function GalleryPage() {
         onSuccess={(newToken, newUser) => {
           setToken(newToken);
           setUser(newUser);
-          setIsUploadOpen(true);
+          if (newUser.role !== 'viewer' && (newUser.isApproved || newUser.role === 'admin' || newUser.email?.toLowerCase() === 'pixela@oriental.ac.in')) {
+            setIsUploadOpen(true);
+          }
         }}
       />
     </div>

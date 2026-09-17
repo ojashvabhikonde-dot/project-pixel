@@ -192,7 +192,7 @@ export default function LoginModal({ isOpen, onClose, onSuccess }: LoginModalPro
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   className="w-full bg-zinc-950 border border-zinc-800 rounded-lg py-2 pl-10 pr-4 text-xs focus:outline-none focus:border-primary transition-colors text-white"
-                  placeholder="e.g. Sarthak Gargav"
+                  placeholder="e.g. Ojashva Bhikonde"
                 />
               </div>
             </div>
@@ -210,7 +210,7 @@ export default function LoginModal({ isOpen, onClose, onSuccess }: LoginModalPro
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="w-full bg-zinc-950 border border-zinc-800 rounded-lg py-2 pl-10 pr-4 text-xs focus:outline-none focus:border-primary transition-colors text-white"
-                placeholder="you@oriental.ac.in"
+                placeholder="ojashva.bhikonde@gmail.com"
               />
             </div>
           </div>
@@ -246,11 +246,21 @@ export default function LoginModal({ isOpen, onClose, onSuccess }: LoginModalPro
                   onChange={(e) => setRole(e.target.value)}
                   className="w-full bg-zinc-950 border border-zinc-800 rounded-lg py-2 px-3 text-xs text-zinc-300 focus:outline-none focus:border-primary"
                 >
-                  <option value="member">Active Crew Member (Featured on Crew List)</option>
-                  <option value="viewer">Viewer / Audience</option>
+                  <option value="member">Active Crew Member (Pending Super Admin Approval)</option>
+                  <option value="viewer">Viewer / Audience (View-only)</option>
                   <option value="alumni">Club Alumni</option>
                   <option value="faculty">Faculty Coordinator</option>
                 </select>
+                {isCrew && (
+                  <p className="text-[10px] text-amber-400/90 mt-1 font-light leading-tight">
+                    * New Crew registrations require Super Admin approval before appearing on the Leadership page and unlocking photo uploads.
+                  </p>
+                )}
+                {role === 'viewer' && (
+                  <p className="text-[10px] text-zinc-400 mt-1 font-light leading-tight">
+                    * Audience accounts have full gallery viewing access.
+                  </p>
+                )}
               </div>
 
               {/* CREW ONLY: Profile Photo & Specialization */}

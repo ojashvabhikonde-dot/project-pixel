@@ -94,55 +94,55 @@ const EXHIBITION_FRAMES: ExhibitionFrame[] = [
   },
   {
     id: 'frame-5',
-    title: 'Azure Solitude at Riverbank',
+    title: 'Avian Vantage & Azure Plumage',
     category: 'nature',
-    photographer: 'Exhibition Curated Selection',
-    story: 'Long-exposure reflection capturing peaceful tranquility under clear midday skies.',
-    image: '/hero_river.jpg',
-    focalLength: '16mm',
-    aperture: 'f/8.0',
-    shutter: '1/60s',
-    iso: '100',
-    likes: 134
+    photographer: 'Divyansh Dharmadhikari (Merit Position)',
+    story: 'A magnificent Kingfisher perched gracefully, showcasing brilliant turquoise plumage and poised focus against the sky.',
+    image: '/shutter_stories_merit_divyansh.png',
+    focalLength: '300mm',
+    aperture: 'f/5.6',
+    shutter: '1/1250s',
+    iso: '200',
+    likes: 235
   },
   {
     id: 'frame-6',
-    title: 'Geometry in Modern Architecture',
-    category: 'abstract',
-    photographer: 'Exhibition Curated Selection',
-    story: 'Interplay of glass panels, sharp angles, and sky reflections creating an illusion of infinite height.',
-    image: '/hero_villa.jpg',
-    focalLength: '28mm',
+    title: 'Twilight Horizon on Glowing Waters',
+    category: 'nature',
+    photographer: 'Maithali Mukul Mahajan (Merit Position)',
+    story: 'A speed boat gliding smoothly across golden sunset ripples beneath a warm, dramatic glowing dusk sky.',
+    image: '/shutter_stories_merit_maithali.jpg',
+    focalLength: '70mm',
     aperture: 'f/4.5',
     shutter: '1/500s',
-    iso: '250',
-    likes: 178
+    iso: '100',
+    likes: 247
   },
   {
     id: 'frame-7',
-    title: 'Emerald Flora in Macro Focus',
+    title: 'Canopy of Whispering Clouds',
     category: 'nature',
-    photographer: 'Exhibition Curated Selection',
-    story: 'Microscopic dewdrop optics on morning foliage highlighting extreme sharpness and shallow depth.',
-    image: '/hero_nature.jpg',
-    focalLength: '90mm Macro',
-    aperture: 'f/2.8',
-    shutter: '1/320s',
-    iso: '200',
-    likes: 195
+    photographer: 'Harshita Pali (Merit Position)',
+    story: 'An upward organic composition capturing vibrant green tree canopies juxtaposed with intricate cirrocumulus patterned skies.',
+    image: '/shutter_stories_merit_harshita.jpg',
+    focalLength: '24mm',
+    aperture: 'f/3.2',
+    shutter: '1/1000s',
+    iso: '100',
+    likes: 212
   },
   {
     id: 'frame-8',
-    title: 'Gaze Through the Lens',
-    category: 'portraits',
-    photographer: 'Exhibition Curated Selection',
-    story: 'An expressive candid portrait reflecting raw emotion, natural eye lighting, and gentle background blur.',
-    image: '/about_hero.png',
-    focalLength: '85mm',
-    aperture: 'f/1.4',
-    shutter: '1/1000s',
+    title: 'Palatial Symmetry in Water Reflection',
+    category: 'campus',
+    photographer: 'Ankit Sagar (Merit Position)',
+    story: 'A breathtaking architectural capture framing an iconic heritage gateway mirrored on rain puddles with pristine symmetry.',
+    image: '/shutter_stories_merit_ankit.jpg',
+    focalLength: '18mm',
+    aperture: 'f/6.3',
+    shutter: '1/400s',
     iso: '100',
-    likes: 254
+    likes: 268
   }
 ];
 
@@ -485,6 +485,217 @@ export default function ShutterStoriesPage() {
               <span className="text-white font-bold block">Bronze Trophy + Certificate</span>
             </div>
           </div>
+
+          {/* Section: Merit Positions / Honorable Merit Awards (4 Winners) */}
+          <div className="space-y-4 pt-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-border/40 pb-3">
+              <div className="flex items-center space-x-2 text-sky-400">
+                <Award className="h-4.5 w-4.5 text-sky-400" />
+                <div>
+                  <span className="text-[10px] font-bold text-sky-400 uppercase tracking-widest font-mono block">
+                    Excellence Commendations
+                  </span>
+                  <h3 className="text-xl md:text-2xl font-black text-white uppercase tracking-tight">
+                    Merit Position Awards
+                  </h3>
+                </div>
+              </div>
+              <span className="text-[10px] font-mono bg-sky-500/10 border border-sky-500/30 text-sky-300 px-3 py-1 rounded-full w-max flex items-center gap-1.5">
+                <Star className="h-3 w-3 text-sky-400 fill-sky-400" />
+                4 Official Merit Positions
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 items-stretch">
+              {/* Merit 1: Bird Picture - Divyansh Dharmadhikari */}
+              <div className="bg-card/40 border border-sky-500/30 rounded-xl p-5 flex flex-col justify-between space-y-4 hover:border-sky-400/70 transition-all relative overflow-hidden group shadow-xl hover:shadow-sky-500/5">
+                <div className="absolute top-0 right-0 w-24 h-24 bg-sky-500/10 rounded-full blur-2xl pointer-events-none" />
+                
+                <div className="space-y-3.5">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[9px] font-bold text-sky-300 uppercase tracking-widest font-mono px-2.5 py-1 rounded bg-sky-950/60 border border-sky-500/40 flex items-center gap-1.5">
+                      <Award className="h-3.5 w-3.5 text-sky-400" />
+                      <span>Merit Position</span>
+                    </span>
+                    <span className="text-lg">🏅</span>
+                  </div>
+
+                  {/* Photo Frame Container */}
+                  <div className="aspect-[4/5] w-full rounded-lg bg-zinc-950 border border-zinc-800 overflow-hidden relative group-hover:border-sky-500/50 transition-colors shadow-md flex items-center justify-center p-2">
+                    <div 
+                      className="absolute inset-0 bg-cover bg-center blur-xl opacity-30 scale-110" 
+                      style={{ backgroundImage: `url('/shutter_stories_merit_divyansh.png')` }}
+                    />
+                    <img 
+                      src="/shutter_stories_merit_divyansh.png" 
+                      alt="The Kingfisher Vantage - Divyansh Dharmadhikari"
+                      className="relative z-10 w-full h-full object-contain drop-shadow-xl rounded group-hover:scale-105 transition-transform duration-500"
+                    />
+                    <div className="absolute bottom-2 left-2 z-20">
+                      <span className="text-[8px] bg-black/85 border border-white/10 text-sky-300 font-mono px-2 py-0.5 rounded backdrop-blur-sm">
+                        Avian Wildlife
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="space-y-1 text-left">
+                    <span className="text-[9px] font-mono text-sky-400 font-bold uppercase tracking-wider block">Merit Award</span>
+                    <h3 className="text-base font-bold text-white">Divyansh Dharmadhikari</h3>
+                    <p className="text-[11px] text-sky-300/90 font-medium">Frame: Kingfisher Vantage & Azure Plumage</p>
+                    <p className="text-xs text-zinc-400 font-light leading-relaxed pt-1">
+                      A vivid wildlife portrait capturing sharp kingfisher plumage and perched poise against pristine open skies.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="pt-3 border-t border-border/30 flex items-center justify-between text-[10px] text-zinc-400 font-mono">
+                  <span>Wild & Avian</span>
+                  <span className="text-sky-300 font-bold">Certificate of Merit</span>
+                </div>
+              </div>
+
+              {/* Merit 2: Sunset - Maithali Mukul Mahajan */}
+              <div className="bg-card/40 border border-amber-500/30 rounded-xl p-5 flex flex-col justify-between space-y-4 hover:border-amber-400/70 transition-all relative overflow-hidden group shadow-xl hover:shadow-amber-500/5">
+                <div className="absolute top-0 right-0 w-24 h-24 bg-amber-500/10 rounded-full blur-2xl pointer-events-none" />
+                
+                <div className="space-y-3.5">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[9px] font-bold text-amber-300 uppercase tracking-widest font-mono px-2.5 py-1 rounded bg-amber-950/60 border border-amber-500/40 flex items-center gap-1.5">
+                      <Award className="h-3.5 w-3.5 text-amber-400" />
+                      <span>Merit Position</span>
+                    </span>
+                    <span className="text-lg">🏅</span>
+                  </div>
+
+                  {/* Photo Frame Container */}
+                  <div className="aspect-[4/5] w-full rounded-lg bg-zinc-950 border border-zinc-800 overflow-hidden relative group-hover:border-amber-500/50 transition-colors shadow-md flex items-center justify-center p-2">
+                    <div 
+                      className="absolute inset-0 bg-cover bg-center blur-xl opacity-30 scale-110" 
+                      style={{ backgroundImage: `url('/shutter_stories_merit_maithali.jpg')` }}
+                    />
+                    <img 
+                      src="/shutter_stories_merit_maithali.jpg" 
+                      alt="Twilight Horizon on Glowing Waters - Maithali Mukul Mahajan"
+                      className="relative z-10 w-full h-full object-contain drop-shadow-xl rounded group-hover:scale-105 transition-transform duration-500"
+                    />
+                    <div className="absolute bottom-2 left-2 z-20">
+                      <span className="text-[8px] bg-black/85 border border-white/10 text-amber-300 font-mono px-2 py-0.5 rounded backdrop-blur-sm">
+                        Sunset & Waterscape
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="space-y-1 text-left">
+                    <span className="text-[9px] font-mono text-amber-400 font-bold uppercase tracking-wider block">Merit Award</span>
+                    <h3 className="text-base font-bold text-white">Maithali Mukul Mahajan</h3>
+                    <p className="text-[11px] text-amber-300/90 font-medium">Frame: Twilight Horizon on Glowing Waters</p>
+                    <p className="text-xs text-zinc-400 font-light leading-relaxed pt-1">
+                      A serene sunset scene featuring a lone boat gliding through glowing ripple reflections under evening dusk.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="pt-3 border-t border-border/30 flex items-center justify-between text-[10px] text-zinc-400 font-mono">
+                  <span>Nature & Sunset</span>
+                  <span className="text-amber-300 font-bold">Certificate of Merit</span>
+                </div>
+              </div>
+
+              {/* Merit 3: Sky, Cloud and Tree - Harshita Pali */}
+              <div className="bg-card/40 border border-emerald-500/30 rounded-xl p-5 flex flex-col justify-between space-y-4 hover:border-emerald-400/70 transition-all relative overflow-hidden group shadow-xl hover:shadow-emerald-500/5">
+                <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-500/10 rounded-full blur-2xl pointer-events-none" />
+                
+                <div className="space-y-3.5">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[9px] font-bold text-emerald-300 uppercase tracking-widest font-mono px-2.5 py-1 rounded bg-emerald-950/60 border border-emerald-500/40 flex items-center gap-1.5">
+                      <Award className="h-3.5 w-3.5 text-emerald-400" />
+                      <span>Merit Position</span>
+                    </span>
+                    <span className="text-lg">🏅</span>
+                  </div>
+
+                  {/* Photo Frame Container */}
+                  <div className="aspect-[4/5] w-full rounded-lg bg-zinc-950 border border-zinc-800 overflow-hidden relative group-hover:border-emerald-500/50 transition-colors shadow-md flex items-center justify-center p-2">
+                    <div 
+                      className="absolute inset-0 bg-cover bg-center blur-xl opacity-30 scale-110" 
+                      style={{ backgroundImage: `url('/shutter_stories_merit_harshita.jpg')` }}
+                    />
+                    <img 
+                      src="/shutter_stories_merit_harshita.jpg" 
+                      alt="Canopy of Whispering Clouds - Harshita Pali"
+                      className="relative z-10 w-full h-full object-contain drop-shadow-xl rounded group-hover:scale-105 transition-transform duration-500"
+                    />
+                    <div className="absolute bottom-2 left-2 z-20">
+                      <span className="text-[8px] bg-black/85 border border-white/10 text-emerald-300 font-mono px-2 py-0.5 rounded backdrop-blur-sm">
+                        Canopy & Sky Perspective
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="space-y-1 text-left">
+                    <span className="text-[9px] font-mono text-emerald-400 font-bold uppercase tracking-wider block">Merit Award</span>
+                    <h3 className="text-base font-bold text-white">Harshita Pali</h3>
+                    <p className="text-[11px] text-emerald-300/90 font-medium">Frame: Canopy of Whispering Clouds</p>
+                    <p className="text-xs text-zinc-400 font-light leading-relaxed pt-1">
+                      An inspiring upward perspective framing lush foliage against a sea of intricate, patterned cloud waves.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="pt-3 border-t border-border/30 flex items-center justify-between text-[10px] text-zinc-400 font-mono">
+                  <span>Sky & Flora</span>
+                  <span className="text-emerald-300 font-bold">Certificate of Merit</span>
+                </div>
+              </div>
+
+              {/* Merit 4: Architecture Reflection - Ankit Sagar */}
+              <div className="bg-card/40 border border-indigo-500/30 rounded-xl p-5 flex flex-col justify-between space-y-4 hover:border-indigo-400/70 transition-all relative overflow-hidden group shadow-xl hover:shadow-indigo-500/5">
+                <div className="absolute top-0 right-0 w-24 h-24 bg-indigo-500/10 rounded-full blur-2xl pointer-events-none" />
+                
+                <div className="space-y-3.5">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[9px] font-bold text-indigo-300 uppercase tracking-widest font-mono px-2.5 py-1 rounded bg-indigo-950/60 border border-indigo-500/40 flex items-center gap-1.5">
+                      <Award className="h-3.5 w-3.5 text-indigo-400" />
+                      <span>Merit Position</span>
+                    </span>
+                    <span className="text-lg">🏅</span>
+                  </div>
+
+                  {/* Photo Frame Container */}
+                  <div className="aspect-[4/5] w-full rounded-lg bg-zinc-950 border border-zinc-800 overflow-hidden relative group-hover:border-indigo-500/50 transition-colors shadow-md flex items-center justify-center p-2">
+                    <div 
+                      className="absolute inset-0 bg-cover bg-center blur-xl opacity-30 scale-110" 
+                      style={{ backgroundImage: `url('/shutter_stories_merit_ankit.jpg')` }}
+                    />
+                    <img 
+                      src="/shutter_stories_merit_ankit.jpg" 
+                      alt="Palatial Symmetry in Water Reflection - Ankit Sagar"
+                      className="relative z-10 w-full h-full object-contain drop-shadow-xl rounded group-hover:scale-105 transition-transform duration-500"
+                    />
+                    <div className="absolute bottom-2 left-2 z-20">
+                      <span className="text-[8px] bg-black/85 border border-white/10 text-indigo-300 font-mono px-2 py-0.5 rounded backdrop-blur-sm">
+                        Heritage Architecture Reflection
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="space-y-1 text-left">
+                    <span className="text-[9px] font-mono text-indigo-400 font-bold uppercase tracking-wider block">Merit Award</span>
+                    <h3 className="text-base font-bold text-white">Ankit Sagar</h3>
+                    <p className="text-[11px] text-indigo-300/90 font-medium">Frame: Palatial Symmetry in Water Reflection</p>
+                    <p className="text-xs text-zinc-400 font-light leading-relaxed pt-1">
+                      A majestic architectural reflection mirroring monumental gateway symmetry on clear pooled rainwater.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="pt-3 border-t border-border/30 flex items-center justify-between text-[10px] text-zinc-400 font-mono">
+                  <span>Heritage & Symmetry</span>
+                  <span className="text-indigo-300 font-bold">Certificate of Merit</span>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Special Category Recognitions (Grid of 4) */}
@@ -535,12 +746,11 @@ export default function ShutterStoriesPage() {
           {/* Filter Chips */}
           <div className="flex items-center space-x-1.5 overflow-x-auto pb-1 scrollbar-none">
             {[
-              { id: 'all', label: 'All Prints' },
-              { id: 'nature', label: 'Nature & Landscape' },
-              { id: 'street', label: 'Street & Life' },
+              { id: 'all', label: 'All Prints (8)' },
+              { id: 'nature', label: 'Nature & Wildlife' },
               { id: 'campus', label: 'Campus & Heritage' },
-              { id: 'portraits', label: 'Portraits' },
-              { id: 'abstract', label: 'Abstract' }
+              { id: 'street', label: 'Street & Life' },
+              { id: 'portraits', label: 'Portraits' }
             ].map(tab => (
               <button
                 key={tab.id}

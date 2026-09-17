@@ -166,7 +166,7 @@ export default function HirePage() {
                   <input
                     type="text"
                     required
-                    placeholder="e.g. Ojas Gupta"
+                    placeholder="e.g. Ojashva Bhikonde"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     className="w-full bg-zinc-950/85 border border-border/40 focus:border-white/20 text-white rounded px-4 py-2 text-sm focus:outline-none transition-colors"
@@ -177,7 +177,7 @@ export default function HirePage() {
                   <input
                     type="email"
                     required
-                    placeholder="you@domain.com"
+                    placeholder="ojashva.bhikonde@gmail.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     className="w-full bg-zinc-950/85 border border-border/40 focus:border-white/20 text-white rounded px-4 py-2 text-sm focus:outline-none transition-colors"

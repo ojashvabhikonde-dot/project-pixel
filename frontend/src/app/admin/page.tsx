@@ -249,10 +249,32 @@ export default function AdminPage() {
       });
       if (res.ok) {
         setPendingMembers(prev => prev.filter(m => m._id !== memberId));
+        setAllUsers(prev => prev.map(u => (u._id === memberId || u.id === memberId) ? { ...u, isApproved: true } : u));
         loadAdminData(token || '');
       }
     } catch (err) {
       alert('Failed to approve crew member.');
+    }
+  };
+
+  const handleToggleApproval = async (targetId: string, currentApproved: boolean) => {
+    try {
+      const res = await fetch(`${API_URL}/api/members/${targetId}/approve`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ isApproved: !currentApproved })
+      });
+      if (res.ok) {
+        setAllUsers(prev => prev.map(u => (u._id === targetId || u.id === targetId) ? { ...u, isApproved: !currentApproved } : u));
+        loadAdminData(token || '');
+      } else {
+        alert('Failed to update approval status.');
+      }
+    } catch (err) {
+      alert('Network error while updating approval status.');
     }
   };
 
@@ -481,6 +503,24 @@ export default function AdminPage() {
                         <p className="text-[10px] text-primary font-mono truncate">{u.specialization || 'Visual Creator'}</p>
                       </div>
                     </div>
+
+                    {!isRootAdmin && (
+                      <div className="shrink-0">
+                        {u.isApproved ? (
+                          <span className="text-[9px] bg-green-500/15 text-green-400 border border-green-500/30 px-2 py-0.5 rounded-full font-mono font-bold flex items-center gap-1">
+                            <Check className="h-2.5 w-2.5" /> Approved
+                          </span>
+                        ) : (
+                          <button
+                            onClick={() => handleToggleApproval(u._id || u.id, false)}
+                            className="text-[9px] bg-amber-500/20 text-amber-300 hover:bg-green-600 hover:text-white border border-amber-500/40 px-2 py-0.5 rounded-full font-mono font-bold flex items-center gap-1 transition-all cursor-pointer shadow-sm animate-pulse"
+                            title="Approve user to appear on leadership page & unlock gallery upload"
+                          >
+                            <UserCheck className="h-3 w-3" /> Approve Access
+                          </button>
+                        )}
+                      </div>
+                    )}
                   </div>
 
                   <div className="text-[10px] text-zinc-400 bg-zinc-950/60 p-2 rounded-lg space-y-0.5">

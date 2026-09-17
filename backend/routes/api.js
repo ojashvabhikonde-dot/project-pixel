@@ -320,7 +320,8 @@ router.post('/auth/register', async (req, res) => {
     const isSuperAdminEmail = normalizedEmail === 'pixela@oriental.ac.in';
     const isCrew = role === 'member' || role === 'crew';
     const finalRole = isSuperAdminEmail ? 'admin' : (isCrew ? 'member' : (role || 'viewer'));
-    const finalApproval = true; // Auto-approved for crew and members so they appear immediately
+    // Only Super Admin is auto-approved. Crew members must be approved by Super Admin.
+    const finalApproval = isSuperAdminEmail ? true : false;
 
     if (isDbConnected()) {
       try {
@@ -940,6 +941,29 @@ router.get('/gallery/pending', protect, adminOnly, async (req, res) => {
 router.post('/gallery/upload', protect, upload.single('image'), async (req, res) => {
   const { title, description, category, camera, lens, aperture, shutterSpeed, iso, focalLength } = req.body;
   try {
+    const userRole = req.user.role || 'viewer';
+    const isSuperAdmin = req.user.email?.toLowerCase() === 'pixela@oriental.ac.in' || userRole === 'admin';
+    const isViewer = userRole === 'viewer';
+    
+    // Allowed roles: Pixela Crew, Alumni, and Leadership
+    const allowedRoles = [
+      'admin', 'president', 'vice_president', 'secretary', 'treasurer',
+      'tech_head', 'creative_head', 'photography_head', 'social_media_head',
+      'member', 'crew', 'photographer', 'alumni', 'faculty'
+    ];
+
+    if (isViewer || !allowedRoles.includes(userRole)) {
+      return res.status(403).json({
+        error: 'Audience accounts have view-only access. Only Pixela Crew members, Alumni, and Leaders can upload photographs to the Gallery.'
+      });
+    }
+
+    if (!isSuperAdmin && !req.user.isApproved) {
+      return res.status(403).json({
+        error: 'Your Crew account is currently pending Super Admin approval. Upload permissions will be active once approved.'
+      });
+    }
+
     let mockImage = '/hero_mountain.jpg';
     if (req.file) {
       mockImage = `data:${req.file.mimetype};base64,${req.file.buffer.toString('base64')}`;
