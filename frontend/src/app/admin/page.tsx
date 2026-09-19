@@ -158,7 +158,11 @@ export default function AdminPage() {
           year: '3rd Year',
           instagramUrl: '',
           bio: '',
-          avatarUrl: ''
+          avatarUrl: '',
+          tenureYear: '2025-2026',
+          pastRole: 'Ex Prime',
+          currentProfession: 'Senior Media Director',
+          designation: 'Faculty Coordinator'
         });
         loadAdminData(token);
         setTimeout(() => setUserSuccessMessage(''), 4000);
@@ -693,33 +697,57 @@ export default function AdminPage() {
             )}
           </div>
 
-          {/* 3. Pending Members Registrations */}
+          {/* 3. Pending Registrations (Crew, Alumni, Faculty) */}
           <div className="bg-card border border-border/40 rounded-2xl p-6 space-y-4">
             <h3 className="text-lg font-bold text-white flex items-center space-x-2">
               <Users className="h-5 w-5 text-primary" />
-              <span>Crew Access Requests ({pendingMembers.length})</span>
+              <span>Pending Access Requests ({pendingMembers.length})</span>
             </h3>
 
             {pendingMembers.length === 0 ? (
-              <p className="text-xs text-zinc-500 italic">No pending member registrations.</p>
+              <p className="text-xs text-zinc-500 italic">No pending registrations requiring approval.</p>
             ) : (
               <div className="space-y-3">
-                {pendingMembers.map((member) => (
-                  <div key={member._id} className="bg-zinc-900/40 border border-zinc-800/50 p-4 rounded-xl flex items-center justify-between gap-4">
-                    <div>
-                      <h4 className="font-bold text-white text-xs">{member.name}</h4>
-                      <p className="text-[10px] text-zinc-400 mt-0.5">{member.department} • {member.year} ({member.semester} Sem)</p>
-                      <p className="text-[9px] text-secondary font-semibold uppercase mt-0.5">{member.role}</p>
+                {pendingMembers.map((member) => {
+                  const isAlumni = member.role === 'alumni';
+                  const isFaculty = member.role === 'faculty';
+                  const roleBadge = isAlumni ? 'Club Alumni' : isFaculty ? 'Faculty Coordinator' : 'Crew Member';
+                  const badgeColor = isAlumni ? 'bg-amber-500/10 text-amber-400 border-amber-500/30' : isFaculty ? 'bg-purple-500/10 text-purple-400 border-purple-500/30' : 'bg-primary/10 text-primary border-primary/30';
+
+                  return (
+                    <div key={member._id} className="bg-zinc-900/40 border border-zinc-800/50 p-4 rounded-xl flex items-center justify-between gap-4">
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2">
+                          <h4 className="font-bold text-white text-xs">{member.name}</h4>
+                          <span className={`text-[9px] font-mono font-bold px-2 py-0.5 rounded border uppercase ${badgeColor}`}>
+                            {roleBadge}
+                          </span>
+                        </div>
+                        {isAlumni ? (
+                          <p className="text-[10px] text-zinc-400 font-mono">
+                            Tenure: {member.tenureYear || '2025-2026'} • Past: {member.pastRole || 'Ex Leader'} • Now: {member.currentProfession || 'Visual Media'}
+                          </p>
+                        ) : isFaculty ? (
+                          <p className="text-[10px] text-zinc-400 font-mono">
+                            {member.designation || 'Faculty Coordinator'} • Dept: {member.department || 'Oriental Group'}
+                          </p>
+                        ) : (
+                          <p className="text-[10px] text-zinc-400 font-mono">
+                            {member.department} • {member.year} ({member.semester} Sem)
+                          </p>
+                        )}
+                        <p className="text-[9px] text-zinc-500 font-mono">{member.email}</p>
+                      </div>
+                      <button
+                        onClick={() => handleApproveMember(member._id)}
+                        className="bg-primary hover:opacity-90 text-primary-foreground py-1.5 px-4 rounded-md text-[10px] font-semibold transition-opacity flex items-center space-x-1 shrink-0 cursor-pointer shadow-md"
+                      >
+                        <Check className="h-3.5 w-3.5" />
+                        <span>Approve Access</span>
+                      </button>
                     </div>
-                    <button
-                      onClick={() => handleApproveMember(member._id)}
-                      className="bg-primary hover:opacity-90 text-primary-foreground py-1 px-4 rounded-md text-[10px] font-semibold transition-opacity flex items-center space-x-1"
-                    >
-                      <Check className="h-3.5 w-3.5" />
-                      <span>Approve Access</span>
-                    </button>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>
@@ -754,42 +782,43 @@ export default function AdminPage() {
                   placeholder="e.g. Leading Lines Guide"
                   value={kbTitle}
                   onChange={(e) => setKbTitle(e.target.value)}
-                  className="w-full bg-zinc-900 border border-zinc-800 rounded-md py-1.5 px-3 text-xs focus:outline-none focus:border-primary text-white font-medium"
+                  className="w-full bg-zinc-900 border border-zinc-800 rounded-lg py-1.5 px-3 text-xs text-white focus:outline-none focus:border-primary"
                 />
               </div>
 
               <div>
-                <label className="block text-[10px] text-zinc-400 mb-1">Topic Category</label>
+                <label className="block text-[10px] text-zinc-400 mb-1">Category</label>
                 <select
                   value={kbCategory}
                   onChange={(e) => setKbCategory(e.target.value)}
-                  className="w-full bg-zinc-900 border border-zinc-800 rounded-md py-1.5 px-3 text-xs text-zinc-300 focus:outline-none focus:border-primary"
+                  className="w-full bg-zinc-900 border border-zinc-800 rounded-lg py-1.5 px-3 text-xs text-white focus:outline-none focus:border-primary cursor-pointer"
                 >
-                  <option value="Camera Settings">Camera Settings</option>
-                  <option value="Composition">Composition</option>
-                  <option value="Editing">Editing & Presets</option>
-                  <option value="Gear Recommendations">Gear Recommendations</option>
+                  <option value="Camera Settings">Camera Settings & Exposure</option>
+                  <option value="Composition">Composition & Framing</option>
+                  <option value="Lighting">Lighting & Golden Hour</option>
+                  <option value="Color Grading">Post-Processing & Color Grading</option>
+                  <option value="Club Guidelines">Pixela Club Guidelines & History</option>
                 </select>
               </div>
 
               <div>
-                <label className="block text-[10px] text-zinc-400 mb-1">Fact Content / Description</label>
+                <label className="block text-[10px] text-zinc-400 mb-1">Verified Technical Content</label>
                 <textarea
-                  rows={4}
                   required
-                  placeholder="Insert the photography or filmmaking fact here. Keep it concise, clear, and factual..."
+                  rows={3}
+                  placeholder="Explain rules, technical parameters, aperture values..."
                   value={kbContent}
                   onChange={(e) => setKbContent(e.target.value)}
-                  className="w-full bg-zinc-900 border border-zinc-800 rounded-md py-1.5 px-3 text-xs focus:outline-none focus:border-primary text-white resize-none font-light"
+                  className="w-full bg-zinc-900 border border-zinc-800 rounded-lg py-1.5 px-3 text-xs text-white focus:outline-none focus:border-primary resize-none font-light"
                 />
               </div>
 
               <button
                 type="submit"
-                className="w-full py-2 rounded-md pixela-gradient-bg text-white text-xs font-semibold hover:opacity-90 transition-opacity flex items-center justify-center space-x-1.5 cursor-pointer"
+                className="w-full pixela-gradient-bg hover:opacity-90 text-white font-bold py-2 rounded-lg text-xs uppercase tracking-wider transition-opacity flex items-center justify-center space-x-1.5 cursor-pointer shadow-md shadow-primary/20"
               >
-                <Send className="h-3.5 w-3.5" />
-                <span>Seed AI Knowledge Base</span>
+                <Send className="h-3 w-3" />
+                <span>Publish to RAG Vector Base</span>
               </button>
             </form>
           )}
@@ -798,26 +827,26 @@ export default function AdminPage() {
       </div>
 
       {/* =========================================================================
-          ADD USER / LEADER MODAL
+          ADD USER MODAL (SUPER ADMIN ONLY)
           ========================================================================= */}
       {showAddUserModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 overflow-y-auto">
-          <div className="bg-card border border-border/80 w-full max-w-lg rounded-2xl p-6 sm:p-8 space-y-6 shadow-2xl relative my-8">
-            <button
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4 overflow-y-auto">
+          <div className="relative w-full max-w-lg my-8 overflow-hidden rounded-2xl glass-panel border border-white/10 p-6 sm:p-8 text-white shadow-2xl">
+            <button 
               onClick={() => setShowAddUserModal(false)}
-              className="absolute top-5 right-5 text-zinc-400 hover:text-white p-1 rounded-lg transition-colors"
+              className="absolute top-4 right-4 text-zinc-400 hover:text-white transition-colors duration-200"
             >
               <X className="h-5 w-5" />
             </button>
 
-            <div className="space-y-1">
-              <div className="flex items-center space-x-2">
-                <UserPlus className="h-5 w-5 text-primary" />
-                <h3 className="text-xl font-bold text-white">Add New User or Leader</h3>
+            <div className="flex items-center space-x-3 mb-6">
+              <div className="h-10 w-10 rounded-full pixela-gradient-bg flex items-center justify-center">
+                <UserPlus className="h-5 w-5 text-white" />
               </div>
-              <p className="text-xs text-zinc-400 font-light">
-                Directly provision a new account with custom role, credentials, and auto-approval.
-              </p>
+              <div>
+                <h3 className="text-xl font-bold text-white">Add New User or Leader</h3>
+                <p className="text-xs text-zinc-400">Directly provision an account into Pixela MongoDB database.</p>
+              </div>
             </div>
 
             <form onSubmit={handleAddUser} className="space-y-4">
@@ -868,6 +897,8 @@ export default function AdminPage() {
                   >
                     <option value="member">General Member</option>
                     <option value="crew">Crew Member (Active Roster)</option>
+                    <option value="alumni">Club Alumni</option>
+                    <option value="faculty">Faculty Coordinator</option>
                     <option value="president">President</option>
                     <option value="vice_president">Vice President</option>
                     <option value="tech_head">Tech Head</option>
@@ -877,44 +908,109 @@ export default function AdminPage() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <div>
-                  <label className="block text-[11px] font-medium text-zinc-300 mb-1">Department</label>
-                  <input
-                    type="text"
-                    placeholder="e.g. IT, CS, EC"
-                    value={newUser.department}
-                    onChange={(e) => setNewUser({ ...newUser, department: e.target.value })}
-                    className="w-full bg-zinc-900 border border-zinc-800 rounded-lg py-2 px-3 text-xs text-white focus:outline-none focus:border-primary"
-                  />
+              {newUser.role === 'alumni' && (
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 bg-zinc-950/60 p-3 rounded-lg border border-zinc-800">
+                  <div>
+                    <label className="block text-[10px] font-medium text-zinc-300 mb-1">Tenure Year</label>
+                    <select
+                      value={newUser.tenureYear}
+                      onChange={(e) => setNewUser({ ...newUser, tenureYear: e.target.value })}
+                      className="w-full bg-zinc-900 border border-zinc-800 rounded-lg py-1.5 px-2 text-xs text-white focus:outline-none"
+                    >
+                      <option value="2025-2026">2025-2026</option>
+                      <option value="2024-2025">2024-2025</option>
+                      <option value="2023-2024">2023-2024</option>
+                      <option value="2022-2023">2022-2023</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-medium text-zinc-300 mb-1">Past Role</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Ex Prime"
+                      value={newUser.pastRole}
+                      onChange={(e) => setNewUser({ ...newUser, pastRole: e.target.value })}
+                      className="w-full bg-zinc-900 border border-zinc-800 rounded-lg py-1.5 px-2 text-xs text-white focus:outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-medium text-zinc-300 mb-1">Now Working As</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Senior Media Director"
+                      value={newUser.currentProfession}
+                      onChange={(e) => setNewUser({ ...newUser, currentProfession: e.target.value })}
+                      className="w-full bg-zinc-900 border border-zinc-800 rounded-lg py-1.5 px-2 text-xs text-white focus:outline-none"
+                    />
+                  </div>
                 </div>
+              )}
 
-                <div>
-                  <label className="block text-[11px] font-medium text-zinc-300 mb-1">Semester</label>
-                  <input
-                    type="number"
-                    min={1}
-                    max={8}
-                    value={newUser.semester}
-                    onChange={(e) => setNewUser({ ...newUser, semester: Number(e.target.value) })}
-                    className="w-full bg-zinc-900 border border-zinc-800 rounded-lg py-2 px-3 text-xs text-white focus:outline-none focus:border-primary"
-                  />
+              {newUser.role === 'faculty' && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-zinc-950/60 p-3 rounded-lg border border-zinc-800">
+                  <div>
+                    <label className="block text-[10px] font-medium text-zinc-300 mb-1">Designation</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Faculty Coordinator"
+                      value={newUser.designation}
+                      onChange={(e) => setNewUser({ ...newUser, designation: e.target.value })}
+                      className="w-full bg-zinc-900 border border-zinc-800 rounded-lg py-1.5 px-2 text-xs text-white focus:outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-medium text-zinc-300 mb-1">Department</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Computer Science & Engg."
+                      value={newUser.department}
+                      onChange={(e) => setNewUser({ ...newUser, department: e.target.value })}
+                      className="w-full bg-zinc-900 border border-zinc-800 rounded-lg py-1.5 px-2 text-xs text-white focus:outline-none"
+                    />
+                  </div>
                 </div>
+              )}
 
-                <div>
-                  <label className="block text-[11px] font-medium text-zinc-300 mb-1">Year</label>
-                  <select
-                    value={newUser.year}
-                    onChange={(e) => setNewUser({ ...newUser, year: e.target.value })}
-                    className="w-full bg-zinc-900 border border-zinc-800 rounded-lg py-2 px-3 text-xs text-white focus:outline-none focus:border-primary cursor-pointer"
-                  >
-                    <option value="1st Year">1st Year</option>
-                    <option value="2nd Year">2nd Year</option>
-                    <option value="3rd Year">3rd Year</option>
-                    <option value="4th Year">4th Year</option>
-                  </select>
+              {newUser.role !== 'alumni' && newUser.role !== 'faculty' && (
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div>
+                    <label className="block text-[11px] font-medium text-zinc-300 mb-1">Department</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. IT, CS, EC"
+                      value={newUser.department}
+                      onChange={(e) => setNewUser({ ...newUser, department: e.target.value })}
+                      className="w-full bg-zinc-900 border border-zinc-800 rounded-lg py-2 px-3 text-xs text-white focus:outline-none focus:border-primary"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-medium text-zinc-300 mb-1">Semester</label>
+                    <input
+                      type="number"
+                      min={1}
+                      max={8}
+                      value={newUser.semester}
+                      onChange={(e) => setNewUser({ ...newUser, semester: Number(e.target.value) })}
+                      className="w-full bg-zinc-900 border border-zinc-800 rounded-lg py-2 px-3 text-xs text-white focus:outline-none focus:border-primary"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-medium text-zinc-300 mb-1">Year</label>
+                    <select
+                      value={newUser.year}
+                      onChange={(e) => setNewUser({ ...newUser, year: e.target.value })}
+                      className="w-full bg-zinc-900 border border-zinc-800 rounded-lg py-2 px-3 text-xs text-white focus:outline-none focus:border-primary cursor-pointer"
+                    >
+                      <option value="1st Year">1st Year</option>
+                      <option value="2nd Year">2nd Year</option>
+                      <option value="3rd Year">3rd Year</option>
+                      <option value="4th Year">4th Year</option>
+                    </select>
+                  </div>
                 </div>
-              </div>
+              )}
 
               <div>
                 <label className="block text-[11px] font-medium text-zinc-300 mb-1">Instagram Profile URL / Handle</label>

@@ -143,11 +143,10 @@ export default function LeadershipPage() {
   const [selectedYear, setSelectedYear] = useState('2025-2026');
   const [crewMembers, setCrewMembers] = useState<any[]>([]);
   const [alumniMembers, setAlumniMembers] = useState<any[]>([]);
-  const [facultyMembers, setFacultyMembers] = useState<any[]>([]);
   const [loadingData, setLoadingData] = useState(true);
   const [token, setToken] = useState<string | null>(null);
   const [user, setUser] = useState<any>(null);
-  const [itemToDelete, setItemToDelete] = useState<{ id: string; name: string; type: 'crew' | 'alumni' | 'faculty' } | null>(null);
+  const [itemToDelete, setItemToDelete] = useState<{ id: string; name: string; type: 'crew' | 'alumni' } | null>(null);
   const [isLoginOpen, setIsLoginOpen] = useState(false);
 
   useEffect(() => {
@@ -158,7 +157,7 @@ export default function LeadershipPage() {
 
     fetchLeadershipData();
 
-    // Auto real-time sync polling every 5 seconds so new crew, faculty, and alumni appear instantly for all users
+    // Auto real-time sync polling every 5 seconds so new crew and alumni appear instantly for all users
     const pollInterval = setInterval(() => {
       fetchLeadershipData(true);
     }, 5000);
@@ -196,16 +195,6 @@ export default function LeadershipPage() {
         const data = await alumniRes.json();
         setAlumniMembers(data || []);
       }
-
-      // 3. Fetch Faculty Coordinators
-      const facultyRes = await fetch(`${API_URL}/api/faculty?t=${Date.now()}`, {
-        cache: 'no-store',
-        headers: { 'Cache-Control': 'no-cache' }
-      });
-      if (facultyRes.ok) {
-        const data = await facultyRes.json();
-        setFacultyMembers(data || []);
-      }
     } catch (err) {
       console.error('Failed to fetch leadership data:', err);
     } finally {
@@ -223,8 +212,6 @@ export default function LeadershipPage() {
       setCrewMembers(prev => prev.filter(m => (m._id !== id && m.id !== id)));
     } else if (type === 'alumni') {
       setAlumniMembers(prev => prev.filter(m => (m._id !== id && m.id !== id)));
-    } else if (type === 'faculty') {
-      setFacultyMembers(prev => prev.filter(m => (m._id !== id && m.id !== id)));
     }
     setItemToDelete(null);
 
@@ -274,22 +261,19 @@ export default function LeadershipPage() {
     }
   });
 
-  // Default Faculty Coordinator list merged with dynamic registrations
-  const displayFaculty = facultyMembers.length > 0 ? facultyMembers : DEFAULT_FACULTY;
-
   return (
     <div className="max-w-6xl mx-auto px-4 py-16 space-y-20 bg-background">
       
       {/* 1. Page Header */}
       <div className="text-center space-y-4 pb-6 border-b border-border/30">
         <span className="text-[10px] font-bold text-primary uppercase tracking-widest block font-mono">
-          Creative Directors & Mentors
+          Creative Directors
         </span>
         <h1 className="text-5xl md:text-7xl font-black tracking-tight text-white uppercase leading-none">
           Club Leadership
         </h1>
         <p className="max-w-xl mx-auto text-xs md:text-sm text-zinc-400 font-light leading-relaxed">
-          Meet the creative directors, mentors, and technicians behind Pixela. Directing workshops, building tech systems, and curating exhibitions.
+          Meet the minds behind the shutter. Our leaders direct workshops, build tech systems, manage bookings, and edit cinematics.
         </p>
       </div>
 
@@ -364,127 +348,6 @@ export default function LeadershipPage() {
           </div>
         ))}
       </div>
-
-      {/* 2.2 Faculty Coordinators & Mentors Section */}
-      <section className="space-y-8 border-t border-border/30 pt-16 text-left">
-        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
-          <div className="space-y-1">
-            <span className="text-[10px] font-bold text-primary uppercase tracking-widest block font-mono">
-              Academic Mentorship
-            </span>
-            <h2 className="text-3xl font-black text-white uppercase tracking-tight flex items-center gap-2.5">
-              <span>Faculty Coordinators & Mentors</span>
-              <span className="text-xs px-2.5 py-0.5 bg-primary/10 border border-primary/30 text-primary rounded-full font-mono font-bold">
-                {displayFaculty.length}
-              </span>
-            </h2>
-            <p className="text-zinc-500 text-xs font-light">
-              Guiding faculty members and department liaisons shaping Pixela's institutional excellence.
-            </p>
-          </div>
-
-          <button
-            onClick={() => setIsLoginOpen(true)}
-            className="inline-flex items-center space-x-1.5 px-4 py-2 rounded-full bg-zinc-900 hover:bg-zinc-800 border border-border/60 text-white text-xs font-bold uppercase tracking-wider transition-colors cursor-pointer shadow-md self-start sm:self-auto"
-          >
-            <UserPlus className="h-3.5 w-3.5 text-primary" />
-            <span>Register as Faculty</span>
-          </button>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {displayFaculty.map((fac, idx) => {
-            const photoUrl = fac.avatarUrl || fac.photo || 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=300&auto=format&fit=crop&q=80';
-            const igUrl = extractInstagramUrl(fac);
-            const igHandle = getInstagramHandle(igUrl, fac.name);
-            const socialLinks = extractSocialLinks(fac);
-            const isDynamic = !!(fac._id || fac.id);
-
-            return (
-              <div 
-                key={fac._id || fac.id || idx}
-                className="bg-card/30 border border-border/50 rounded-2xl p-6 relative overflow-hidden group hover:border-white/20 transition-all duration-300 shadow-xl flex flex-col justify-between"
-              >
-                {/* Super Admin Delete Button */}
-                {isSuperAdmin && isDynamic && (
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setItemToDelete({ id: fac._id || fac.id, name: fac.name, type: 'faculty' });
-                    }}
-                    className="absolute top-3 right-3 z-20 p-1.5 bg-red-950/90 hover:bg-red-600 text-white rounded-full transition-all duration-200 shadow-md cursor-pointer border border-red-500/40 opacity-0 group-hover:opacity-100"
-                    title={`Delete faculty profile of ${fac.name}`}
-                  >
-                    <Trash2 className="h-3 w-3" />
-                  </button>
-                )}
-
-                <div className="space-y-4">
-                  <div className="flex items-center space-x-4">
-                    <div className="relative h-16 w-16 rounded-xl overflow-hidden bg-zinc-950 border border-primary/30 shrink-0 shadow-md">
-                      <img src={photoUrl} alt={fac.name} className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                    </div>
-                    <div>
-                      <span className="text-[10px] font-bold text-primary uppercase tracking-widest font-mono block">
-                        {fac.designation || 'Faculty Coordinator'}
-                      </span>
-                      <h4 className="text-lg font-bold text-white uppercase tracking-tight">{fac.name}</h4>
-                      <p className="text-[10px] text-zinc-400 font-mono">{fac.department || 'Oriental Group of Institutes'}</p>
-                    </div>
-                  </div>
-
-                  {fac.bio && (
-                    <p className="text-xs text-zinc-400 font-light leading-relaxed bg-zinc-950/60 p-3 rounded-xl border border-white/5">
-                      "{fac.bio}"
-                    </p>
-                  )}
-                </div>
-
-                {/* Social Links Bar */}
-                <div className="pt-4 mt-4 border-t border-border/30 flex items-center justify-between">
-                  {igHandle ? (
-                    <a
-                      href={igUrl || '#'}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-[10px] font-bold text-[#ff5e95] hover:underline font-mono flex items-center gap-1"
-                    >
-                      <Instagram className="h-3 w-3" />
-                      <span>{igHandle}</span>
-                    </a>
-                  ) : (
-                    <span className="text-[9px] font-mono text-zinc-500">Pixela Faculty</span>
-                  )}
-
-                  <div className="flex items-center gap-1.5">
-                    {socialLinks.map((link, sIdx) => {
-                      let iconEl = <Globe className="h-3.5 w-3.5 text-primary" />;
-                      if (link.platform === 'instagram') iconEl = <Instagram className="h-3.5 w-3.5 text-[#ff5e95]" />;
-                      if (link.platform === 'linkedin') iconEl = <Linkedin className="h-3.5 w-3.5 text-[#0a66c2]" />;
-                      if (link.platform === 'github') iconEl = <Github className="h-3.5 w-3.5 text-zinc-200" />;
-                      if (link.platform === 'twitter' || link.platform === 'x') iconEl = <TwitterX className="h-3.5 w-3.5 text-[#1da1f2]" />;
-                      if (link.platform === 'youtube') iconEl = <YoutubeIcon className="h-3.5 w-3.5 text-[#ff0000]" />;
-
-                      return (
-                        <a
-                          key={sIdx}
-                          href={link.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="p-1 rounded-md bg-zinc-900 hover:bg-zinc-800 border border-white/5 transition-all duration-200"
-                          title={link.platform}
-                        >
-                          {iconEl}
-                        </a>
-                      );
-                    })}
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </section>
 
       {/* 2.5 Active Crew Section (Dynamic Crew List) */}
       <section className="space-y-8 border-t border-border/30 pt-16 text-left">
@@ -811,21 +674,6 @@ export default function LeadershipPage() {
     </div>
   );
 }
-
-const DEFAULT_FACULTY = [
-  {
-    name: 'Dr. S. K. Gupta',
-    designation: 'Senior Faculty Advisor & Mentor',
-    department: 'Department of Computer Science & Engineering',
-    photo: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=300&auto=format&fit=crop&q=80',
-    bio: 'Guiding Pixela photography and cinematic club activities, institutional exhibitions, and visual storytelling excellence since 2022.',
-    instagram: 'https://www.instagram.com/oriental_bhopal',
-    socialLinks: [
-      { platform: 'instagram', url: 'https://www.instagram.com/oriental_bhopal' },
-      { platform: 'linkedin', url: 'https://www.linkedin.com' }
-    ]
-  }
-];
 
 interface Leader {
   name: string;
