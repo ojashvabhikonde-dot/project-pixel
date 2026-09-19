@@ -102,7 +102,7 @@ export default function RootLayout({
                     onClick={() => setIsLoginOpen(true)}
                     className="text-xs bg-white text-black hover:bg-white/95 transition-colors font-bold px-5 py-2 rounded-full shadow-md cursor-pointer"
                   >
-                    Join Club
+                    Login
                   </button>
                 )}
               </div>
@@ -144,7 +144,7 @@ export default function RootLayout({
                     }}
                     className="w-full bg-white text-black font-bold text-center py-2.5 rounded-full text-sm cursor-pointer"
                   >
-                    Join Club
+                    Login
                   </button>
                 )}
               </div>

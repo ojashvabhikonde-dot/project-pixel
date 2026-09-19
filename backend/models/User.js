@@ -37,10 +37,19 @@ const userSchema = new mongoose.Schema(
     instagramUrl: { type: String },
     linkedinUrl: { type: String },
     githubUrl: { type: String },
+    socialLinks: [
+      {
+        platform: { type: String },
+        url: { type: String },
+      }
+    ],
     phone: { type: String },
     avatarUrl: { type: String },
     isApproved: { type: Boolean, default: false },
     currentProfession: { type: String }, // for alumni
+    pastRole: { type: String }, // e.g., 'Ex Prime', 'Ex Chief', 'Club Alumni'
+    tenureYear: { type: String }, // e.g., '2025-2026', '2024-2025'
+    designation: { type: String }, // e.g., 'Faculty Coordinator', 'Senior Faculty Advisor'
     timelineOrder: { type: Number }, // for order display
   },
   { timestamps: true }

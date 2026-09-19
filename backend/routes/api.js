@@ -39,6 +39,12 @@ const memoryStore = {
       photographyGenre: ['Street', 'Portrait', 'Exhibition'],
       bio: 'Super Administrator of Pixela Photography Club.',
       avatarUrl: '/ojashva.jpg',
+      instagramUrl: 'https://www.instagram.com/mr_ojashva',
+      socialLinks: [
+        { platform: 'instagram', url: 'https://www.instagram.com/mr_ojashva' },
+        { platform: 'linkedin', url: 'https://www.linkedin.com/in/ojashva-bhikonde-947a48331' },
+        { platform: 'portfolio', url: 'https://portfolio-ojashva.vercel.app/' }
+      ],
       isApproved: true,
       createdAt: new Date(),
     },
@@ -55,6 +61,11 @@ const memoryStore = {
       photographyGenre: ['Street', 'Portrait'],
       bio: 'Lead coordinator and Admin of Pixela Photography Club.',
       avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300&auto=format&fit=crop&q=80',
+      instagramUrl: 'https://www.instagram.com/mr_ojashva',
+      socialLinks: [
+        { platform: 'instagram', url: 'https://www.instagram.com/mr_ojashva' },
+        { platform: 'linkedin', url: 'https://www.linkedin.com/in/ojashva-bhikonde-947a48331' }
+      ],
       isApproved: true,
       createdAt: new Date(),
     },
@@ -71,6 +82,10 @@ const memoryStore = {
       photographyGenre: ['Wildlife', 'Drone'],
       bio: 'Behind the glass for 4 years, directing cinematic projects and club activities.',
       avatarUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&auto=format&fit=crop&q=80',
+      instagramUrl: 'https://www.instagram.com/shuttterbugg_',
+      socialLinks: [
+        { platform: 'instagram', url: 'https://www.instagram.com/shuttterbugg_' }
+      ],
       isApproved: true,
       createdAt: new Date(),
     },
@@ -87,6 +102,10 @@ const memoryStore = {
       photographyGenre: ['Macro', 'Nature'],
       bio: 'Capturing details invisible to the naked eye. Passionate educator.',
       avatarUrl: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=300&auto=format&fit=crop&q=80',
+      instagramUrl: 'https://www.instagram.com/anugyajhaaaa',
+      socialLinks: [
+        { platform: 'instagram', url: 'https://www.instagram.com/anugyajhaaaa' }
+      ],
       isApproved: true,
       createdAt: new Date(),
     },
@@ -103,6 +122,11 @@ const memoryStore = {
       photographyGenre: ['Architecture', 'Night'],
       bio: 'Blending tech and lenses. Built the Pixela platform and handles automation.',
       avatarUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=300&auto=format&fit=crop&q=80',
+      instagramUrl: 'https://www.instagram.com/theshutterbug_devashish',
+      socialLinks: [
+        { platform: 'instagram', url: 'https://www.instagram.com/theshutterbug_devashish' },
+        { platform: 'github', url: 'https://github.com' }
+      ],
       isApproved: true,
       createdAt: new Date(),
     },
@@ -311,17 +335,54 @@ const adminOnly = (req, res, next) => {
    AUTH ENDPOINTS
    ========================================================================== */
 
+const formatSocialUrl = (platform, url) => {
+  if (!url) return '';
+  const clean = url.trim();
+  if (clean.startsWith('http://') || clean.startsWith('https://')) return clean;
+  if (platform === 'instagram') {
+    const handle = clean.replace(/^@/, '');
+    return `https://www.instagram.com/${handle}`;
+  }
+  if (platform === 'linkedin') {
+    return `https://www.linkedin.com/in/${clean.replace(/^@/, '')}`;
+  }
+  if (platform === 'github') {
+    return `https://github.com/${clean.replace(/^@/, '')}`;
+  }
+  if (platform === 'twitter' || platform === 'x') {
+    return `https://x.com/${clean.replace(/^@/, '')}`;
+  }
+  return `https://${clean}`;
+};
+
 router.post('/auth/register', async (req, res) => {
-  const { name, email, password, role, semester, year, department, bio, skills, specialization, avatarUrl } = req.body;
+  const { 
+    name, email, password, role, semester, year, department, bio, skills, specialization, 
+    avatarUrl, instagramUrl, socialLinks, currentProfession, pastRole, tenureYear, designation 
+  } = req.body;
   try {
     const normalizedEmail = (email || '').toLowerCase().trim();
 
     // Check if registering with super admin email
     const isSuperAdminEmail = normalizedEmail === 'pixela@oriental.ac.in';
-    const isCrew = role === 'member' || role === 'crew';
-    const finalRole = isSuperAdminEmail ? 'admin' : (isCrew ? 'member' : (role || 'viewer'));
-    // Only Super Admin is auto-approved. Crew members must be approved by Super Admin.
-    const finalApproval = isSuperAdminEmail ? true : false;
+    const isAudience = role === 'viewer';
+    const finalRole = isSuperAdminEmail ? 'admin' : (role || 'viewer');
+    // Only Super Admin and Audience (Viewers) are auto-approved. Crew members, alumni, and faculty must be approved by Super Admin.
+    const finalApproval = isSuperAdminEmail || isAudience ? true : false;
+
+    // Process Instagram & Social links
+    const formattedInsta = formatSocialUrl('instagram', instagramUrl || (isSuperAdminEmail ? 'https://www.instagram.com/mr_ojashva' : ''));
+    let finalSocialLinks = Array.isArray(socialLinks) ? socialLinks.map(s => ({
+      platform: s.platform || 'other',
+      url: formatSocialUrl(s.platform, s.url)
+    })) : [];
+
+    // Ensure instagram is present in socialLinks if provided
+    if (formattedInsta && !finalSocialLinks.some(s => s.platform === 'instagram')) {
+      finalSocialLinks.unshift({ platform: 'instagram', url: formattedInsta });
+    }
+    // Cap at max 3 handles
+    finalSocialLinks = finalSocialLinks.slice(0, 3);
 
     if (isDbConnected()) {
       try {
@@ -333,6 +394,8 @@ router.post('/auth/register', async (req, res) => {
             existingUser.isApproved = true;
             if (password) existingUser.password = password;
             if (avatarUrl) existingUser.avatarUrl = avatarUrl;
+            if (formattedInsta) existingUser.instagramUrl = formattedInsta;
+            if (finalSocialLinks.length > 0) existingUser.socialLinks = finalSocialLinks;
             await existingUser.save();
             const token = jwt.sign({ id: existingUser._id }, process.env.JWT_SECRET || 'pixela_secret_key_2026_shutter_stories', { expiresIn: '30d' });
             return res.status(200).json({
@@ -344,6 +407,15 @@ router.post('/auth/register', async (req, res) => {
                 role: existingUser.role,
                 avatarUrl: existingUser.avatarUrl,
                 specialization: existingUser.specialization,
+                instagramUrl: existingUser.instagramUrl,
+                socialLinks: existingUser.socialLinks || [],
+                department: existingUser.department,
+                semester: existingUser.semester,
+                year: existingUser.year,
+                currentProfession: existingUser.currentProfession,
+                pastRole: existingUser.pastRole,
+                tenureYear: existingUser.tenureYear,
+                designation: existingUser.designation,
                 isApproved: existingUser.isApproved,
               },
             });
@@ -358,11 +430,17 @@ router.post('/auth/register', async (req, res) => {
           role: finalRole,
           semester: semester || 1,
           year: year || '1st Year',
-          department: department || 'Information Technology',
+          department: department || (role === 'faculty' ? 'Information Technology' : 'General'),
           bio: bio || (isSuperAdminEmail ? 'Super Administrator of Pixela Photography Club.' : ''),
           skills: skills || [],
           specialization: specialization || (isSuperAdminEmail ? 'Lead Admin & Curator' : 'Visual Creator'),
           avatarUrl: avatarUrl || (isSuperAdminEmail ? '/ojashva.jpg' : ''),
+          instagramUrl: formattedInsta,
+          socialLinks: finalSocialLinks,
+          currentProfession: currentProfession || '',
+          pastRole: pastRole || '',
+          tenureYear: tenureYear || '',
+          designation: designation || '',
           isApproved: finalApproval,
         });
 
@@ -376,9 +454,15 @@ router.post('/auth/register', async (req, res) => {
             role: user.role,
             avatarUrl: user.avatarUrl,
             specialization: user.specialization,
+            instagramUrl: user.instagramUrl,
+            socialLinks: user.socialLinks || [],
             department: user.department,
             semester: user.semester,
             year: user.year,
+            currentProfession: user.currentProfession,
+            pastRole: user.pastRole,
+            tenureYear: user.tenureYear,
+            designation: user.designation,
             isApproved: user.isApproved,
           },
         });
@@ -395,6 +479,8 @@ router.post('/auth/register', async (req, res) => {
         memoryStore.users[memUserIndex].isApproved = true;
         if (password) memoryStore.users[memUserIndex].passwordHash = bcrypt.hashSync(password, 8);
         if (avatarUrl) memoryStore.users[memUserIndex].avatarUrl = avatarUrl;
+        if (formattedInsta) memoryStore.users[memUserIndex].instagramUrl = formattedInsta;
+        if (finalSocialLinks.length > 0) memoryStore.users[memUserIndex].socialLinks = finalSocialLinks;
         const token = jwt.sign({ id: memoryStore.users[memUserIndex]._id }, process.env.JWT_SECRET || 'pixela_secret_key_2026_shutter_stories', { expiresIn: '30d' });
         return res.status(200).json({
           token,
@@ -405,6 +491,8 @@ router.post('/auth/register', async (req, res) => {
             role: 'admin',
             avatarUrl: memoryStore.users[memUserIndex].avatarUrl,
             specialization: memoryStore.users[memUserIndex].specialization || 'Lead Admin & Curator',
+            instagramUrl: memoryStore.users[memUserIndex].instagramUrl || formattedInsta,
+            socialLinks: memoryStore.users[memUserIndex].socialLinks || finalSocialLinks,
             isApproved: true,
           },
         });
@@ -428,6 +516,12 @@ router.post('/auth/register', async (req, res) => {
       skills: skills || [],
       specialization: specialization || (isSuperAdminEmail ? 'Lead Admin & Curator' : 'Visual Creator'),
       avatarUrl: avatarUrl || (isSuperAdminEmail ? '/ojashva.jpg' : ''),
+      instagramUrl: formattedInsta,
+      socialLinks: finalSocialLinks,
+      currentProfession: currentProfession || '',
+      pastRole: pastRole || '',
+      tenureYear: tenureYear || '',
+      designation: designation || '',
       isApproved: finalApproval,
       createdAt: new Date(),
     };
@@ -443,9 +537,15 @@ router.post('/auth/register', async (req, res) => {
         role: newUser.role,
         avatarUrl: newUser.avatarUrl,
         specialization: newUser.specialization,
+        instagramUrl: newUser.instagramUrl,
+        socialLinks: newUser.socialLinks || [],
         department: newUser.department,
         semester: newUser.semester,
         year: newUser.year,
+        currentProfession: newUser.currentProfession,
+        pastRole: newUser.pastRole,
+        tenureYear: newUser.tenureYear,
+        designation: newUser.designation,
         isApproved: newUser.isApproved,
       },
     });
@@ -480,6 +580,8 @@ router.post('/auth/login', async (req, res) => {
               role: isSuperAdminEmail ? 'admin' : user.role,
               avatarUrl: user.avatarUrl,
               specialization: user.specialization,
+              instagramUrl: user.instagramUrl || '',
+              socialLinks: user.socialLinks || [],
               department: user.department,
               semester: user.semester,
               year: user.year,
@@ -508,6 +610,8 @@ router.post('/auth/login', async (req, res) => {
           department: 'Information Technology',
           semester: 6,
           year: '3rd Year',
+          instagramUrl: 'https://www.instagram.com/mr_ojashva',
+          socialLinks: [{ platform: 'instagram', url: 'https://www.instagram.com/mr_ojashva' }],
           isApproved: true,
         };
         if (isSuperAdminEmail) adminUser.role = 'admin';
@@ -521,6 +625,8 @@ router.post('/auth/login', async (req, res) => {
             role: isSuperAdminEmail ? 'admin' : adminUser.role,
             avatarUrl: adminUser.avatarUrl,
             specialization: adminUser.specialization || 'Lead Admin & Curator',
+            instagramUrl: adminUser.instagramUrl || '',
+            socialLinks: adminUser.socialLinks || [],
             department: adminUser.department,
             semester: adminUser.semester,
             year: adminUser.year,
@@ -651,12 +757,22 @@ router.get('/users', protect, adminOnly, async (req, res) => {
 
 // Super Admin add any user/member/leader directly
 router.post('/users', protect, adminOnly, async (req, res) => {
-  const { name, email, password, role, semester, year, department, bio, skills, specialization, avatarUrl } = req.body;
+  const { name, email, password, role, semester, year, department, bio, skills, specialization, avatarUrl, instagramUrl, socialLinks } = req.body;
   try {
     if (!name || !email) {
       return res.status(400).json({ error: 'Name and email are required.' });
     }
     const normalizedEmail = email.toLowerCase().trim();
+
+    const formattedInsta = formatSocialUrl('instagram', instagramUrl);
+    let finalSocialLinks = Array.isArray(socialLinks) ? socialLinks.map(s => ({
+      platform: s.platform || 'other',
+      url: formatSocialUrl(s.platform, s.url)
+    })) : [];
+    if (formattedInsta && !finalSocialLinks.some(s => s.platform === 'instagram')) {
+      finalSocialLinks.unshift({ platform: 'instagram', url: formattedInsta });
+    }
+    finalSocialLinks = finalSocialLinks.slice(0, 3);
 
     if (isDbConnected()) {
       try {
@@ -676,6 +792,8 @@ router.post('/users', protect, adminOnly, async (req, res) => {
           skills: Array.isArray(skills) ? skills : (typeof skills === 'string' ? skills.split(',').map(s => s.trim()) : []),
           specialization: specialization || 'Visual Creator',
           avatarUrl: avatarUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300&auto=format&fit=crop&q=80',
+          instagramUrl: formattedInsta,
+          socialLinks: finalSocialLinks,
           isApproved: true,
         });
 
@@ -690,6 +808,8 @@ router.post('/users', protect, adminOnly, async (req, res) => {
             role: user.role,
             avatarUrl: user.avatarUrl,
             specialization: user.specialization,
+            instagramUrl: user.instagramUrl,
+            socialLinks: user.socialLinks || [],
             department: user.department,
             semester: user.semester,
             year: user.year,
@@ -721,6 +841,8 @@ router.post('/users', protect, adminOnly, async (req, res) => {
       skills: Array.isArray(skills) ? skills : (typeof skills === 'string' ? skills.split(',').map(s => s.trim()) : []),
       specialization: specialization || 'Visual Creator',
       avatarUrl: avatarUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300&auto=format&fit=crop&q=80',
+      instagramUrl: formattedInsta,
+      socialLinks: finalSocialLinks,
       isApproved: true,
       createdAt: new Date(),
     };
@@ -814,6 +936,62 @@ router.get('/members', async (req, res) => {
     }
     const approved = memoryStore.users
       .filter(u => u.isApproved && (u.role === 'member' || u.role === 'crew' || u.role === 'photographer'))
+      .map(u => {
+        const { passwordHash, ...safe } = u;
+        return safe;
+      });
+    return res.json(approved);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Public Alumni list (Real-time synced for all users)
+router.get('/alumni', async (req, res) => {
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
+  try {
+    if (isDbConnected()) {
+      try {
+        const alumni = await User.find({ isApproved: true, role: 'alumni' })
+          .select('-password')
+          .sort({ createdAt: -1 });
+        if (alumni) return res.json(alumni);
+      } catch (dbErr) {
+        console.warn('DB alumni fetch error, using memory fallback');
+      }
+    }
+    const approved = memoryStore.users
+      .filter(u => u.isApproved && u.role === 'alumni')
+      .map(u => {
+        const { passwordHash, ...safe } = u;
+        return safe;
+      });
+    return res.json(approved);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Public Faculty Coordinators list (Real-time synced for all users)
+router.get('/faculty', async (req, res) => {
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
+  try {
+    if (isDbConnected()) {
+      try {
+        const faculty = await User.find({ isApproved: true, role: 'faculty' })
+          .select('-password')
+          .sort({ createdAt: -1 });
+        if (faculty) return res.json(faculty);
+      } catch (dbErr) {
+        console.warn('DB faculty fetch error, using memory fallback');
+      }
+    }
+    const approved = memoryStore.users
+      .filter(u => u.isApproved && u.role === 'faculty')
       .map(u => {
         const { passwordHash, ...safe } = u;
         return safe;

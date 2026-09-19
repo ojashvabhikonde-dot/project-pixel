@@ -26,9 +26,13 @@ export default function AdminPage() {
     department: 'Information Technology',
     semester: 6,
     year: '3rd Year',
-    specialization: 'Visual Creator & Photographer',
+    instagramUrl: '',
     bio: '',
-    avatarUrl: ''
+    avatarUrl: '',
+    tenureYear: '2025-2026',
+    pastRole: 'Ex Prime',
+    currentProfession: 'Senior Media Director',
+    designation: 'Faculty Coordinator'
   });
   const [isSubmittingUser, setIsSubmittingUser] = useState(false);
   const [userSuccessMessage, setUserSuccessMessage] = useState('');
@@ -152,7 +156,7 @@ export default function AdminPage() {
           department: 'Information Technology',
           semester: 6,
           year: '3rd Year',
-          specialization: 'Visual Creator & Photographer',
+          instagramUrl: '',
           bio: '',
           avatarUrl: ''
         });
@@ -341,6 +345,7 @@ export default function AdminPage() {
       (u.name || '').toLowerCase().includes(userSearch.toLowerCase()) ||
       (u.email || '').toLowerCase().includes(userSearch.toLowerCase()) ||
       (u.department || '').toLowerCase().includes(userSearch.toLowerCase()) ||
+      (u.instagramUrl || '').toLowerCase().includes(userSearch.toLowerCase()) ||
       (u.specialization || '').toLowerCase().includes(userSearch.toLowerCase());
 
     if (!matchesSearch) return false;
@@ -500,7 +505,18 @@ export default function AdminPage() {
                           )}
                         </div>
                         <p className="text-[11px] text-zinc-400 font-mono truncate">{u.email}</p>
-                        <p className="text-[10px] text-primary font-mono truncate">{u.specialization || 'Visual Creator'}</p>
+                        {u.instagramUrl ? (
+                          <a 
+                            href={u.instagramUrl} 
+                            target="_blank" 
+                            rel="noopener noreferrer" 
+                            className="text-[10px] text-[#ff5e95] hover:underline font-mono truncate block"
+                          >
+                            {u.instagramUrl.replace(/^https?:\/\/(www\.)?instagram\.com\//, '@').replace(/\/$/, '')}
+                          </a>
+                        ) : (
+                          <p className="text-[10px] text-primary font-mono truncate">Pixela Member</p>
+                        )}
                       </div>
                     </div>
 
@@ -901,12 +917,12 @@ export default function AdminPage() {
               </div>
 
               <div>
-                <label className="block text-[11px] font-medium text-zinc-300 mb-1">Specialization / Title</label>
+                <label className="block text-[11px] font-medium text-zinc-300 mb-1">Instagram Profile URL / Handle</label>
                 <input
                   type="text"
-                  placeholder="e.g. Wildlife Cinematographer, Portrait Specialist"
-                  value={newUser.specialization}
-                  onChange={(e) => setNewUser({ ...newUser, specialization: e.target.value })}
+                  placeholder="e.g. mr_ojashva or https://instagram.com/mr_ojashva"
+                  value={newUser.instagramUrl}
+                  onChange={(e) => setNewUser({ ...newUser, instagramUrl: e.target.value })}
                   className="w-full bg-zinc-900 border border-zinc-800 rounded-lg py-2 px-3 text-xs text-white focus:outline-none focus:border-primary"
                 />
               </div>
