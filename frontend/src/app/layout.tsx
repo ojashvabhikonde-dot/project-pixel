@@ -77,15 +77,36 @@ export default function RootLayout({
               </nav>
 
               {/* User Profiles / Access */}
-              <div className="hidden md:flex items-center space-x-4">
+              <div className="hidden md:flex items-center space-x-3">
                 {user ? (
-                  <div className="flex items-center space-x-3 bg-card/60 rounded-full py-1 pl-2 pr-3 border border-border/40">
-                    <div className="h-6 w-6 rounded-full bg-foreground text-background flex items-center justify-center text-xs font-semibold">
-                      {user.name.charAt(0)}
-                    </div>
-                    <span className="text-xs text-foreground font-medium truncate max-w-[80px]">{user.name}</span>
-                    {user.role === 'admin' && (
-                      <NextLink href="/admin" className="text-[10px] bg-primary/20 text-primary px-2 py-0.5 rounded border border-primary/30">
+                  <div className="flex items-center space-x-2.5 bg-card/60 rounded-full py-1 pl-1.5 pr-2.5 border border-border/40 hover:border-white/20 transition-colors">
+                    <NextLink
+                      href="/profile"
+                      className="flex items-center space-x-2 group cursor-pointer"
+                      title="View & Edit My Profile"
+                    >
+                      <div className="h-7 w-7 rounded-full bg-zinc-900 border border-zinc-700 overflow-hidden flex items-center justify-center text-xs font-semibold text-white group-hover:border-primary transition-colors">
+                        {user.avatarUrl ? (
+                          <img src={user.avatarUrl} alt={user.name} className="h-full w-full object-cover" />
+                        ) : (
+                          user.name?.charAt(0) || 'U'
+                        )}
+                      </div>
+                      <span className="text-xs text-foreground font-medium truncate max-w-[90px] group-hover:text-primary transition-colors">
+                        {user.name}
+                      </span>
+                    </NextLink>
+
+                    <NextLink
+                      href="/profile"
+                      className="text-[10px] bg-zinc-800/80 hover:bg-zinc-700 text-zinc-300 px-2 py-0.5 rounded-full border border-zinc-700 transition-colors font-medium"
+                      title="Edit Profile"
+                    >
+                      Edit
+                    </NextLink>
+
+                    {(user.role === 'admin' || user.role === 'president' || user.email?.toLowerCase() === 'pixela@oriental.ac.in') && (
+                      <NextLink href="/admin" className="text-[10px] bg-primary/20 text-primary px-2.5 py-0.5 rounded-full border border-primary/40 font-bold hover:bg-primary/30 transition-colors">
                         Admin
                       </NextLink>
                     )}
@@ -128,11 +149,17 @@ export default function RootLayout({
               <NextLink href="/gallery" onClick={() => setMobileMenuOpen(false)} className={`block py-2 text-sm ${isActive('/gallery') ? 'text-foreground font-bold' : 'text-muted-foreground hover:text-foreground'}`}>Gallery</NextLink>
               <NextLink href="/assistant" onClick={() => setMobileMenuOpen(false)} className={`block py-2 text-sm ${isActive('/assistant') ? 'text-foreground font-bold' : 'text-muted-foreground hover:text-foreground'}`}>Pixie AI</NextLink>
               <NextLink href="/hire" onClick={() => setMobileMenuOpen(false)} className={`block py-2 text-sm ${isActive('/hire') ? 'text-foreground font-bold' : 'text-muted-foreground hover:text-foreground'}`}>Hire Us</NextLink>
+              {user && (
+                <NextLink href="/profile" onClick={() => setMobileMenuOpen(false)} className={`block py-2 text-sm ${isActive('/profile') ? 'text-foreground font-bold' : 'text-primary font-semibold'}`}>My Profile & Edit Details</NextLink>
+              )}
+              {(user?.role === 'admin' || user?.role === 'president' || user?.email?.toLowerCase() === 'pixela@oriental.ac.in') && (
+                <NextLink href="/admin" onClick={() => setMobileMenuOpen(false)} className={`block py-2 text-sm text-primary font-bold`}>Admin Dashboard</NextLink>
+              )}
               <div className="pt-2 border-t border-border/40">
                 {user ? (
                   <div className="flex items-center justify-between py-2 text-sm text-foreground">
-                    <span>{user.name}</span>
-                    <button onClick={handleLogout} className="flex items-center text-red-500">
+                    <span className="truncate max-w-[200px]">{user.name} ({user.role})</span>
+                    <button onClick={handleLogout} className="flex items-center text-red-500 text-xs font-semibold">
                       <LogOut className="h-4 w-4 mr-1" /> Logout
                     </button>
                   </div>

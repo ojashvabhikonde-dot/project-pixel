@@ -17,6 +17,7 @@ export default function HirePage() {
   const [success, setSuccess] = useState(false);
   const [isLoginOpen, setIsLoginOpen] = useState(false);
   const [token, setToken] = useState<string | null>(null);
+  const [error, setError] = useState('');
 
   useEffect(() => {
     // Read local auth state
@@ -69,8 +70,6 @@ export default function HirePage() {
       setLoading(false);
     }
   };
-
-  const [error, setError] = useState('');
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-16 space-y-16 bg-background text-left">

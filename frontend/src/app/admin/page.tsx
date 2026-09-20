@@ -1,9 +1,9 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { 
-  ShieldCheck, Calendar, Image as ImageIcon, Users, BookOpen, AlertCircle, 
-  Check, X, Send, Database, BarChart3, UserPlus, Trash2, Search, Filter, 
+import {
+  ShieldCheck, Calendar, Image as ImageIcon, Users, BookOpen, AlertCircle,
+  Check, X, Send, Database, BarChart3, UserPlus, Trash2, Search, Filter,
   ShieldAlert, Sparkles, Edit3, UserCheck, Shield
 } from 'lucide-react';
 import { API_URL } from '@/config/api';
@@ -13,7 +13,7 @@ export default function AdminPage() {
   const [pendingPhotos, setPendingPhotos] = useState<any[]>([]);
   const [pendingMembers, setPendingMembers] = useState<any[]>([]);
   const [allUsers, setAllUsers] = useState<any[]>([]);
-  
+
   // User Management State
   const [userSearch, setUserSearch] = useState('');
   const [userRoleFilter, setUserRoleFilter] = useState('all');
@@ -152,17 +152,17 @@ export default function AdminPage() {
           name: '',
           email: '',
           password: '',
-          role: 'member',
-          department: 'Information Technology',
+          role: '',
+          department: '',
           semester: 6,
-          year: '3rd Year',
+          year: '',
           instagramUrl: '',
           bio: '',
           avatarUrl: '',
-          tenureYear: '2025-2026',
-          pastRole: 'Ex Prime',
-          currentProfession: 'Senior Media Director',
-          designation: 'Faculty Coordinator'
+          tenureYear: '',
+          pastRole: '',
+          currentProfession: '',
+          designation: ''
         });
         loadAdminData(token);
         setTimeout(() => setUserSuccessMessage(''), 4000);
@@ -179,7 +179,7 @@ export default function AdminPage() {
   const handleDeleteUser = async (targetUser: any) => {
     const targetId = targetUser._id || targetUser.id;
     const isRootAdmin = targetUser.email?.toLowerCase() === 'pixela@oriental.ac.in';
-    
+
     if (isRootAdmin) {
       alert('The Primary Super Admin root account (pixela@oriental.ac.in) cannot be deleted for security purposes.');
       return;
@@ -345,7 +345,7 @@ export default function AdminPage() {
 
   // Filtered Users List
   const filteredUsers = allUsers.filter(u => {
-    const matchesSearch = 
+    const matchesSearch =
       (u.name || '').toLowerCase().includes(userSearch.toLowerCase()) ||
       (u.email || '').toLowerCase().includes(userSearch.toLowerCase()) ||
       (u.department || '').toLowerCase().includes(userSearch.toLowerCase()) ||
@@ -362,7 +362,7 @@ export default function AdminPage() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-12">
-      
+
       {/* Page Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-border/40 pb-6">
         <div className="space-y-1">
@@ -465,9 +465,8 @@ export default function AdminPage() {
                 <button
                   key={tab}
                   onClick={() => setUserRoleFilter(tab)}
-                  className={`px-3 py-1 rounded-md font-medium uppercase text-[10px] tracking-wider transition-colors capitalize ${
-                    userRoleFilter === tab ? 'bg-primary text-primary-foreground font-bold' : 'text-zinc-400 hover:text-white'
-                  }`}
+                  className={`px-3 py-1 rounded-md font-medium uppercase text-[10px] tracking-wider transition-colors capitalize ${userRoleFilter === tab ? 'bg-primary text-primary-foreground font-bold' : 'text-zinc-400 hover:text-white'
+                    }`}
                 >
                   {tab === 'all' ? 'All Users' : tab}
                 </button>
@@ -510,10 +509,10 @@ export default function AdminPage() {
                         </div>
                         <p className="text-[11px] text-zinc-400 font-mono truncate">{u.email}</p>
                         {u.instagramUrl ? (
-                          <a 
-                            href={u.instagramUrl} 
-                            target="_blank" 
-                            rel="noopener noreferrer" 
+                          <a
+                            href={u.instagramUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
                             className="text-[10px] text-[#ff5e95] hover:underline font-mono truncate block"
                           >
                             {u.instagramUrl.replace(/^https?:\/\/(www\.)?instagram\.com\//, '@').replace(/\/$/, '')}
@@ -597,17 +596,17 @@ export default function AdminPage() {
 
       {/* Approvals & Bookings & RAG Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-        
+
         {/* Left Side: Approvals lists */}
         <div className="lg:col-span-8 space-y-8">
-          
+
           {/* 1. Booking Notifications / Alerts */}
           <div className="bg-card border border-border/40 rounded-2xl p-6 space-y-4">
             <h3 className="text-lg font-bold text-white flex items-center space-x-2">
               <Calendar className="h-5 w-5 text-primary" />
               <span>Event Booking Mail Alerts</span>
             </h3>
-            
+
             {bookings.length === 0 ? (
               <p className="text-xs text-zinc-500 italic">No event bookings received yet.</p>
             ) : (
@@ -619,13 +618,12 @@ export default function AdminPage() {
                         <h4 className="font-bold text-white text-sm">{booking.eventType}</h4>
                         <p className="text-[10px] text-zinc-400 mt-0.5">Venue: {booking.venue} • Date: {new Date(booking.eventDate).toLocaleDateString()}</p>
                       </div>
-                      <span className={`text-[9px] uppercase px-2 py-0.5 rounded font-semibold border ${
-                        booking.status === 'accepted' 
-                          ? 'bg-green-500/10 text-green-500 border-green-500/20' 
-                          : booking.status === 'declined'
+                      <span className={`text-[9px] uppercase px-2 py-0.5 rounded font-semibold border ${booking.status === 'accepted'
+                        ? 'bg-green-500/10 text-green-500 border-green-500/20'
+                        : booking.status === 'declined'
                           ? 'bg-red-500/10 text-red-500 border-red-500/20'
                           : 'bg-primary/10 text-primary border-primary/20 animate-pulse'
-                      }`}>
+                        }`}>
                         {booking.status}
                       </span>
                     </div>
@@ -636,17 +634,17 @@ export default function AdminPage() {
 
                     <div className="flex items-center justify-between text-[10px] text-zinc-500 pt-1">
                       <span>Client: {booking.clientName} ({booking.clientEmail})</span>
-                      
+
                       {booking.status === 'pending' && (
                         <div className="flex space-x-2">
-                          <button 
+                          <button
                             onClick={() => handleUpdateBookingStatus(booking._id, 'accepted')}
                             className="bg-green-600 hover:bg-green-500 text-white p-1 rounded transition-colors"
                             title="Accept request"
                           >
                             <Check className="h-3 w-3" />
                           </button>
-                          <button 
+                          <button
                             onClick={() => handleUpdateBookingStatus(booking._id, 'declined')}
                             className="bg-red-600 hover:bg-red-500 text-white p-1 rounded transition-colors"
                             title="Decline request"
@@ -757,7 +755,7 @@ export default function AdminPage() {
         {/* Right Side: RAG Bot Knowledge Seeder */}
         <div className="lg:col-span-4 bg-card border border-border/40 rounded-2xl p-6 space-y-4 shadow-xl relative overflow-hidden">
           <div className="absolute top-0 right-0 w-32 h-32 rounded-full pixela-gradient-bg opacity-5 blur-2xl pointer-events-none" />
-          
+
           <h3 className="text-lg font-bold text-white flex items-center space-x-2">
             <BookOpen className="h-5 w-5 text-primary" />
             <span>Pixie RAG Knowledge Seeder</span>
@@ -832,7 +830,7 @@ export default function AdminPage() {
       {showAddUserModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4 overflow-y-auto">
           <div className="relative w-full max-w-lg my-8 overflow-hidden rounded-2xl glass-panel border border-white/10 p-6 sm:p-8 text-white shadow-2xl">
-            <button 
+            <button
               onClick={() => setShowAddUserModal(false)}
               className="absolute top-4 right-4 text-zinc-400 hover:text-white transition-colors duration-200"
             >

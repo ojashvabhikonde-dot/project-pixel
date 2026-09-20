@@ -34,6 +34,7 @@ export default function GalleryPage() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const [uploadSuccess, setUploadSuccess] = useState(false);
+  const [permissionNotice, setPermissionNotice] = useState<{ title: string; message: string } | null>(null);
 
   useEffect(() => {
     // Set local token/user
@@ -79,8 +80,6 @@ export default function GalleryPage() {
         }
       });
   };
-
-  const [permissionNotice, setPermissionNotice] = useState<{ title: string; message: string } | null>(null);
 
   const handleUploadClick = () => {
     if (!token || !user) {

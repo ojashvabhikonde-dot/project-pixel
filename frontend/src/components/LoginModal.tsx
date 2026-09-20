@@ -62,8 +62,15 @@ export default function LoginModal({
 
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [registrationSuccessMsg, setRegistrationSuccessMsg] = useState('');
 
-  if (!isOpen) return null;
+  React.useEffect(() => {
+    if (isOpen) {
+      setIsRegister(initialMode === 'register');
+      setError('');
+      setRegistrationSuccessMsg('');
+    }
+  }, [isOpen, initialMode]);
 
   const isSuperAdminEmail = email.trim().toLowerCase() === 'pixela@oriental.ac.in';
   const totalHandlesCount = (instagramUrl.trim() ? 1 : 0) + extraHandles.length;
@@ -143,7 +150,24 @@ export default function LoginModal({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setRegistrationSuccessMsg('');
     setLoading(true);
+
+    const cleanEmail = email.trim();
+    const cleanPassword = password.trim();
+    const cleanName = name.trim();
+
+    if (!cleanEmail || !cleanPassword) {
+      setError('Please provide both email and password.');
+      setLoading(false);
+      return;
+    }
+
+    if (isRegister && !cleanName) {
+      setError('Please provide your full name.');
+      setLoading(false);
+      return;
+    }
 
     const formattedInstagram = instagramUrl.trim();
 
@@ -161,23 +185,23 @@ export default function LoginModal({
     const url = isRegister ? '/api/auth/register' : '/api/auth/login';
     const payload = isRegister 
       ? {
-          name,
-          email,
-          password,
+          name: cleanName,
+          email: cleanEmail,
+          password: cleanPassword,
           role: role || 'member',
           avatarUrl,
           instagramUrl: formattedInstagram,
           socialLinks: socialLinks.slice(0, 3),
-          semester: Number(semester),
-          year,
-          department,
+          semester: Number(semester) || 1,
+          year: year || '1st Year',
+          department: department || 'General',
           currentProfession,
           pastRole,
           tenureYear,
           designation,
           bio,
         }
-      : { email, password };
+      : { email: cleanEmail, password: cleanPassword };
 
     try {
       const targetApi = API_URL || 'http://localhost:5000';
@@ -196,21 +220,31 @@ export default function LoginModal({
       }
 
       if (!res.ok) {
-        throw new Error(data.error || 'Authentication failed');
+        throw new Error(data.error || 'Authentication failed. Please check your credentials.');
       }
 
       // Save token and user details to localStorage
       localStorage.setItem('pixela_token', data.token);
       localStorage.setItem('pixela_user', JSON.stringify(data.user));
       
-      onSuccess(data.token, data.user);
-      onClose();
+      if (isRegister && role === 'member' && !data.user.isApproved) {
+        setRegistrationSuccessMsg('Registration submitted successfully! Your application has been sent to the Super Admin for roster approval.');
+        setTimeout(() => {
+          onSuccess(data.token, data.user);
+          onClose();
+        }, 1200);
+      } else {
+        onSuccess(data.token, data.user);
+        onClose();
+      }
     } catch (err: any) {
       setError(err.message || 'Something went wrong. Please try again.');
     } finally {
       setLoading(false);
     }
   };
+
+  if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4 overflow-y-auto">
@@ -251,6 +285,13 @@ export default function LoginModal({
         {error && (
           <div className="mb-4 p-3 rounded-lg bg-red-950/60 border border-red-500/40 text-red-400 text-xs font-medium">
             {error}
+          </div>
+        )}
+
+        {registrationSuccessMsg && (
+          <div className="mb-4 p-3 rounded-lg bg-green-950/60 border border-green-500/40 text-green-400 text-xs font-medium flex items-center gap-2">
+            <CheckCircle2 className="h-4 w-4 shrink-0" />
+            <span>{registrationSuccessMsg}</span>
           </div>
         )}
 

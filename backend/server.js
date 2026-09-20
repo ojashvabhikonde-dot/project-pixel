@@ -27,15 +27,15 @@ app.get('/', (req, res) => {
   res.json({ message: 'Pixela Photography Club API running successfully.' });
 });
 
-// Seed data function to populate DB on startup if empty
+// Seed data function to populate DB on startup if empty or missing crew
 const seedDatabase = async () => {
   try {
-    const userCount = await User.countDocuments();
-    if (userCount === 0) {
-      console.log('Seeding initial crew database...');
-      
-      // 1. Create Default Super Admin user
-      const superAdmin = await User.create({
+    // 1. Ensure Default Super Admin user exists
+    const superAdmin = await User.findOne({ email: 'pixela@oriental.ac.in' });
+    let adminUser = superAdmin;
+    if (!superAdmin) {
+      console.log('Seeding Default Super Admin user...');
+      adminUser = await User.create({
         name: 'Pixela Super Admin',
         email: 'pixela@oriental.ac.in',
         password: 'pixela@2026',
@@ -47,57 +47,183 @@ const seedDatabase = async () => {
         photographyGenre: ['Street', 'Portrait', 'Exhibition'],
         bio: 'Super Administrator & Coordinator of Pixela Photography Club.',
         avatarUrl: '/ojashva.jpg',
+        instagramUrl: 'https://www.instagram.com/mr_ojashva',
+        socialLinks: [
+          { platform: 'instagram', url: 'https://www.instagram.com/mr_ojashva' },
+          { platform: 'linkedin', url: 'https://www.linkedin.com/in/ojashva-bhikonde-947a48331' },
+          { platform: 'portfolio', url: 'https://portfolio-ojashva.vercel.app/' }
+        ],
         isApproved: true,
       });
+    }
 
-      const admin = superAdmin;
+    // 2. Ensure Leaders exist
+    const leadersData = [
+      {
+        name: 'Aarav Sharma',
+        email: 'president@pixela.club',
+        password: 'password123',
+        role: 'president',
+        semester: 8,
+        year: '4th Year',
+        department: 'Computer Science',
+        skills: ['Cinematography', 'Color Grading'],
+        photographyGenre: ['Wildlife', 'Drone'],
+        bio: 'Behind the glass for 4 years, directing cinematic projects and club activities.',
+        avatarUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&auto=format&fit=crop&q=80',
+        instagramUrl: 'https://www.instagram.com/shuttterbugg_',
+        socialLinks: [{ platform: 'instagram', url: 'https://www.instagram.com/shuttterbugg_' }],
+        isApproved: true,
+      },
+      {
+        name: 'Nisha Verma',
+        email: 'vp@pixela.club',
+        password: 'password123',
+        role: 'vice_president',
+        semester: 6,
+        year: '3rd Year',
+        department: 'Electronics',
+        skills: ['Macro Photography', 'Adobe Photoshop'],
+        photographyGenre: ['Macro', 'Nature'],
+        bio: 'Capturing details invisible to the naked eye. Passionate educator.',
+        avatarUrl: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=300&auto=format&fit=crop&q=80',
+        instagramUrl: 'https://www.instagram.com/anugyajhaaaa',
+        socialLinks: [{ platform: 'instagram', url: 'https://www.instagram.com/anugyajhaaaa' }],
+        isApproved: true,
+      },
+      {
+        name: 'Rohan Mehra',
+        email: 'techhead@pixela.club',
+        password: 'password123',
+        role: 'tech_head',
+        semester: 6,
+        year: '3rd Year',
+        department: 'Information Technology',
+        skills: ['Three.js', 'Next.js', 'Web Development'],
+        photographyGenre: ['Architecture', 'Night'],
+        bio: 'Blending tech and lenses. Built the Pixela platform and handles automation.',
+        avatarUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=300&auto=format&fit=crop&q=80',
+        instagramUrl: 'https://www.instagram.com/theshutterbug_devashish',
+        socialLinks: [
+          { platform: 'instagram', url: 'https://www.instagram.com/theshutterbug_devashish' },
+          { platform: 'github', url: 'https://github.com' }
+        ],
+        isApproved: true,
+      }
+    ];
+    for (const leader of leadersData) {
+      const exists = await User.findOne({ email: leader.email });
+      if (!exists) {
+        await User.create(leader);
+      }
+    }
 
-      // 2. Create Leaders
-      const leadersData = [
-        {
-          name: 'Aarav Sharma',
-          email: 'president@pixela.club',
-          password: 'password123',
-          role: 'president',
-          semester: 8,
-          year: '4th Year',
-          department: 'Computer Science',
-          skills: ['Cinematography', 'Color Grading'],
-          photographyGenre: ['Wildlife', 'Drone'],
-          bio: 'Behind the glass for 4 years, directing cinematic projects and club activities.',
-          avatarUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&auto=format&fit=crop&q=80',
-          isApproved: true,
-        },
-        {
-          name: 'Nisha Verma',
-          email: 'vp@pixela.club',
-          password: 'password123',
-          role: 'vice_president',
-          semester: 6,
-          year: '3rd Year',
-          department: 'Electronics',
-          skills: ['Macro Photography', 'Adobe Photoshop'],
-          photographyGenre: ['Macro', 'Nature'],
-          bio: 'Capturing details invisible to the naked eye. Passionate educator.',
-          avatarUrl: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=300&auto=format&fit=crop&q=80',
-          isApproved: true,
-        },
-        {
-          name: 'Rohan Mehra',
-          email: 'techhead@pixela.club',
-          password: 'password123',
-          role: 'tech_head',
-          semester: 6,
-          year: '3rd Year',
-          department: 'Information Technology',
-          skills: ['Three.js', 'Next.js', 'Web Development'],
-          photographyGenre: ['Architecture', 'Night'],
-          bio: 'Blending tech and lenses. Built the Pixela platform and handles automation.',
-          avatarUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=300&auto=format&fit=crop&q=80',
-          isApproved: true,
-        }
-      ];
-      const createdLeaders = await User.insertMany(leadersData);
+    // 3. Ensure Initial Active Crew Members exist (Approved so Crew Section is populated)
+    const crewData = [
+      {
+        name: 'Devansh Soni',
+        email: 'devansh@pixela.club',
+        password: 'password123',
+        role: 'member',
+        semester: 4,
+        year: '2nd Year',
+        department: 'Information Technology',
+        skills: ['Street Photography', 'Lightroom'],
+        photographyGenre: ['Street', 'Events'],
+        bio: 'Capturing candid college moments and street life in Bhopal.',
+        avatarUrl: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=300&auto=format&fit=crop&q=80',
+        instagramUrl: 'https://www.instagram.com/devansh_captures',
+        socialLinks: [{ platform: 'instagram', url: 'https://www.instagram.com/devansh_captures' }],
+        isApproved: true,
+      },
+      {
+        name: 'Priya Sharma',
+        email: 'priya@pixela.club',
+        password: 'password123',
+        role: 'member',
+        semester: 6,
+        year: '3rd Year',
+        department: 'Computer Science',
+        skills: ['Portraiture', 'Studio Lighting'],
+        photographyGenre: ['Portrait', 'Fashion'],
+        bio: 'Specialized in portrait lighting and post-processing color grading.',
+        avatarUrl: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=300&auto=format&fit=crop&q=80',
+        instagramUrl: 'https://www.instagram.com/priyasharma_snaps',
+        socialLinks: [{ platform: 'instagram', url: 'https://www.instagram.com/priyasharma_snaps' }],
+        isApproved: true,
+      },
+      {
+        name: 'Kavya Patel',
+        email: 'kavya@pixela.club',
+        password: 'password123',
+        role: 'member',
+        semester: 4,
+        year: '2nd Year',
+        department: 'AIML',
+        skills: ['Drone Operator', 'Landscape'],
+        photographyGenre: ['Drone', 'Nature'],
+        bio: 'Drone photography enthusiast and landscape visual artist.',
+        avatarUrl: 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=300&auto=format&fit=crop&q=80',
+        instagramUrl: 'https://www.instagram.com/kavya_visuals',
+        socialLinks: [{ platform: 'instagram', url: 'https://www.instagram.com/kavya_visuals' }],
+        isApproved: true,
+      },
+      {
+        name: 'Ayush Tiwari',
+        email: 'ayush@pixela.club',
+        password: 'password123',
+        role: 'member',
+        semester: 6,
+        year: '3rd Year',
+        department: 'Electronics',
+        skills: ['Macro Lens', 'Photoshop'],
+        photographyGenre: ['Macro', 'Nature'],
+        bio: 'Exploring miniature details and nature textures with prime macro glass.',
+        avatarUrl: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=300&auto=format&fit=crop&q=80',
+        instagramUrl: 'https://www.instagram.com/ayushtiwari_clicks',
+        socialLinks: [{ platform: 'instagram', url: 'https://www.instagram.com/ayushtiwari_clicks' }],
+        isApproved: true,
+      },
+      {
+        name: 'Tanvi Joshi',
+        email: 'tanvi@pixela.club',
+        password: 'password123',
+        role: 'member',
+        semester: 2,
+        year: '1st Year',
+        department: 'Cyber Security',
+        skills: ['Visual Storytelling', 'Cinematics'],
+        photographyGenre: ['Events', 'Documentary'],
+        bio: 'Storyteller covering campus fest stages and backstage narratives.',
+        avatarUrl: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=300&auto=format&fit=crop&q=80',
+        instagramUrl: 'https://www.instagram.com/tanvi_frame',
+        socialLinks: [{ platform: 'instagram', url: 'https://www.instagram.com/tanvi_frame' }],
+        isApproved: true,
+      },
+      {
+        name: 'Rishi Vardhan',
+        email: 'rishi@pixela.club',
+        password: 'password123',
+        role: 'member',
+        semester: 4,
+        year: '2nd Year',
+        department: 'Mechanical',
+        skills: ['Concert Photography', 'Fast Action'],
+        photographyGenre: ['Concert', 'Sports'],
+        bio: 'Fast-action concert and sports photographer with full-frame primes.',
+        avatarUrl: 'https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=300&auto=format&fit=crop&q=80',
+        instagramUrl: 'https://www.instagram.com/rishi_pixels',
+        socialLinks: [{ platform: 'instagram', url: 'https://www.instagram.com/rishi_pixels' }],
+        isApproved: true,
+      }
+    ];
+
+    for (const crew of crewData) {
+      const exists = await User.findOne({ email: crew.email });
+      if (!exists) {
+        await User.create(crew);
+      }
+    }
 
       // 3. Create Shutter Stories Exhibition Event
       console.log('Seeding Shutter Stories Exhibition...');
@@ -207,7 +333,6 @@ const seedDatabase = async () => {
       await ChatbotKnowledge.insertMany(knowledgeItems);
 
       console.log('Database seeded successfully!');
-    }
   } catch (error) {
     console.error('Error seeding database:', error);
   }

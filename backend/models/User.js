@@ -67,9 +67,29 @@ userSchema.pre('save', async function (next) {
   }
 });
 
-// Compare password method
+// Compare password method with safe fallback and auto-upgrade
 userSchema.methods.matchPassword = async function (enteredPassword) {
-  return await bcrypt.compare(enteredPassword, this.password);
+  if (!enteredPassword || !this.password) return false;
+  try {
+    const isMatch = await bcrypt.compare(enteredPassword, this.password);
+    if (isMatch) return true;
+  } catch (err) {
+    // Stored password might not be a valid bcrypt string, check plain text fallback
+  }
+
+  // Plain text fallback (for legacy or seeded accounts)
+  if (enteredPassword === this.password) {
+    try {
+      const salt = await bcrypt.genSalt(10);
+      this.password = await bcrypt.hash(enteredPassword, salt);
+      await this.save();
+    } catch (saveErr) {
+      // Ignore save error on auth check
+    }
+    return true;
+  }
+
+  return false;
 };
 
 export const User = mongoose.model('User', userSchema);
