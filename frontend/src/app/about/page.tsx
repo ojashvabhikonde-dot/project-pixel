@@ -159,7 +159,7 @@ export default function AboutPage() {
               <div className="p-5 space-y-2.5">
                 <div>
                   <span className="text-[9px] font-bold text-primary uppercase tracking-widest font-mono">Faculty Coordinator</span>
-                  <h3 className="text-lg font-bold text-white mt-0.5">Prof. Sumit Vashishtha</h3>
+                  <h3 className="text-lg font-bold text-white mt-0.5">Dr. Sumit Vasishtha</h3>
                   <p className="text-[10px] text-zinc-500">HOD of AIML Department, OIST Bhopal</p>
                 </div>
                 <p className="text-zinc-400 text-xs font-light leading-relaxed">
