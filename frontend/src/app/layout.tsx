@@ -197,7 +197,7 @@ export default function RootLayout({
                   href="https://portfolio-ojashva.vercel.app/" 
                   target="_blank" 
                   rel="noopener noreferrer"
-                  className="watermark-signature text-base font-bold text-transparent bg-clip-text bg-gradient-to-r from-[#00f2fe] via-[#ff5e95] to-[#ffaa5e] animate-gradient-text hover:opacity-85 transition-opacity cursor-pointer"
+                  className="watermark-signature text-xs sm:text-[13px] font-semibold text-transparent bg-clip-text bg-gradient-to-r from-[#00f2fe] via-[#ff5e95] to-[#ffaa5e] animate-gradient-text hover:opacity-85 transition-opacity cursor-pointer"
                   title="Open Ojashva Bhikonde Portfolio"
                 >
                   Ojashva Bhikonde
