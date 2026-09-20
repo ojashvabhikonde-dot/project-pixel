@@ -583,21 +583,21 @@ const MOCK_PHOTOS = [
     title: 'Cosmic Trails',
     category: 'Night',
     imageUrl: 'https://images.unsplash.com/photo-1506318137071-a8e063b4bec0?w=800&auto=format&fit=crop&q=80',
-    photographer: { name: 'Rohan Mehra' },
+    photographer: { name: 'Pixela' },
     camera: 'Sony A7 III',
   },
   {
     title: 'Golden Hour Dunes',
     category: 'Nature',
     imageUrl: 'https://images.unsplash.com/photo-1509316975850-ff9c5deb0cd9?w=800&auto=format&fit=crop&q=80',
-    photographer: { name: 'Ishaan Sen' },
+    photographer: { name: 'Pixela' },
     camera: 'Sony A7 III',
   },
   {
     title: 'Forest Path Sunrise',
     category: 'Nature',
     imageUrl: 'https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?w=800&auto=format&fit=crop&q=80',
-    photographer: { name: 'Ishaan Sen' },
+    photographer: { name: 'Pixela' },
     camera: 'Sony A7 III',
   }
 ];
