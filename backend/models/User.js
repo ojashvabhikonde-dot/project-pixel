@@ -51,6 +51,26 @@ const userSchema = new mongoose.Schema(
     tenureYear: { type: String }, // e.g., '2025-2026', '2024-2025'
     designation: { type: String }, // e.g., 'Faculty Coordinator', 'Senior Faculty Advisor'
     timelineOrder: { type: Number }, // for order display
+    // Track record & crew performance fields
+    gear: {
+      cameraBody: { type: String, default: '' },
+      primaryLens: { type: String, default: '' },
+      secondaryLens: { type: String, default: '' },
+      accessories: [{ type: String }],
+    },
+    badges: [{ type: String }], // e.g. 'Prime Shooter', 'Drone Pilot', 'Verified Crew', 'Event Lead', 'Exhibition Curator'
+    eventsCovered: [
+      {
+        eventName: { type: String },
+        date: { type: Date },
+        role: { type: String },
+        location: { type: String },
+        notes: { type: String },
+      }
+    ],
+    performanceRating: { type: Number, default: 5, min: 1, max: 5 },
+    trackRecordNotes: { type: String, default: '' },
+    joinDate: { type: Date, default: Date.now },
   },
   { timestamps: true }
 );

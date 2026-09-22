@@ -11,6 +11,15 @@ import { Blog } from '../models/Blog.js';
 import { Resource } from '../models/Resource.js';
 import { ChatbotKnowledge } from '../models/ChatbotKnowledge.js';
 import { chatPixie, critiquePhoto } from '../controllers/aiController.js';
+import {
+  loadRegistrationsFromFile,
+  saveRegistrationToFile,
+  saveAllRegistrationsToFile,
+  deleteRegistrationFromFile,
+  updateRegistrationStatusInFile,
+  getRegistrationsTableMarkdown,
+  getRegistrationsCsv
+} from '../config/fileStorage.js';
 
 const router = express.Router();
 
@@ -21,35 +30,11 @@ const upload = multer({ storage });
 const isDbConnected = () => mongoose.connection && mongoose.connection.readyState === 1;
 
 /* ==========================================================================
-   IN-MEMORY DATA STORE (Zero-downtime fallback if MongoDB is offline)
+   IN-MEMORY DATA STORE (Zero-downtime fallback synced with persistent file storage)
    ========================================================================== */
 
 const memoryStore = {
-  users: [
-    {
-      _id: 'user_superadmin_pixela',
-      id: 'user_superadmin_pixela',
-      name: 'Pixela Super Admin',
-      email: 'pixela@oriental.ac.in',
-      passwordHash: bcrypt.hashSync('pixela@2026', 8),
-      role: 'admin',
-      semester: 6,
-      year: '3rd Year',
-      department: 'Information Technology',
-      skills: ['Club Lead', 'Direction', 'Management', 'Curation'],
-      photographyGenre: ['Street', 'Portrait', 'Exhibition'],
-      bio: 'Super Administrator of Pixela Photography Club.',
-      avatarUrl: '/ojashva.jpg',
-      instagramUrl: 'https://www.instagram.com/mr_ojashva',
-      socialLinks: [
-        { platform: 'instagram', url: 'https://www.instagram.com/mr_ojashva' },
-        { platform: 'linkedin', url: 'https://www.linkedin.com/in/ojashva-bhikonde-947a48331' },
-        { platform: 'portfolio', url: 'https://portfolio-ojashva.vercel.app/' }
-      ],
-      isApproved: true,
-      createdAt: new Date(),
-    },
-  ],
+  users: loadRegistrationsFromFile(),
 
   photos: [
     {
@@ -291,7 +276,7 @@ router.post('/auth/register', async (req, res) => {
     const isSuperAdminEmail = normalizedEmail === 'pixela@oriental.ac.in';
     const isAudience = role === 'viewer';
     const finalRole = isSuperAdminEmail ? 'admin' : (role || 'member');
-    // Only Super Admin and Audience (Viewers) are auto-approved. Crew members, alumni, and faculty must be approved by Super Admin.
+    // Super Admin and Audience (Viewers) are auto-approved. Crew members, alumni, and faculty are approved by Super Admin.
     const finalApproval = isSuperAdminEmail || isAudience ? true : false;
 
     // Process Instagram & Social links
@@ -301,25 +286,25 @@ router.post('/auth/register', async (req, res) => {
       url: formatSocialUrl(s.platform, s.url)
     })) : [];
 
-    // Ensure instagram is present in socialLinks if provided
     if (formattedInsta && !finalSocialLinks.some(s => s.platform === 'instagram')) {
       finalSocialLinks.unshift({ platform: 'instagram', url: formattedInsta });
     }
-    // Cap at max 3 handles
     finalSocialLinks = finalSocialLinks.slice(0, 3);
 
     const safeDepartment = department || (role === 'faculty' ? 'Information Technology' : 'General');
     const safeSpecialization = specialization || (isSuperAdminEmail ? 'Lead Admin & Curator' : 'Visual Creator');
     const safeAvatar = avatarUrl || (isSuperAdminEmail ? '/ojashva.jpg' : '');
     const safeBio = bio || (isSuperAdminEmail ? 'Super Administrator of Pixela Photography Club.' : '');
+    const skillsArray = Array.isArray(skills) ? skills : (typeof skills === 'string' ? skills.split(',').map(s => s.trim()).filter(Boolean) : []);
 
     let createdUserPayload = null;
+    let savedDbUser = null;
 
     if (isDbConnected()) {
       try {
-        let existingUser = await User.findOne({ email: normalizedEmail });
+        const escapedEmail = normalizedEmail.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        let existingUser = await User.findOne({ email: { $regex: new RegExp(`^${escapedEmail}$`, 'i') } });
         if (existingUser) {
-          // If superadmin already existed, update credentials / role
           if (isSuperAdminEmail) {
             existingUser.role = 'admin';
             existingUser.isApproved = true;
@@ -328,6 +313,7 @@ router.post('/auth/register', async (req, res) => {
             if (formattedInsta) existingUser.instagramUrl = formattedInsta;
             if (finalSocialLinks.length > 0) existingUser.socialLinks = finalSocialLinks;
             await existingUser.save();
+            savedDbUser = existingUser;
             const token = jwt.sign({ id: existingUser._id }, process.env.JWT_SECRET || 'pixela_secret_key_2026_shutter_stories', { expiresIn: '30d' });
             createdUserPayload = {
               token,
@@ -352,7 +338,7 @@ router.post('/auth/register', async (req, res) => {
               },
             };
           } else {
-            return res.status(400).json({ error: 'User already exists with this email. Please sign in instead.' });
+            return res.status(400).json({ error: 'User with this email already exists. Please sign in instead.' });
           }
         } else {
           const user = await User.create({
@@ -364,7 +350,7 @@ router.post('/auth/register', async (req, res) => {
             year: year || '1st Year',
             department: safeDepartment,
             bio: safeBio,
-            skills: Array.isArray(skills) ? skills : (typeof skills === 'string' ? skills.split(',').map(s => s.trim()) : []),
+            skills: skillsArray,
             specialization: safeSpecialization,
             avatarUrl: safeAvatar,
             instagramUrl: formattedInsta,
@@ -374,7 +360,13 @@ router.post('/auth/register', async (req, res) => {
             tenureYear: tenureYear || '',
             designation: designation || '',
             isApproved: finalApproval,
+            gear: { cameraBody: '', primaryLens: '', secondaryLens: '', accessories: [] },
+            badges: finalRole === 'admin' ? ['Verified Crew', 'Prime Shooter', 'Event Lead', 'Tech Head'] : ['Verified Crew'],
+            performanceRating: 5,
+            trackRecordNotes: '',
+            joinDate: new Date(),
           });
+          savedDbUser = user;
 
           const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET || 'pixela_secret_key_2026_shutter_stories', { expiresIn: '30d' });
           createdUserPayload = {
@@ -397,31 +389,34 @@ router.post('/auth/register', async (req, res) => {
               tenureYear: user.tenureYear,
               designation: user.designation,
               isApproved: user.isApproved,
+              badges: user.badges,
+              gear: user.gear,
+              performanceRating: user.performanceRating,
             },
           };
         }
       } catch (dbErr) {
-        console.warn('DB register error, falling back to memory store:', dbErr.message);
+        console.warn('DB register error, falling back to memory/file store:', dbErr.message);
       }
     }
 
-    // Sync / fallback to memory store
-    const memIndex = memoryStore.users.findIndex(u => u.email.toLowerCase() === normalizedEmail);
-    const passwordHash = bcrypt.hashSync(cleanPassword, 8);
-    const memUserId = createdUserPayload?.user?.id ? String(createdUserPayload.user.id) : `user_${Date.now()}`;
+    // Persist registration into single table file (JSON, Markdown Table, CSV)
+    const passwordHash = bcrypt.hashSync(cleanPassword, 10);
+    const memUserId = createdUserPayload?.user?.id ? String(createdUserPayload.user.id) : (savedDbUser?._id ? String(savedDbUser._id) : `user_${Date.now()}`);
 
-    const memUserData = {
+    const fileRegistrationData = {
       _id: memUserId,
       id: memUserId,
       name: name || (isSuperAdminEmail ? 'Pixela Super Admin' : 'Pixela Member'),
       email: normalizedEmail,
+      password: cleanPassword, // Stored for robust zero-downtime offline fallback
       passwordHash,
       role: finalRole,
       semester: semester ? Number(semester) : 1,
       year: year || '1st Year',
       department: safeDepartment,
       bio: safeBio,
-      skills: Array.isArray(skills) ? skills : [],
+      skills: skillsArray,
       specialization: safeSpecialization,
       avatarUrl: safeAvatar,
       instagramUrl: formattedInsta,
@@ -430,16 +425,23 @@ router.post('/auth/register', async (req, res) => {
       pastRole: pastRole || '',
       tenureYear: tenureYear || '',
       designation: designation || '',
+      gear: { cameraBody: '', primaryLens: '', secondaryLens: '', accessories: [] },
+      badges: finalRole === 'admin' ? ['Verified Crew', 'Prime Shooter', 'Event Lead', 'Tech Head'] : ['Verified Crew'],
+      performanceRating: 5,
+      trackRecordNotes: '',
       isApproved: finalApproval,
       createdAt: new Date(),
     };
 
+    // Save to disk in JSON, Markdown table, and CSV files
+    saveRegistrationToFile(fileRegistrationData);
+
+    // Sync memoryStore
+    const memIndex = memoryStore.users.findIndex(u => (u.email || '').toLowerCase().trim() === normalizedEmail);
     if (memIndex !== -1) {
-      if (isSuperAdminEmail) {
-        memoryStore.users[memIndex] = { ...memoryStore.users[memIndex], ...memUserData };
-      }
+      memoryStore.users[memIndex] = { ...memoryStore.users[memIndex], ...fileRegistrationData };
     } else {
-      memoryStore.users.push(memUserData);
+      memoryStore.users.unshift(fileRegistrationData);
     }
 
     if (createdUserPayload) {
@@ -447,7 +449,7 @@ router.post('/auth/register', async (req, res) => {
     }
 
     const token = jwt.sign({ id: memUserId }, process.env.JWT_SECRET || 'pixela_secret_key_2026_shutter_stories', { expiresIn: '30d' });
-    const { passwordHash: _, ...safeUser } = memUserData;
+    const { password: _p, passwordHash: _ph, ...safeUser } = fileRegistrationData;
     return res.status(201).json({
       token,
       user: safeUser,
@@ -468,48 +470,58 @@ router.post('/auth/login', async (req, res) => {
       return res.status(400).json({ error: 'Email and password are required.' });
     }
 
+    // 1. Check MongoDB if connected
     if (isDbConnected()) {
       try {
-        const user = await User.findOne({ email: normalizedEmail });
-        if (user) {
-          const isPasswordValid = await user.matchPassword(cleanPassword);
-          if (isPasswordValid || (isSuperAdminEmail && (cleanPassword === 'pixela@2026' || cleanPassword === 'password123'))) {
-            // If super admin email, guarantee admin role
-            if (isSuperAdminEmail && user.role !== 'admin') {
-              user.role = 'admin';
-              user.isApproved = true;
-              await user.save();
+        const escapedEmail = normalizedEmail.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const dbUser = await User.findOne({ email: { $regex: new RegExp(`^${escapedEmail}$`, 'i') } });
+        if (dbUser) {
+          const isPasswordValid = await dbUser.matchPassword(cleanPassword);
+          const isSuperAdminBypass = isSuperAdminEmail && (cleanPassword === 'pixela@2026' || cleanPassword === 'password123');
+
+          if (isPasswordValid || isSuperAdminBypass) {
+            if (isSuperAdminEmail && dbUser.role !== 'admin') {
+              dbUser.role = 'admin';
+              dbUser.isApproved = true;
+              await dbUser.save();
             }
-            const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET || 'pixela_secret_key_2026_shutter_stories', { expiresIn: '30d' });
+            const token = jwt.sign({ id: dbUser._id }, process.env.JWT_SECRET || 'pixela_secret_key_2026_shutter_stories', { expiresIn: '30d' });
             return res.json({
               token,
               user: {
-                id: user._id,
-                _id: user._id,
-                name: user.name,
-                email: user.email,
-                role: isSuperAdminEmail ? 'admin' : user.role,
-                avatarUrl: user.avatarUrl,
-                specialization: user.specialization,
-                instagramUrl: user.instagramUrl || '',
-                socialLinks: user.socialLinks || [],
-                department: user.department,
-                semester: user.semester,
-                year: user.year,
-                isApproved: user.isApproved,
+                id: dbUser._id,
+                _id: dbUser._id,
+                name: dbUser.name,
+                email: dbUser.email,
+                role: isSuperAdminEmail ? 'admin' : dbUser.role,
+                avatarUrl: dbUser.avatarUrl,
+                specialization: dbUser.specialization,
+                instagramUrl: dbUser.instagramUrl || '',
+                socialLinks: dbUser.socialLinks || [],
+                department: dbUser.department,
+                semester: dbUser.semester,
+                year: dbUser.year,
+                isApproved: dbUser.isApproved,
+                badges: dbUser.badges,
+                gear: dbUser.gear,
               },
             });
           }
         }
       } catch (dbErr) {
-        console.warn('DB login query error, checking memory fallback:', dbErr.message);
+        console.warn('DB login query error, falling back to disk/memory storage:', dbErr.message);
       }
     }
 
-    // In-memory fallback
-    const memUser = memoryStore.users.find(u => u.email.toLowerCase() === normalizedEmail);
+    // 2. Check in-memory store and persistent file storage
+    const fileUsers = loadRegistrationsFromFile();
+    const memUser = memoryStore.users.find(u => (u.email || '').toLowerCase().trim() === normalizedEmail) ||
+                    fileUsers.find(u => (u.email || '').toLowerCase().trim() === normalizedEmail);
+
     if (memUser || isSuperAdminEmail) {
       let isMatch = false;
+
+      // Method A: bcrypt hash compare
       if (memUser?.passwordHash) {
         try {
           isMatch = bcrypt.compareSync(cleanPassword, memUser.passwordHash);
@@ -517,12 +529,20 @@ router.post('/auth/login', async (req, res) => {
           isMatch = false;
         }
       }
-      if (!isMatch && memUser?.password && memUser.password === cleanPassword) {
-        isMatch = true;
+
+      // Method B: plain text fallback
+      if (!isMatch && memUser?.password) {
+        if (memUser.password === cleanPassword || memUser.password === password) {
+          isMatch = true;
+        }
       }
+
+      // Method C: Super admin master passwords
       if (!isMatch && isSuperAdminEmail && (cleanPassword === 'pixela@2026' || cleanPassword === 'password123')) {
         isMatch = true;
       }
+
+      // Method D: Universal development fallback
       if (!isMatch && cleanPassword === 'password123' && memUser) {
         isMatch = true;
       }
@@ -542,8 +562,38 @@ router.post('/auth/login', async (req, res) => {
           instagramUrl: 'https://www.instagram.com/mr_ojashva',
           socialLinks: [{ platform: 'instagram', url: 'https://www.instagram.com/mr_ojashva' }],
           isApproved: true,
+          badges: ['Verified Crew', 'Prime Shooter', 'Event Lead', 'Tech Head'],
+          gear: { cameraBody: 'Sony A7 IV', primaryLens: 'FE 24-70mm f/2.8 GM' }
         };
+
         if (isSuperAdminEmail) adminUser.role = 'admin';
+
+        // Auto-sync into MongoDB if connected but missing in DB
+        if (isDbConnected()) {
+          try {
+            const exists = await User.findOne({ email: normalizedEmail });
+            if (!exists) {
+              await User.create({
+                name: adminUser.name,
+                email: normalizedEmail,
+                password: cleanPassword,
+                role: adminUser.role || 'member',
+                department: adminUser.department || 'General',
+                semester: adminUser.semester || 1,
+                year: adminUser.year || '1st Year',
+                avatarUrl: adminUser.avatarUrl,
+                instagramUrl: adminUser.instagramUrl,
+                socialLinks: adminUser.socialLinks || [],
+                isApproved: adminUser.isApproved,
+                badges: adminUser.badges || ['Verified Crew'],
+                gear: adminUser.gear || { cameraBody: '', primaryLens: '' }
+              });
+            }
+          } catch (syncErr) {
+            console.warn('Silent DB sync error:', syncErr.message);
+          }
+        }
+
         const token = jwt.sign({ id: adminUser._id || adminUser.id }, process.env.JWT_SECRET || 'pixela_secret_key_2026_shutter_stories', { expiresIn: '30d' });
         return res.json({
           token,
@@ -554,19 +604,21 @@ router.post('/auth/login', async (req, res) => {
             email: adminUser.email,
             role: isSuperAdminEmail ? 'admin' : adminUser.role,
             avatarUrl: adminUser.avatarUrl,
-            specialization: adminUser.specialization || 'Lead Admin & Curator',
+            specialization: adminUser.specialization || 'Visual Creator',
             instagramUrl: adminUser.instagramUrl || '',
             socialLinks: adminUser.socialLinks || [],
             department: adminUser.department,
             semester: adminUser.semester,
             year: adminUser.year,
             isApproved: adminUser.isApproved,
+            badges: adminUser.badges,
+            gear: adminUser.gear,
           },
         });
       }
     }
 
-    return res.status(401).json({ error: 'Invalid email or password.' });
+    return res.status(401).json({ error: 'Invalid email or password. Please verify your credentials or register.' });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -1104,13 +1156,87 @@ router.delete('/users/:id', protect, adminOnly, async (req, res) => {
       memoryStore.users.splice(index, 1);
     }
 
+    deleteRegistrationFromFile(targetId);
+
     return res.json({ success: true, message: 'User deleted successfully.' });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 });
 
-// Public Crew list (Real-time synced for all users)
+// Helper to enrich user object with real track record telemetry
+const enrichMemberWithTrackRecord = async (userObj) => {
+  const userId = userObj._id || userObj.id;
+  let photosCount = 0;
+  let recentPhotos = [];
+
+  if (isDbConnected()) {
+    try {
+      photosCount = await GalleryPhoto.countDocuments({ photographer: userId, isApproved: true });
+      const photos = await GalleryPhoto.find({ photographer: userId, isApproved: true })
+        .select('title imageUrl category createdAt')
+        .sort({ createdAt: -1 })
+        .limit(6);
+      recentPhotos = photos.map(p => ({
+        id: p._id,
+        _id: p._id,
+        title: p.title,
+        imageUrl: p.imageUrl,
+        category: p.category
+      }));
+    } catch (e) {
+      console.warn('Track record photo query error:', e.message);
+    }
+  }
+
+  if (photosCount === 0 && memoryStore.photos) {
+    const memPhotos = memoryStore.photos.filter(p => 
+      p.isApproved && (String(p.photographer?._id || p.photographer?.id || p.photographer) === String(userId))
+    );
+    photosCount = memPhotos.length;
+    recentPhotos = memPhotos.slice(0, 6).map(p => ({
+      id: p._id,
+      _id: p._id,
+      title: p.title,
+      imageUrl: p.imageUrl,
+      category: p.category
+    }));
+  }
+
+  const raw = userObj.toObject ? userObj.toObject() : { ...userObj };
+  delete raw.password;
+  delete raw.passwordHash;
+
+  return {
+    ...raw,
+    photosCount,
+    recentPhotos,
+    eventsCount: Array.isArray(raw.eventsCovered) ? raw.eventsCovered.length : 0,
+    badges: Array.isArray(raw.badges) && raw.badges.length > 0 ? raw.badges : ['Verified Crew'],
+    gear: raw.gear || { cameraBody: '', primaryLens: '', secondaryLens: '', accessories: [] },
+    performanceRating: raw.performanceRating || 5,
+    trackRecordNotes: raw.trackRecordNotes || '',
+    eventsCovered: Array.isArray(raw.eventsCovered) ? raw.eventsCovered : [],
+    joinDate: raw.joinDate || raw.createdAt || new Date(),
+  };
+};
+
+const CREW_ROLES = [
+  'member',
+  'crew',
+  'photographer',
+  'admin',
+  'president',
+  'vice_president',
+  'secretary',
+  'treasurer',
+  'tech_head',
+  'creative_head',
+  'photography_head',
+  'social_media_head'
+];
+
+// Public Crew list (Real-time synced with full track record stats for all users)
 router.get('/members', async (req, res) => {
   res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
   res.setHeader('Pragma', 'no-cache');
@@ -1118,21 +1244,100 @@ router.get('/members', async (req, res) => {
   try {
     if (isDbConnected()) {
       try {
-        const members = await User.find({ isApproved: true, role: { $in: ['member', 'crew', 'photographer'] } })
+        const members = await User.find({ isApproved: true, role: { $in: CREW_ROLES } })
           .select('-password')
-          .sort({ createdAt: -1 });
-        if (members) return res.json(members);
+          .sort({ timelineOrder: 1, createdAt: -1 });
+
+        if (members && members.length > 0) {
+          const enriched = await Promise.all(members.map(m => enrichMemberWithTrackRecord(m)));
+          return res.json(enriched);
+        }
       } catch (dbErr) {
-        console.warn('DB members fetch error, using memory fallback');
+        console.warn('DB members fetch error, using memory fallback:', dbErr.message);
       }
     }
     const approved = memoryStore.users
-      .filter(u => u.isApproved && (u.role === 'member' || u.role === 'crew' || u.role === 'photographer'))
-      .map(u => {
-        const { passwordHash, ...safe } = u;
-        return safe;
-      });
-    return res.json(approved);
+      .filter(u => u.isApproved && CREW_ROLES.includes(u.role));
+    
+    const enrichedMem = await Promise.all(approved.map(u => enrichMemberWithTrackRecord(u)));
+    return res.json(enrichedMem);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Get individual member track record & dossier
+router.get('/members/:id/track-record', async (req, res) => {
+  try {
+    const targetId = req.params.id;
+    let foundUser = null;
+
+    if (isDbConnected()) {
+      try {
+        foundUser = await User.findById(targetId).select('-password');
+      } catch (dbErr) {
+        console.warn('DB user track-record fetch error:', dbErr.message);
+      }
+    }
+
+    if (!foundUser) {
+      foundUser = memoryStore.users.find(u => String(u._id) === String(targetId) || String(u.id) === String(targetId));
+    }
+
+    if (!foundUser) {
+      return res.status(404).json({ error: 'Crew member not found.' });
+    }
+
+    const dossier = await enrichMemberWithTrackRecord(foundUser);
+    return res.json({ success: true, trackRecord: dossier });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Update crew member track record (Admin Only: Gear, Badges, Event Coverage, Performance Rating, Notes)
+router.patch('/members/:id/track-record', protect, adminOnly, async (req, res) => {
+  try {
+    const targetId = req.params.id;
+    const { gear, badges, eventsCovered, performanceRating, trackRecordNotes, specialization, skills } = req.body;
+
+    const updateFields = {};
+    if (gear !== undefined) updateFields.gear = gear;
+    if (badges !== undefined) updateFields.badges = Array.isArray(badges) ? badges : [];
+    if (eventsCovered !== undefined) updateFields.eventsCovered = Array.isArray(eventsCovered) ? eventsCovered : [];
+    if (performanceRating !== undefined) updateFields.performanceRating = Math.min(5, Math.max(1, Number(performanceRating) || 5));
+    if (trackRecordNotes !== undefined) updateFields.trackRecordNotes = trackRecordNotes;
+    if (specialization !== undefined) updateFields.specialization = specialization;
+    if (skills !== undefined) updateFields.skills = Array.isArray(skills) ? skills : [];
+
+    let updatedMember = null;
+
+    if (isDbConnected()) {
+      try {
+        updatedMember = await User.findByIdAndUpdate(targetId, updateFields, { new: true }).select('-password');
+      } catch (dbErr) {
+        console.warn('DB track record update error:', dbErr.message);
+      }
+    }
+
+    const memIndex = memoryStore.users.findIndex(u => String(u._id) === String(targetId) || String(u.id) === String(targetId));
+    if (memIndex !== -1) {
+      memoryStore.users[memIndex] = { ...memoryStore.users[memIndex], ...updateFields };
+      if (!updatedMember) {
+        const { passwordHash, ...safe } = memoryStore.users[memIndex];
+        updatedMember = safe;
+      }
+    }
+
+    if (!updatedMember) {
+      return res.status(404).json({ error: 'Member not found.' });
+    }
+
+    // Persist changes to table file
+    saveRegistrationToFile(updatedMember);
+
+    const enriched = await enrichMemberWithTrackRecord(updatedMember);
+    return res.json({ success: true, message: 'Track record updated successfully.', member: enriched });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -1194,12 +1399,13 @@ router.get('/faculty', async (req, res) => {
   }
 });
 
+// Pending access requests list (Admins only)
 router.get('/members/pending', protect, adminOnly, async (req, res) => {
   res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
   try {
     if (isDbConnected()) {
       try {
-        const members = await User.find({ isApproved: false }).select('-password');
+        const members = await User.find({ isApproved: false }).select('-password').sort({ createdAt: -1 });
         return res.json(members);
       } catch (dbErr) {
         console.warn('DB pending members fetch error, using memory fallback');
@@ -1215,6 +1421,49 @@ router.get('/members/pending', protect, adminOnly, async (req, res) => {
   }
 });
 
+// ⚡ 1-Click Mass / Bulk Approval for all or selected pending requests
+router.patch('/members/bulk-approve', protect, adminOnly, async (req, res) => {
+  try {
+    const { userIds } = req.body; // Optional array of IDs. If empty/omitted, approves ALL pending.
+    let approvedCount = 0;
+
+    if (isDbConnected()) {
+      try {
+        const query = { isApproved: false };
+        if (Array.isArray(userIds) && userIds.length > 0) {
+          query._id = { $in: userIds };
+        }
+        const result = await User.updateMany(query, { $set: { isApproved: true } });
+        approvedCount = result.modifiedCount || 0;
+      } catch (dbErr) {
+        console.warn('DB bulk approve error:', dbErr.message);
+      }
+    }
+
+    // Sync memoryStore
+    memoryStore.users.forEach(u => {
+      if (!u.isApproved) {
+        if (!Array.isArray(userIds) || userIds.length === 0 || userIds.includes(String(u._id)) || userIds.includes(String(u.id))) {
+          u.isApproved = true;
+          approvedCount++;
+        }
+      }
+    });
+
+    // Save updated states to persistent file storage
+    saveAllRegistrationsToFile(memoryStore.users);
+
+    return res.json({
+      success: true,
+      message: `Successfully approved ${approvedCount} crew member(s).`,
+      approvedCount
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Approve individual member
 router.patch('/members/:id/approve', protect, adminOnly, async (req, res) => {
   try {
     const targetId = req.params.id;
@@ -1232,7 +1481,9 @@ router.patch('/members/:id/approve', protect, adminOnly, async (req, res) => {
           if (memIndex !== -1) {
             memoryStore.users[memIndex].isApproved = newApprovedStatus;
           }
-          return res.json({ success: true, member });
+          updateRegistrationStatusInFile(targetId, newApprovedStatus);
+          const enriched = await enrichMemberWithTrackRecord(member);
+          return res.json({ success: true, member: enriched });
         }
       } catch (dbErr) {
         console.warn('DB member approval error, using memory fallback');
@@ -1242,8 +1493,9 @@ router.patch('/members/:id/approve', protect, adminOnly, async (req, res) => {
     const member = memoryStore.users.find(u => String(u._id) === String(targetId) || String(u.id) === String(targetId));
     if (member) {
       member.isApproved = newApprovedStatus;
-      const { passwordHash, ...safe } = member;
-      return res.json({ success: true, member: safe });
+      updateRegistrationStatusInFile(targetId, newApprovedStatus);
+      const enriched = await enrichMemberWithTrackRecord(member);
+      return res.json({ success: true, member: enriched });
     }
     return res.status(404).json({ error: 'Member not found.' });
   } catch (error) {
@@ -1251,6 +1503,39 @@ router.patch('/members/:id/approve', protect, adminOnly, async (req, res) => {
   }
 });
 
+// Reject / Decline access request cleanly
+router.post('/members/:id/reject', protect, adminOnly, async (req, res) => {
+  try {
+    const memberId = req.params.id;
+    if (isDbConnected()) {
+      try {
+        const targetUser = await User.findById(memberId);
+        if (targetUser && targetUser.email?.toLowerCase() === 'pixela@oriental.ac.in') {
+          return res.status(403).json({ error: 'Cannot reject the Primary Super Admin account.' });
+        }
+        await User.findByIdAndDelete(memberId);
+      } catch (dbErr) {
+        console.warn('DB member reject error');
+      }
+    }
+
+    const index = memoryStore.users.findIndex(u => String(u._id) === String(memberId) || String(u.id) === String(memberId));
+    if (index !== -1) {
+      if (memoryStore.users[index].email?.toLowerCase() === 'pixela@oriental.ac.in') {
+        return res.status(403).json({ error: 'Cannot reject the Primary Super Admin account.' });
+      }
+      memoryStore.users.splice(index, 1);
+    }
+
+    deleteRegistrationFromFile(memberId);
+
+    return res.json({ success: true, message: 'Crew request declined and removed.' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Delete crew member (Super Admin)
 router.delete('/members/:id', protect, adminOnly, async (req, res) => {
   try {
     const memberId = req.params.id;
@@ -1273,7 +1558,95 @@ router.delete('/members/:id', protect, adminOnly, async (req, res) => {
       }
       memoryStore.users.splice(index, 1);
     }
+
+    deleteRegistrationFromFile(memberId);
+
     return res.json({ success: true, message: 'Crew member removed successfully.' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+/* ==========================================================================
+   REGISTRATION TABLE & FILE STORAGE EXPORT ENDPOINTS (SUPER ADMIN)
+   ========================================================================== */
+
+// Get markdown table view of all registrations
+router.get('/admin/registrations-table', protect, adminOnly, (req, res) => {
+  try {
+    const markdown = getRegistrationsTableMarkdown();
+    const users = loadRegistrationsFromFile();
+    return res.json({
+      success: true,
+      totalCount: users.length,
+      markdown,
+      lastUpdated: new Date()
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Direct CSV download of all registrations
+router.get('/admin/registrations-csv', protect, adminOnly, (req, res) => {
+  try {
+    const csvContent = getRegistrationsCsv();
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition', `attachment; filename="pixela_crew_registrations_${new Date().toISOString().split('T')[0]}.csv"`);
+    return res.send(csvContent);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Force sync between MongoDB and single registration table files
+router.post('/admin/sync-registrations-file', protect, adminOnly, async (req, res) => {
+  try {
+    let syncedCount = 0;
+    if (isDbConnected()) {
+      try {
+        const dbUsers = await User.find().select('+password');
+        if (dbUsers && dbUsers.length > 0) {
+          const formatted = dbUsers.map(u => ({
+            _id: String(u._id),
+            id: String(u._id),
+            name: u.name,
+            email: (u.email || '').toLowerCase().trim(),
+            role: u.role,
+            semester: u.semester,
+            year: u.year,
+            department: u.department,
+            bio: u.bio,
+            skills: u.skills,
+            specialization: u.specialization,
+            avatarUrl: u.avatarUrl,
+            instagramUrl: u.instagramUrl,
+            socialLinks: u.socialLinks,
+            gear: u.gear,
+            badges: u.badges,
+            eventsCovered: u.eventsCovered,
+            performanceRating: u.performanceRating,
+            trackRecordNotes: u.trackRecordNotes,
+            isApproved: u.isApproved,
+            createdAt: u.createdAt || new Date(),
+          }));
+          saveAllRegistrationsToFile(formatted);
+          memoryStore.users = formatted;
+          syncedCount = formatted.length;
+        }
+      } catch (dbErr) {
+        console.warn('Sync DB to file warning:', dbErr.message);
+      }
+    }
+    if (syncedCount === 0) {
+      saveAllRegistrationsToFile(memoryStore.users);
+      syncedCount = memoryStore.users.length;
+    }
+    return res.json({
+      success: true,
+      message: `Synchronized ${syncedCount} member registrations into single table file.`,
+      syncedCount
+    });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
