@@ -6,7 +6,7 @@ import {
   Check, X, Send, Database, BarChart3, UserPlus, Trash2, Search, Filter,
   ShieldAlert, Sparkles, Edit3, UserCheck, Shield, Award, Star, Camera,
   Zap, CheckCircle2, Sliders, ExternalLink, Plus, FileText, Download,
-  Copy, RefreshCw, Table, FileCode
+  Copy, RefreshCw, Table, FileCode, UploadCloud, FileUp
 } from 'lucide-react';
 import { API_URL } from '@/config/api';
 import { exportAllRegistrationsPdf, exportCrewMemberDossierPdf } from '@/utils/pdfExport';
@@ -54,6 +54,16 @@ export default function AdminPage() {
   });
   const [isSubmittingUser, setIsSubmittingUser] = useState(false);
   const [userSuccessMessage, setUserSuccessMessage] = useState('');
+
+  // Bulk Crew Upload State (PDF / CSV / JSON)
+  const [showBulkUploadModal, setShowBulkUploadModal] = useState(false);
+  const [uploadFile, setUploadFile] = useState<File | null>(null);
+  const [isUploadingCrew, setIsUploadingCrew] = useState(false);
+  const [bulkRole, setBulkRole] = useState('crew');
+  const [bulkDept, setBulkDept] = useState('Information Technology');
+  const [bulkYear, setBulkYear] = useState('3rd Year');
+  const [bulkSemester, setBulkSemester] = useState(6);
+  const [bulkUploadResult, setBulkUploadResult] = useState<any | null>(null);
 
   // Fast Approvals state
   const [isBulkApproving, setIsBulkApproving] = useState(false);
@@ -463,6 +473,51 @@ export default function AdminPage() {
     }
   };
 
+  // 📤 1-Click Bulk Crew Upload & Auto-Approval Handler
+  const handleBulkUploadCrew = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!uploadFile) {
+      alert('Please select a roster file (.pdf, .csv, .json, or .txt) to upload.');
+      return;
+    }
+    if (!token) return;
+
+    setIsUploadingCrew(true);
+    setBulkUploadResult(null);
+
+    const formData = new FormData();
+    formData.append('file', uploadFile);
+    formData.append('defaultRole', bulkRole);
+    formData.append('defaultDept', bulkDept);
+    formData.append('defaultYear', bulkYear);
+    formData.append('defaultSemester', String(bulkSemester));
+
+    try {
+      const res = await fetch(`${API_URL}/api/admin/bulk-upload-crew`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        },
+        body: formData
+      });
+
+      const data = await res.json();
+      if (res.ok) {
+        setBulkUploadResult(data);
+        setUserSuccessMessage(`⚡ ${data.message || `Successfully processed and auto-approved ${data.count} crew members!`}`);
+        loadAdminData(token);
+        loadTableData(token);
+        setTimeout(() => setUserSuccessMessage(''), 8000);
+      } else {
+        alert(data.error || 'Failed to process crew roster upload.');
+      }
+    } catch (err: any) {
+      alert(`Error during bulk crew upload: ${err.message}`);
+    } finally {
+      setIsUploadingCrew(false);
+    }
+  };
+
   const handleDeleteUser = async (targetUser: any) => {
     const targetId = targetUser._id || targetUser.id;
     const isRootAdmin = targetUser.email?.toLowerCase() === 'pixela@oriental.ac.in';
@@ -703,6 +758,19 @@ export default function AdminPage() {
               All Users ({allUsers.length})
             </button>
           </div>
+
+          <button
+            onClick={() => {
+              setBulkUploadResult(null);
+              setUploadFile(null);
+              setShowBulkUploadModal(true);
+            }}
+            className="inline-flex items-center space-x-1.5 px-4 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 text-white text-xs font-bold uppercase tracking-wider hover:opacity-90 transition-all cursor-pointer shadow-lg shadow-orange-500/20 shrink-0"
+            title="Upload a PDF roster or CSV file to register and auto-approve all crew members at once"
+          >
+            <UploadCloud className="h-4 w-4" />
+            <span>Upload Crew Roster (PDF)</span>
+          </button>
 
           <button
             onClick={() => setShowAddUserModal(true)}
@@ -1190,6 +1258,19 @@ export default function AdminPage() {
                   </button>
                 ))}
               </div>
+
+              <button
+                onClick={() => {
+                  setBulkUploadResult(null);
+                  setUploadFile(null);
+                  setShowBulkUploadModal(true);
+                }}
+                className="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-orange-500/20 hover:bg-orange-500/30 text-orange-300 border border-orange-500/40 text-xs font-semibold transition-colors cursor-pointer"
+                title="Upload a PDF roster or CSV to register all crew at once"
+              >
+                <UploadCloud className="h-3.5 w-3.5 text-orange-400" />
+                <span>Upload Roster (PDF)</span>
+              </button>
             </div>
           </div>
 
@@ -1343,6 +1424,19 @@ export default function AdminPage() {
 
             {/* Action Bar */}
             <div className="flex flex-wrap items-center gap-2">
+              <button
+                onClick={() => {
+                  setBulkUploadResult(null);
+                  setUploadFile(null);
+                  setShowBulkUploadModal(true);
+                }}
+                className="px-3.5 py-1.5 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white rounded-lg text-xs font-bold flex items-center space-x-1.5 transition-all shadow-md shadow-orange-500/20 cursor-pointer"
+                title="Upload a PDF roster or CSV to register and auto-approve all crew members at once"
+              >
+                <UploadCloud className="h-3.5 w-3.5" />
+                <span>Upload Crew Roster (PDF)</span>
+              </button>
+
               <button
                 onClick={() => exportAllRegistrationsPdf(allUsers)}
                 className="px-3 py-1.5 bg-gradient-to-r from-pink-600 to-rose-600 hover:from-pink-500 hover:to-rose-500 text-white rounded-lg text-xs font-bold flex items-center space-x-1.5 transition-all shadow-md cursor-pointer"
@@ -2006,6 +2100,271 @@ export default function AdminPage() {
                 >
                   <UserPlus className="h-4 w-4" />
                   <span>{isSubmittingUser ? 'Adding...' : 'Add User Now'}</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* =========================================================================
+          1-CLICK CREW BULK UPLOAD MODAL (PDF / CSV / JSON)
+          ========================================================================= */}
+      {showBulkUploadModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md p-4 overflow-y-auto">
+          <div className="relative w-full max-w-2xl my-8 overflow-hidden rounded-2xl glass-panel border border-white/15 p-6 sm:p-8 text-white shadow-2xl space-y-6 text-left">
+            <button
+              onClick={() => {
+                setShowBulkUploadModal(false);
+                setBulkUploadResult(null);
+                setUploadFile(null);
+              }}
+              className="absolute top-4 right-4 p-2 text-zinc-400 hover:text-white rounded-full bg-zinc-900/80 hover:bg-zinc-800 border border-white/10 transition-colors cursor-pointer"
+            >
+              <X className="h-4 w-4" />
+            </button>
+
+            {/* Modal Title & Subtitle */}
+            <div className="flex items-center space-x-3 border-b border-border/40 pb-4">
+              <div className="h-11 w-11 rounded-2xl bg-gradient-to-tr from-amber-500 to-orange-500 flex items-center justify-center text-white shadow-lg shadow-orange-500/20 shrink-0">
+                <UploadCloud className="h-6 w-6" />
+              </div>
+              <div>
+                <h3 className="text-xl font-bold text-white flex items-center space-x-2">
+                  <span>1-Click Crew Registration via PDF / Roster</span>
+                  <span className="text-[10px] bg-green-500/20 text-green-400 border border-green-500/30 px-2 py-0.5 rounded-full font-mono font-bold">
+                    INSTANT AUTO-APPROVAL
+                  </span>
+                </h3>
+                <p className="text-xs text-zinc-400">
+                  Upload a PDF document, CSV spreadsheet, or JSON roster. All crew members are extracted, registered, and automatically approved without delay.
+                </p>
+              </div>
+            </div>
+
+            {/* Success Result Summary (if uploaded) */}
+            {bulkUploadResult && (
+              <div className="bg-green-500/10 border border-green-500/40 rounded-xl p-4 space-y-3 animate-in fade-in duration-300">
+                <div className="flex items-center space-x-2 text-green-400">
+                  <CheckCircle2 className="h-5 w-5 shrink-0" />
+                  <span className="text-sm font-bold">Roster Processed Successfully!</span>
+                </div>
+                <p className="text-xs text-zinc-300 leading-relaxed">
+                  {bulkUploadResult.message}
+                </p>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center text-xs pt-1">
+                  <div className="bg-zinc-900/80 p-2 rounded-lg border border-zinc-800">
+                    <span className="text-zinc-500 text-[10px] block uppercase">Total Processed</span>
+                    <span className="font-bold text-white text-base font-mono">{bulkUploadResult.count}</span>
+                  </div>
+                  <div className="bg-zinc-900/80 p-2 rounded-lg border border-zinc-800">
+                    <span className="text-zinc-500 text-[10px] block uppercase">Newly Added</span>
+                    <span className="font-bold text-green-400 text-base font-mono">{bulkUploadResult.newlyRegisteredCount}</span>
+                  </div>
+                  <div className="bg-zinc-900/80 p-2 rounded-lg border border-zinc-800">
+                    <span className="text-zinc-500 text-[10px] block uppercase">Updated</span>
+                    <span className="font-bold text-blue-400 text-base font-mono">{bulkUploadResult.updatedCount}</span>
+                  </div>
+                  <div className="bg-zinc-900/80 p-2 rounded-lg border border-zinc-800">
+                    <span className="text-zinc-500 text-[10px] block uppercase">Approval Status</span>
+                    <span className="font-bold text-emerald-400 text-xs">100% Approved</span>
+                  </div>
+                </div>
+
+                {Array.isArray(bulkUploadResult.users) && bulkUploadResult.users.length > 0 && (
+                  <div className="space-y-1.5 pt-2">
+                    <span className="text-[10px] font-mono text-zinc-400 uppercase tracking-widest font-semibold block">
+                      Imported Crew List ({bulkUploadResult.users.length})
+                    </span>
+                    <div className="max-h-36 overflow-y-auto divide-y divide-zinc-800/80 border border-zinc-800 rounded-lg bg-zinc-950/60 text-xs">
+                      {bulkUploadResult.users.map((u: any, idx: number) => (
+                        <div key={idx} className="p-2 flex items-center justify-between gap-2">
+                          <div className="min-w-0">
+                            <span className="font-semibold text-white truncate block">{u.name}</span>
+                            <span className="text-[10px] text-zinc-400 font-mono truncate block">{u.email}</span>
+                          </div>
+                          <div className="flex items-center space-x-2 shrink-0">
+                            <span className="text-[10px] font-mono bg-zinc-800 text-zinc-300 px-2 py-0.5 rounded capitalize">
+                              {u.role || 'crew'}
+                            </span>
+                            <span className="text-[10px] font-mono bg-green-500/20 text-green-400 border border-green-500/30 px-2 py-0.5 rounded-full font-bold flex items-center gap-1">
+                              <Check className="h-2.5 w-2.5" /> Approved
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            <form onSubmit={handleBulkUploadCrew} className="space-y-5">
+              {/* File Upload Area */}
+              <div>
+                <label className="block text-xs font-semibold text-zinc-300 mb-2">
+                  Select Roster File (.pdf, .csv, .json, .txt) *
+                </label>
+                <div className={`relative border-2 border-dashed rounded-2xl p-6 text-center transition-all ${
+                  uploadFile ? 'border-primary/60 bg-primary/5' : 'border-zinc-700 hover:border-zinc-500 bg-zinc-900/40'
+                }`}>
+                  <input
+                    type="file"
+                    accept=".pdf,.csv,.json,.txt"
+                    onChange={(e) => {
+                      if (e.target.files && e.target.files[0]) {
+                        setUploadFile(e.target.files[0]);
+                        setBulkUploadResult(null);
+                      }
+                    }}
+                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                  />
+                  <div className="flex flex-col items-center justify-center space-y-2 pointer-events-none">
+                    <div className="h-12 w-12 rounded-full bg-zinc-800/80 border border-zinc-700 flex items-center justify-center text-primary">
+                      {uploadFile ? <CheckCircle2 className="h-6 w-6 text-green-400" /> : <FileUp className="h-6 w-6" />}
+                    </div>
+                    {uploadFile ? (
+                      <div className="space-y-1">
+                        <p className="text-sm font-bold text-white flex items-center justify-center gap-2">
+                          <span>{uploadFile.name}</span>
+                          <span className="text-[10px] px-2 py-0.5 bg-green-500/20 text-green-400 rounded-full font-mono font-bold">
+                            {(uploadFile.size / 1024).toFixed(1)} KB
+                          </span>
+                        </p>
+                        <p className="text-[11px] text-zinc-400 font-mono">
+                          Ready for 1-click parsing & auto-registration. Click or drop another file to change.
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="space-y-1">
+                        <p className="text-sm font-semibold text-white">
+                          Drop your crew roster file here, or <span className="text-primary underline">browse</span>
+                        </p>
+                        <p className="text-[11px] text-zinc-400">
+                          Supports multi-page PDF documents, Markdown tables, CSV sheets, and JSON arrays
+                        </p>
+                        <div className="flex items-center justify-center gap-2 pt-1">
+                          <span className="text-[10px] bg-zinc-800 text-zinc-300 px-2 py-0.5 rounded font-mono">.PDF</span>
+                          <span className="text-[10px] bg-zinc-800 text-zinc-300 px-2 py-0.5 rounded font-mono">.CSV</span>
+                          <span className="text-[10px] bg-zinc-800 text-zinc-300 px-2 py-0.5 rounded font-mono">.JSON</span>
+                          <span className="text-[10px] bg-zinc-800 text-zinc-300 px-2 py-0.5 rounded font-mono">.TXT</span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Roster Defaults */}
+              <div className="space-y-3 bg-zinc-950/60 p-4 rounded-xl border border-zinc-800">
+                <h4 className="text-xs font-bold text-zinc-300 uppercase tracking-widest font-mono flex items-center space-x-1.5">
+                  <Sliders className="h-3.5 w-3.5 text-primary" />
+                  <span>Default Fallback Settings (for unassigned columns)</span>
+                </h4>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div>
+                    <label className="block text-[11px] font-medium text-zinc-400 mb-1">Default Role</label>
+                    <select
+                      value={bulkRole}
+                      onChange={(e) => setBulkRole(e.target.value)}
+                      className="w-full bg-zinc-900 border border-zinc-800 rounded-lg py-2 px-3 text-xs text-white focus:outline-none focus:border-primary cursor-pointer"
+                    >
+                      <option value="crew">Crew Member (Active Roster)</option>
+                      <option value="member">General Member</option>
+                      <option value="photographer">Photographer</option>
+                      <option value="tech_head">Tech Head</option>
+                      <option value="creative_head">Creative Head</option>
+                      <option value="photography_head">Photography Head</option>
+                      <option value="alumni">Club Alumni</option>
+                      <option value="faculty">Faculty Coordinator</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-medium text-zinc-400 mb-1">Default Department</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Information Technology"
+                      value={bulkDept}
+                      onChange={(e) => setBulkDept(e.target.value)}
+                      className="w-full bg-zinc-900 border border-zinc-800 rounded-lg py-2 px-3 text-xs text-white focus:outline-none focus:border-primary"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-medium text-zinc-400 mb-1">Default Year</label>
+                    <select
+                      value={bulkYear}
+                      onChange={(e) => setBulkYear(e.target.value)}
+                      className="w-full bg-zinc-900 border border-zinc-800 rounded-lg py-2 px-3 text-xs text-white focus:outline-none focus:border-primary cursor-pointer"
+                    >
+                      <option value="1st Year">1st Year</option>
+                      <option value="2nd Year">2nd Year</option>
+                      <option value="3rd Year">3rd Year</option>
+                      <option value="4th Year">4th Year</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              {/* Guarantees Box */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-[11px]">
+                <div className="bg-zinc-900/60 p-3 rounded-xl border border-zinc-800/80 space-y-1">
+                  <span className="font-bold text-green-400 flex items-center gap-1">
+                    <Check className="h-3 w-3" /> Auto-Approved
+                  </span>
+                  <p className="text-zinc-400 text-[10px] leading-relaxed">
+                    Zero waiting time. All crew members imported by the admin are automatically approved and immediately visible in Leadership & Roster.
+                  </p>
+                </div>
+                <div className="bg-zinc-900/60 p-3 rounded-xl border border-zinc-800/80 space-y-1">
+                  <span className="font-bold text-amber-400 flex items-center gap-1">
+                    <Sparkles className="h-3 w-3" /> Default Password
+                  </span>
+                  <p className="text-zinc-400 text-[10px] leading-relaxed">
+                    Credentials initialized to <code className="text-white font-mono">pixela@2026</code>. Members can log in directly and customize their profile.
+                  </p>
+                </div>
+                <div className="bg-zinc-900/60 p-3 rounded-xl border border-zinc-800/80 space-y-1">
+                  <span className="font-bold text-blue-400 flex items-center gap-1">
+                    <Table className="h-3 w-3" /> Persistent Table Sync
+                  </span>
+                  <p className="text-zinc-400 text-[10px] leading-relaxed">
+                    Instantly writes to <code className="text-white font-mono">crew_registrations_table.md</code>, CSV files, and MongoDB database.
+                  </p>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex items-center justify-end space-x-3 pt-2 border-t border-border/40">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowBulkUploadModal(false);
+                    setBulkUploadResult(null);
+                    setUploadFile(null);
+                  }}
+                  className="px-4 py-2 rounded-xl border border-zinc-700 text-zinc-300 hover:text-white text-xs font-semibold transition-colors cursor-pointer"
+                >
+                  Close
+                </button>
+                <button
+                  type="submit"
+                  disabled={!uploadFile || isUploadingCrew}
+                  className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white text-xs font-bold uppercase tracking-wider transition-all flex items-center space-x-2 cursor-pointer shadow-lg shadow-orange-500/20 disabled:opacity-50"
+                >
+                  {isUploadingCrew ? (
+                    <>
+                      <RefreshCw className="h-4 w-4 animate-spin" />
+                      <span>Parsing & Registering All Crew...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Zap className="h-4 w-4" />
+                      <span>Register & Auto-Approve All Crew</span>
+                    </>
+                  )}
                 </button>
               </div>
             </form>

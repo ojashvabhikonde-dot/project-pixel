@@ -151,5 +151,203 @@
     "trackRecordNotes": "",
     "isApproved": true,
     "createdAt": "2026-09-20T18:54:44.518Z"
+  },
+  {
+    "name": "Aarav Sharma",
+    "email": "aarav.sharma@oriental.ac.in",
+    "password": "pixela@2026",
+    "role": "photographer",
+    "department": "Information Technology",
+    "semester": 6,
+    "year": "3rd Year",
+    "specialization": "Wildlife & Portrait",
+    "skills": [
+      "Photography",
+      "Event Coverage"
+    ],
+    "instagramUrl": "",
+    "bio": "Official Pixela Crew Member imported via bulk roster upload.",
+    "gear": {
+      "cameraBody": "",
+      "primaryLens": "",
+      "secondaryLens": "",
+      "accessories": []
+    },
+    "badges": [
+      "Verified Crew"
+    ],
+    "performanceRating": 5,
+    "trackRecordNotes": "Provisioned by Super Admin via Bulk Roster Upload.",
+    "eventsCovered": [],
+    "isApproved": true,
+    "createdAt": "2026-09-22T19:12:49.607Z",
+    "_id": "user_crew_1790104369631_i1cp5",
+    "id": "user_crew_1790104369631_i1cp5",
+    "passwordHash": "$2a$08$kvtRct4SeZt/HsKd6yjqcerFBBXaRHimNEMLIJOjhMDzdqxdzADx6"
+  },
+  {
+    "name": "Priya Patel",
+    "email": "priya.patel@oriental.ac.in",
+    "password": "pixela@2026",
+    "role": "crew",
+    "department": "Computer Science",
+    "semester": 6,
+    "year": "3rd Year",
+    "specialization": "Event Coverage & Lighting",
+    "skills": [
+      "Photography",
+      "Event Coverage"
+    ],
+    "instagramUrl": "",
+    "bio": "Official Pixela Crew Member imported via bulk roster upload.",
+    "gear": {
+      "cameraBody": "",
+      "primaryLens": "",
+      "secondaryLens": "",
+      "accessories": []
+    },
+    "badges": [
+      "Verified Crew"
+    ],
+    "performanceRating": 5,
+    "trackRecordNotes": "Provisioned by Super Admin via Bulk Roster Upload.",
+    "eventsCovered": [],
+    "isApproved": true,
+    "createdAt": "2026-09-22T19:12:49.690Z",
+    "_id": "6ab2d33152e3ae7afbb8c0b4",
+    "id": "6ab2d33152e3ae7afbb8c0b4",
+    "passwordHash": "$2a$08$umNoDMUyH44e542Z8ZSEt.4WuATwIvUytnqzXqeX/MV4K/7QJf1kK"
+  },
+  {
+    "name": "Rohan Verma",
+    "email": "rohan.verma@oriental.ac.in",
+    "password": "pixela@2026",
+    "role": "tech_head",
+    "department": "Information Technology",
+    "semester": 6,
+    "year": "3rd Year",
+    "specialization": "Digital Asset Manager",
+    "skills": [
+      "Photography",
+      "Event Coverage"
+    ],
+    "instagramUrl": "",
+    "bio": "Official Pixela Crew Member imported via bulk roster upload.",
+    "gear": {
+      "cameraBody": "",
+      "primaryLens": "",
+      "secondaryLens": "",
+      "accessories": []
+    },
+    "badges": [
+      "Verified Crew"
+    ],
+    "performanceRating": 5,
+    "trackRecordNotes": "Provisioned by Super Admin via Bulk Roster Upload.",
+    "eventsCovered": [],
+    "isApproved": true,
+    "createdAt": "2026-09-22T19:12:49.910Z",
+    "_id": "6ab2d33152e3ae7afbb8c0b7",
+    "id": "6ab2d33152e3ae7afbb8c0b7",
+    "passwordHash": "$2a$08$GojpI5hn9zHJjbai4xWsPOr.t8BRMdvJLbtIy.oV9Ggyk4o9EYPM2"
+  },
+  {
+    "name": "Vikram Aditya  crew Information Technology Drone & Aerial",
+    "email": "vikram.aditya@oriental.ac.in",
+    "password": "pixela@2026",
+    "role": "crew",
+    "department": "Information Technology",
+    "semester": 6,
+    "year": "3rd Year",
+    "specialization": "Visual Creator",
+    "skills": [
+      "Photography",
+      "Event Coverage"
+    ],
+    "instagramUrl": "",
+    "bio": "Official Pixela Crew Member imported via bulk roster upload.",
+    "gear": {
+      "cameraBody": "",
+      "primaryLens": "",
+      "secondaryLens": "",
+      "accessories": []
+    },
+    "badges": [
+      "Verified Crew"
+    ],
+    "performanceRating": 5,
+    "trackRecordNotes": "Provisioned by Super Admin via Bulk Roster Upload.",
+    "eventsCovered": [],
+    "isApproved": true,
+    "createdAt": "2026-09-22T19:15:32.722Z",
+    "_id": "6ab2d3d452e3ae7afbb8c0bd",
+    "id": "6ab2d3d452e3ae7afbb8c0bd",
+    "passwordHash": "$2a$08$nmCSaZxI.ByEMzYHvVcs6OQrDBzHfq0YIDx3mmye0483p41Vcas52"
+  },
+  {
+    "name": "Ananya Sen  photographer Computer Science Concert & Lighting",
+    "email": "ananya.sen@oriental.ac.in",
+    "password": "pixela@2026",
+    "role": "crew",
+    "department": "Information Technology",
+    "semester": 6,
+    "year": "3rd Year",
+    "specialization": "Visual Creator",
+    "skills": [
+      "Photography",
+      "Event Coverage"
+    ],
+    "instagramUrl": "",
+    "bio": "Official Pixela Crew Member imported via bulk roster upload.",
+    "gear": {
+      "cameraBody": "",
+      "primaryLens": "",
+      "secondaryLens": "",
+      "accessories": []
+    },
+    "badges": [
+      "Verified Crew"
+    ],
+    "performanceRating": 5,
+    "trackRecordNotes": "Provisioned by Super Admin via Bulk Roster Upload.",
+    "eventsCovered": [],
+    "isApproved": true,
+    "createdAt": "2026-09-22T19:15:32.923Z",
+    "_id": "6ab2d3d452e3ae7afbb8c0c0",
+    "id": "6ab2d3d452e3ae7afbb8c0c0",
+    "passwordHash": "$2a$08$SRgMdtBBxoHk0xsjRfrhTuhDCI1bQz1ZzQ.R8YAAcXjMiEE1Y7f1u"
+  },
+  {
+    "name": "Kavita Rao  creative_head Information Technology Color Grading",
+    "email": "kavita.rao@oriental.ac.in",
+    "password": "pixela@2026",
+    "role": "crew",
+    "department": "Information Technology",
+    "semester": 6,
+    "year": "3rd Year",
+    "specialization": "Visual Creator",
+    "skills": [
+      "Photography",
+      "Event Coverage"
+    ],
+    "instagramUrl": "",
+    "bio": "Official Pixela Crew Member imported via bulk roster upload.",
+    "gear": {
+      "cameraBody": "",
+      "primaryLens": "",
+      "secondaryLens": "",
+      "accessories": []
+    },
+    "badges": [
+      "Verified Crew"
+    ],
+    "performanceRating": 5,
+    "trackRecordNotes": "Provisioned by Super Admin via Bulk Roster Upload.",
+    "eventsCovered": [],
+    "isApproved": true,
+    "createdAt": "2026-09-22T19:15:33.125Z",
+    "_id": "6ab2d3d552e3ae7afbb8c0c3",
+    "id": "6ab2d3d552e3ae7afbb8c0c3",
+    "passwordHash": "$2a$08$LF7LAWpRCHsVCrtuOgoe4u/kf4NAfMMjYx6rvb.G6ViSoaSbdQ4Tm"
   }
 ]

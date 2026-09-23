@@ -20,6 +20,8 @@ import {
   getRegistrationsTableMarkdown,
   getRegistrationsCsv
 } from '../config/fileStorage.js';
+import { PDFParse } from 'pdf-parse';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 
 const router = express.Router();
 
@@ -1041,6 +1043,27 @@ router.post('/users', protect, adminOnly, async (req, res) => {
           isApproved: true,
         });
 
+        // Immediately persist to single table file (Markdown, CSV, JSON)
+        saveRegistrationToFile({
+          _id: String(user._id),
+          id: String(user._id),
+          name: user.name,
+          email: user.email,
+          password: password || 'pixela@2026',
+          role: user.role,
+          semester: user.semester,
+          year: user.year,
+          department: user.department,
+          bio: user.bio,
+          skills: user.skills,
+          specialization: user.specialization,
+          avatarUrl: user.avatarUrl,
+          instagramUrl: user.instagramUrl,
+          socialLinks: user.socialLinks,
+          isApproved: true,
+          createdAt: user.createdAt || new Date()
+        });
+
         return res.status(201).json({
           success: true,
           message: 'User created successfully.',
@@ -1076,6 +1099,7 @@ router.post('/users', protect, adminOnly, async (req, res) => {
       id: newId,
       name,
       email: normalizedEmail,
+      password: password || 'pixela@2026',
       passwordHash: bcrypt.hashSync(password || 'pixela@2026', 8),
       role: role || 'member',
       semester: Number(semester) || 1,
@@ -1091,6 +1115,7 @@ router.post('/users', protect, adminOnly, async (req, res) => {
       createdAt: new Date(),
     };
     memoryStore.users.push(newUser);
+    saveRegistrationToFile(newUser);
 
     const { passwordHash, ...safeUser } = newUser;
     return res.status(201).json({
@@ -1649,6 +1674,397 @@ router.post('/admin/sync-registrations-file', protect, adminOnly, async (req, re
     });
   } catch (error) {
     res.status(500).json({ error: error.message });
+  }
+});
+
+// Intelligent parser for extracting crew members from PDF text, CSV, Markdown tables, or key-value blocks
+async function parseCrewFromText(rawText, defaultRole = 'crew', defaultDept = 'Information Technology') {
+  if (!rawText || typeof rawText !== 'string') return [];
+  const lines = rawText.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+  const candidates = [];
+
+  // 1. Check if rawText is JSON
+  const trimmed = rawText.trim();
+  if ((trimmed.startsWith('[') && trimmed.endsWith(']')) || (trimmed.startsWith('{') && trimmed.endsWith('}'))) {
+    try {
+      const parsed = JSON.parse(trimmed);
+      const arr = Array.isArray(parsed) ? parsed : (parsed.crew || parsed.members || parsed.users || [parsed]);
+      for (const item of arr) {
+        if (item && (item.email || item.name)) {
+          const email = (item.email || `${(item.name || 'crew').toLowerCase().replace(/\s+/g, '.')}@oriental.ac.in`).toLowerCase().trim();
+          candidates.push({
+            name: item.name || item.fullName || 'Pixela Crew Member',
+            email,
+            role: item.role || defaultRole,
+            department: item.department || item.dept || defaultDept,
+            semester: Number(item.semester) || 6,
+            year: item.year || '3rd Year',
+            specialization: item.specialization || item.spec || 'Visual Creator',
+            skills: Array.isArray(item.skills) ? item.skills : (item.skills ? String(item.skills).split(',').map(s => s.trim()) : ['Photography', 'Event Coverage']),
+            instagramUrl: item.instagramUrl || item.instagram || '',
+            bio: item.bio || '',
+            gear: item.gear || { cameraBody: item.camera || '', primaryLens: item.lens || '' },
+            eventsCovered: Array.isArray(item.eventsCovered) ? item.eventsCovered : [],
+            badges: Array.isArray(item.badges) ? item.badges : ['Verified Crew']
+          });
+        }
+      }
+      if (candidates.length > 0) return candidates;
+    } catch (e) {
+      // Not JSON, continue with text parsing
+    }
+  }
+
+  // 2. Check for Table format (Markdown pipe '|' delimiter)
+  const tableLines = lines.filter(l => l.includes('|'));
+  if (tableLines.length >= 2) {
+    const headerLine = tableLines[0];
+    const headers = headerLine.split('|').map(h => h.trim().toLowerCase()).filter(Boolean);
+    const nameIdx = headers.findIndex(h => h.includes('name'));
+    const emailIdx = headers.findIndex(h => h.includes('email') || h.includes('mail'));
+    const roleIdx = headers.findIndex(h => h.includes('role') || h.includes('designation') || h.includes('position'));
+    const deptIdx = headers.findIndex(h => h.includes('dept') || h.includes('department') || h.includes('branch'));
+    const specIdx = headers.findIndex(h => h.includes('spec') || h.includes('skill'));
+    const instaIdx = headers.findIndex(h => h.includes('insta') || h.includes('social'));
+    const gearIdx = headers.findIndex(h => h.includes('gear') || h.includes('camera'));
+
+    for (let i = 1; i < tableLines.length; i++) {
+      const line = tableLines[i];
+      if (line.includes('---')) continue; // Separator row
+      const rawCols = line.split('|').map(c => c.trim());
+      // Filter out leading/trailing empty cells from outer pipes
+      const cols = rawCols.filter((_, idx, arr) => (idx > 0 && idx < arr.length - 1) || arr.length === 1);
+      const name = nameIdx !== -1 && cols[nameIdx] ? cols[nameIdx] : cols[0];
+      const email = emailIdx !== -1 && cols[emailIdx] ? cols[emailIdx] : cols.find(c => c.includes('@'));
+      if (email && email.includes('@')) {
+        candidates.push({
+          name: name || 'Crew Member',
+          email: email.toLowerCase().trim(),
+          role: (roleIdx !== -1 && cols[roleIdx]) ? cols[roleIdx].toLowerCase().trim() : defaultRole,
+          department: (deptIdx !== -1 && cols[deptIdx]) ? cols[deptIdx] : defaultDept,
+          specialization: (specIdx !== -1 && cols[specIdx]) ? cols[specIdx] : 'Visual Creator',
+          instagramUrl: (instaIdx !== -1 && cols[instaIdx]) ? cols[instaIdx] : '',
+          gear: (gearIdx !== -1 && cols[gearIdx]) ? { cameraBody: cols[gearIdx], primaryLens: '' } : { cameraBody: '', primaryLens: '' },
+          semester: 6,
+          year: '3rd Year',
+          skills: ['Photography', 'Event Coverage'],
+          badges: ['Verified Crew']
+        });
+      }
+    }
+    if (candidates.length > 0) return candidates;
+  }
+
+  // 3. Check for CSV / Comma-separated format
+  const csvLines = lines.filter(l => l.includes(','));
+  if (csvLines.length >= 2) {
+    const headerLine = csvLines[0];
+    const headers = headerLine.split(',').map(h => h.trim().toLowerCase());
+    const nameIdx = headers.findIndex(h => h.includes('name'));
+    const emailIdx = headers.findIndex(h => h.includes('email') || h.includes('mail'));
+    const roleIdx = headers.findIndex(h => h.includes('role') || h.includes('designation'));
+    const deptIdx = headers.findIndex(h => h.includes('dept') || h.includes('department'));
+    const specIdx = headers.findIndex(h => h.includes('spec') || h.includes('skill'));
+
+    for (let i = 1; i < csvLines.length; i++) {
+      const parts = csvLines[i].split(',').map(p => p.trim().replace(/^["']|["']$/g, ''));
+      const email = emailIdx !== -1 && parts[emailIdx] ? parts[emailIdx] : parts.find(p => p.includes('@'));
+      const name = nameIdx !== -1 && parts[nameIdx] ? parts[nameIdx] : parts[0];
+      if (email && email.includes('@')) {
+        candidates.push({
+          name: name || 'Crew Member',
+          email: email.toLowerCase().trim(),
+          role: (roleIdx !== -1 && parts[roleIdx]) ? parts[roleIdx].toLowerCase().trim() : defaultRole,
+          department: (deptIdx !== -1 && parts[deptIdx]) ? parts[deptIdx] : defaultDept,
+          specialization: (specIdx !== -1 && parts[specIdx]) ? parts[specIdx] : 'Visual Creator',
+          semester: 6,
+          year: '3rd Year',
+          skills: ['Photography', 'Event Coverage'],
+          badges: ['Verified Crew']
+        });
+      }
+    }
+    if (candidates.length > 0) return candidates;
+  }
+
+  // 4. Block / Key-Value recognition (e.g. Name: ..., Email: ...)
+  let currentCrew = null;
+  for (const line of lines) {
+    const lower = line.toLowerCase();
+    if (lower.startsWith('name:') || lower.startsWith('crew:') || lower.startsWith('member:') || lower.startsWith('student:')) {
+      if (currentCrew && currentCrew.email) candidates.push(currentCrew);
+      currentCrew = {
+        name: line.split(':')[1]?.trim() || 'Crew Member',
+        email: '',
+        role: defaultRole,
+        department: defaultDept,
+        specialization: 'Visual Creator',
+        semester: 6,
+        year: '3rd Year',
+        skills: ['Photography', 'Event Coverage'],
+        badges: ['Verified Crew']
+      };
+    } else if (lower.startsWith('email:') || lower.startsWith('mail:')) {
+      if (!currentCrew) currentCrew = { name: 'Crew Member', role: defaultRole, department: defaultDept, specialization: 'Visual Creator', semester: 6, year: '3rd Year', skills: ['Photography'], badges: ['Verified Crew'] };
+      currentCrew.email = line.split(':')[1]?.trim().toLowerCase() || '';
+    } else if (lower.startsWith('role:') || lower.startsWith('designation:')) {
+      if (currentCrew) currentCrew.role = line.split(':')[1]?.trim().toLowerCase() || defaultRole;
+    } else if (lower.startsWith('department:') || lower.startsWith('dept:') || lower.startsWith('branch:')) {
+      if (currentCrew) currentCrew.department = line.split(':')[1]?.trim() || defaultDept;
+    } else if (lower.startsWith('specialization:') || lower.startsWith('domain:')) {
+      if (currentCrew) currentCrew.specialization = line.split(':')[1]?.trim() || 'Visual Creator';
+    } else if (lower.startsWith('camera:') || lower.startsWith('gear:')) {
+      if (currentCrew) currentCrew.gear = { cameraBody: line.split(':')[1]?.trim() || '', primaryLens: '' };
+    }
+  }
+  if (currentCrew && currentCrew.email) {
+    candidates.push(currentCrew);
+  }
+  if (candidates.length > 0) return candidates;
+
+  // 5. Line-by-line regex pattern recognition: Any line containing an email
+  const emailRegex = /([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/g;
+  for (const line of lines) {
+    const match = line.match(emailRegex);
+    if (match) {
+      const email = match[0].toLowerCase();
+      const emailIdx = line.indexOf(match[0]);
+      const beforeEmail = line.slice(0, emailIdx).replace(/[-–|,;:]/g, ' ').trim();
+      const afterEmail = line.slice(emailIdx + match[0].length).replace(/[-–|,;:]/g, ' ').trim();
+
+      const knownRoles = ['crew', 'photographer', 'tech_head', 'creative_head', 'photography_head', 'social_media_head', 'alumni', 'faculty', 'president', 'vice_president', 'member'];
+      let detectedRole = defaultRole;
+      let detectedDept = defaultDept;
+
+      for (const r of knownRoles) {
+        if (new RegExp(`\\b${r}\\b`, 'i').test(line)) {
+          detectedRole = r;
+          break;
+        }
+      }
+
+      if (/computer science|cse/i.test(line)) detectedDept = 'Computer Science';
+      else if (/information tech|it\b/i.test(line)) detectedDept = 'Information Technology';
+      else if (/electronics|ec\b/i.test(line)) detectedDept = 'Electronics & Communication';
+      else if (/mechanical|me\b/i.test(line)) detectedDept = 'Mechanical Engineering';
+
+      let cleanName = '';
+      if (beforeEmail && beforeEmail.length >= 2 && !/^\d+$/.test(beforeEmail)) {
+        cleanName = beforeEmail;
+      } else if (afterEmail && afterEmail.length >= 2 && !/^\d+$/.test(afterEmail)) {
+        cleanName = afterEmail.split(/\s{2,}|\t/)[0].trim();
+      }
+
+      if (!cleanName || cleanName.length < 2) {
+        cleanName = email.split('@')[0].replace(/[._-]/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+      }
+
+      candidates.push({
+        name: cleanName,
+        email,
+        role: detectedRole,
+        department: detectedDept,
+        specialization: 'Visual Creator',
+        semester: 6,
+        year: '3rd Year',
+        skills: ['Photography', 'Event Coverage'],
+        badges: ['Verified Crew']
+      });
+    }
+  }
+  if (candidates.length > 0) return candidates;
+
+  // 6. Gemini Generative AI fallback for complex/unstructured PDF text
+  if (process.env.GEMINI_API_KEY) {
+    try {
+      const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+      const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+      const prompt = `Extract all individual crew members, students, photographers, or people listed in the following document text into a strict JSON array of objects.
+Each object MUST have:
+- "name": string (full name)
+- "email": string (email address; if not provided in text, synthesize a valid email like firstname.lastname@oriental.ac.in)
+- "role": string (e.g., "crew", "photographer", "member", "tech_head", "creative_head")
+- "department": string (e.g. "Information Technology", "Computer Science", etc.)
+- "specialization": string (e.g. "Event Photography", "Cinematography", "Lighting")
+Return ONLY the raw JSON array without markdown codeblocks or quotes around the array.
+
+Document Text:
+${rawText.slice(0, 15000)}`;
+
+      const result = await model.generateContent(prompt);
+      const outputText = result.response.text().trim().replace(/^```json/, '').replace(/^```/, '').replace(/```$/, '').trim();
+      const aiParsed = JSON.parse(outputText);
+      if (Array.isArray(aiParsed) && aiParsed.length > 0) {
+        for (const item of aiParsed) {
+          if (item.name || item.email) {
+            candidates.push({
+              name: item.name || 'Pixela Crew Member',
+              email: (item.email || `${(item.name || 'crew').toLowerCase().replace(/\s+/g, '.')}@oriental.ac.in`).toLowerCase().trim(),
+              role: item.role || defaultRole,
+              department: item.department || defaultDept,
+              specialization: item.specialization || 'Visual Creator',
+              semester: 6,
+              year: '3rd Year',
+              skills: ['Photography', 'Event Coverage'],
+              badges: ['Verified Crew']
+            });
+          }
+        }
+      }
+    } catch (aiErr) {
+      console.warn('Gemini PDF AI extraction fallback error:', aiErr.message);
+    }
+  }
+
+  return candidates;
+}
+
+// 📤 1-Click Bulk Upload & Auto-Registration for Crew Members (PDF / CSV / JSON)
+router.post('/admin/bulk-upload-crew', protect, adminOnly, upload.single('file'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: 'Please upload a roster file (.pdf, .csv, .json, or .txt).' });
+    }
+
+    const { defaultRole = 'crew', defaultDept = 'Information Technology', defaultYear = '3rd Year', defaultSemester = 6 } = req.body;
+    const isPdf = req.file.mimetype === 'application/pdf' || req.file.originalname?.toLowerCase().endsWith('.pdf');
+    let rawText = '';
+
+    if (isPdf) {
+      try {
+        const parser = new PDFParse({ data: req.file.buffer });
+        await parser.load();
+        const textResult = await parser.getText();
+        rawText = textResult?.text || '';
+      } catch (pdfErr) {
+        console.error('PDF parsing error:', pdfErr);
+        return res.status(400).json({ error: `Failed to read PDF file: ${pdfErr.message}` });
+      }
+    } else {
+      rawText = req.file.buffer.toString('utf-8');
+    }
+
+    if (!rawText.trim()) {
+      return res.status(400).json({ error: 'Uploaded file is empty or contains no readable text.' });
+    }
+
+    // Extract crew candidate records
+    const parsedCrew = await parseCrewFromText(rawText, defaultRole, defaultDept);
+
+    if (!parsedCrew || parsedCrew.length === 0) {
+      return res.status(400).json({
+        error: 'No crew members could be identified in the uploaded document. Please check the file formatting (supports PDF tables, CSV with Name/Email, or JSON list).'
+      });
+    }
+
+    const registeredUsers = [];
+    const updatedUsers = [];
+
+    for (const crew of parsedCrew) {
+      const normalizedEmail = crew.email.toLowerCase().trim();
+      const defaultPassword = 'pixela@2026';
+      const passwordHash = bcrypt.hashSync(defaultPassword, 8);
+
+      const userRecord = {
+        name: crew.name,
+        email: normalizedEmail,
+        password: defaultPassword,
+        role: crew.role || defaultRole,
+        department: crew.department || defaultDept,
+        semester: Number(crew.semester) || Number(defaultSemester) || 6,
+        year: crew.year || defaultYear,
+        specialization: crew.specialization || 'Visual Creator',
+        skills: Array.isArray(crew.skills) && crew.skills.length > 0 ? crew.skills : ['Photography', 'Event Coverage'],
+        instagramUrl: crew.instagramUrl || '',
+        bio: crew.bio || `Official Pixela Crew Member imported via bulk roster upload.`,
+        gear: crew.gear || { cameraBody: '', primaryLens: '', secondaryLens: '', accessories: [] },
+        badges: crew.badges || ['Verified Crew'],
+        performanceRating: 5,
+        trackRecordNotes: 'Provisioned by Super Admin via Bulk Roster Upload.',
+        eventsCovered: Array.isArray(crew.eventsCovered) ? crew.eventsCovered : [],
+        isApproved: true, // ✅ ALWAYS auto-approved because added by Super Admin directly
+        createdAt: new Date(),
+      };
+
+      // 1. Database Upsert
+      if (isDbConnected()) {
+        try {
+          let dbUser = await User.findOne({ email: normalizedEmail });
+          if (dbUser) {
+            dbUser.isApproved = true;
+            if (crew.role) dbUser.role = crew.role;
+            if (crew.department) dbUser.department = crew.department;
+            if (crew.specialization) dbUser.specialization = crew.specialization;
+            await dbUser.save();
+            userRecord._id = String(dbUser._id);
+            userRecord.id = String(dbUser._id);
+            updatedUsers.push(dbUser);
+          } else {
+            const created = await User.create({
+              ...userRecord,
+              password: defaultPassword,
+              avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300&auto=format&fit=crop&q=80',
+            });
+            userRecord._id = String(created._id);
+            userRecord.id = String(created._id);
+            registeredUsers.push(created);
+          }
+        } catch (dbErr) {
+          console.warn('DB upsert error for crew member:', dbErr.message);
+        }
+      }
+
+      // 2. Memory Store Upsert
+      if (!userRecord._id) {
+        userRecord._id = `user_crew_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+        userRecord.id = userRecord._id;
+      }
+      userRecord.passwordHash = passwordHash;
+
+      const memIdx = memoryStore.users.findIndex(u => (u.email || '').toLowerCase().trim() === normalizedEmail);
+      if (memIdx !== -1) {
+        memoryStore.users[memIdx] = {
+          ...memoryStore.users[memIdx],
+          ...userRecord,
+          isApproved: true,
+        };
+        if (!updatedUsers.some(u => (u.email || '').toLowerCase().trim() === normalizedEmail)) {
+          updatedUsers.push(memoryStore.users[memIdx]);
+        }
+      } else {
+        memoryStore.users.push(userRecord);
+        if (!registeredUsers.some(u => (u.email || '').toLowerCase().trim() === normalizedEmail)) {
+          registeredUsers.push(userRecord);
+        }
+      }
+
+      // 3. Persist into Single Table File (Markdown, CSV, JSON)
+      saveRegistrationToFile(userRecord);
+    }
+
+    // Comprehensive table file sync
+    saveAllRegistrationsToFile(memoryStore.users);
+
+    const totalProcessed = registeredUsers.length + updatedUsers.length;
+    return res.status(201).json({
+      success: true,
+      message: `⚡ Successfully processed ${totalProcessed} crew members from "${req.file.originalname}"! (${registeredUsers.length} newly registered, ${updatedUsers.length} updated). All are automatically APPROVED and synced.`,
+      count: totalProcessed,
+      newlyRegisteredCount: registeredUsers.length,
+      updatedCount: updatedUsers.length,
+      defaultPassword: 'pixela@2026',
+      users: [...registeredUsers, ...updatedUsers].map(u => ({
+        id: u._id || u.id,
+        name: u.name,
+        email: u.email,
+        role: u.role,
+        department: u.department,
+        isApproved: true,
+      }))
+    });
+  } catch (error) {
+    console.error('Bulk upload crew error:', error);
+    res.status(500).json({ error: error.message || 'Server error processing crew roster upload.' });
   }
 });
 
