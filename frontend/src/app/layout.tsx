@@ -21,17 +21,36 @@ export default function RootLayout({
   const isActive = (path: string) => pathname === path;
 
   useEffect(() => {
-    // Read local auth state
-    const savedToken = localStorage.getItem('pixela_token');
-    const savedUser = localStorage.getItem('pixela_user');
-    if (savedToken && savedUser) {
-      setToken(savedToken);
-      setUser(JSON.parse(savedUser));
-    }
+    const syncAuth = () => {
+      const savedToken = localStorage.getItem('pixela_token');
+      const savedUser = localStorage.getItem('pixela_user');
+      if (savedToken && savedUser) {
+        try {
+          setToken(savedToken);
+          setUser(JSON.parse(savedUser));
+        } catch (e) {
+          setToken(null);
+          setUser(null);
+        }
+      } else {
+        setToken(null);
+        setUser(null);
+      }
+    };
+
+    syncAuth();
+
+    window.addEventListener('pixela_auth_change', syncAuth);
+    window.addEventListener('storage', syncAuth);
 
     // Enforce Dark Theme
     document.documentElement.setAttribute('data-theme', 'dark');
     document.documentElement.classList.add('dark');
+
+    return () => {
+      window.removeEventListener('pixela_auth_change', syncAuth);
+      window.removeEventListener('storage', syncAuth);
+    };
   }, []);
 
   const handleLoginSuccess = (newToken: string, newUser: any) => {
@@ -44,6 +63,8 @@ export default function RootLayout({
     localStorage.removeItem('pixela_user');
     setToken(null);
     setUser(null);
+    window.dispatchEvent(new Event('pixela_auth_change'));
+    window.dispatchEvent(new Event('storage'));
   };
 
   return (

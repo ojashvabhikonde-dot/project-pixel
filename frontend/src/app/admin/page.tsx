@@ -1,12 +1,13 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import NextLink from 'next/link';
 import {
   ShieldCheck, Calendar, Image as ImageIcon, Users, BookOpen, AlertCircle,
   Check, X, Send, Database, BarChart3, UserPlus, Trash2, Search, Filter,
   ShieldAlert, Sparkles, Edit3, UserCheck, Shield, Award, Star, Camera,
   Zap, CheckCircle2, Sliders, ExternalLink, Plus, FileText, Download,
-  Copy, RefreshCw, Table, FileCode, UploadCloud, FileUp
+  Copy, RefreshCw, Table, FileCode, UploadCloud, FileUp, Lock
 } from 'lucide-react';
 import { API_URL } from '@/config/api';
 import { exportAllRegistrationsPdf, exportCrewMemberDossierPdf } from '@/utils/pdfExport';
@@ -123,38 +124,50 @@ export default function AdminPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const savedToken = localStorage.getItem('pixela_token');
-    const savedUser = localStorage.getItem('pixela_user');
-    if (savedToken) setToken(savedToken);
-    if (savedUser) {
-      try {
-        setUser(JSON.parse(savedUser));
-      } catch (e) {
-        setUser(null);
+    const syncAdminAuth = () => {
+      const savedToken = localStorage.getItem('pixela_token');
+      const savedUser = localStorage.getItem('pixela_user');
+      if (savedToken) setToken(savedToken);
+      if (savedUser) {
+        try {
+          setUser(JSON.parse(savedUser));
+        } catch (e) {
+          setUser(null);
+        }
       }
-    }
+      if (savedToken) {
+        loadAdminData(savedToken);
+        loadTableData(savedToken);
+      } else {
+        setLoading(false);
+      }
+    };
 
-    if (savedToken) {
-      loadAdminData(savedToken);
-      loadTableData(savedToken);
+    syncAdminAuth();
 
-      // Auto-sync admin panel every 5 seconds
-      const pollInterval = setInterval(() => {
-        loadAdminData(savedToken, true);
-      }, 5000);
+    window.addEventListener('pixela_auth_change', syncAdminAuth);
+    window.addEventListener('storage', syncAdminAuth);
 
-      const onFocus = () => loadAdminData(savedToken, true);
-      window.addEventListener('focus', onFocus);
-      window.addEventListener('visibilitychange', onFocus);
+    // Auto-sync admin panel every 5 seconds
+    const pollInterval = setInterval(() => {
+      const activeToken = localStorage.getItem('pixela_token');
+      if (activeToken) loadAdminData(activeToken, true);
+    }, 5000);
 
-      return () => {
-        clearInterval(pollInterval);
-        window.removeEventListener('focus', onFocus);
-        window.removeEventListener('visibilitychange', onFocus);
-      };
-    } else {
-      setLoading(false);
-    }
+    const onFocus = () => {
+      const activeToken = localStorage.getItem('pixela_token');
+      if (activeToken) loadAdminData(activeToken, true);
+    };
+    window.addEventListener('focus', onFocus);
+    window.addEventListener('visibilitychange', onFocus);
+
+    return () => {
+      clearInterval(pollInterval);
+      window.removeEventListener('pixela_auth_change', syncAdminAuth);
+      window.removeEventListener('storage', syncAdminAuth);
+      window.removeEventListener('focus', onFocus);
+      window.removeEventListener('visibilitychange', onFocus);
+    };
   }, []);
 
   const loadTableData = async (authToken?: string) => {
@@ -656,12 +669,31 @@ export default function AdminPage() {
 
   if (!token || !isSuperAdmin) {
     return (
-      <div className="max-w-md mx-auto px-4 py-20 text-center space-y-4">
-        <AlertCircle className="h-10 w-10 text-red-500 mx-auto" />
-        <h2 className="text-xl font-bold text-white">Access Denied</h2>
-        <p className="text-xs text-zinc-400 font-light">
-          Only approved Pixela Administrators or Super Admin (pixela@oriental.ac.in) can view the database analytics dashboard.
-        </p>
+      <div className="max-w-md mx-auto px-4 py-24 text-center space-y-5">
+        <div className="h-16 w-16 rounded-full bg-red-950/60 border border-red-500/40 flex items-center justify-center mx-auto text-red-400 shadow-xl shadow-red-950/50">
+          <AlertCircle className="h-8 w-8" />
+        </div>
+        <div className="space-y-2">
+          <h2 className="text-2xl font-black tracking-tight text-white uppercase">Admin Access Required</h2>
+          <p className="text-xs text-zinc-400 font-light leading-relaxed max-w-sm mx-auto">
+            Only approved Pixela Administrators or Super Admin (<span className="text-primary font-mono font-medium">pixela@oriental.ac.in</span>) can view and manage the database analytics dashboard.
+          </p>
+        </div>
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
+          <NextLink
+            href="/login?redirect=/admin"
+            className="w-full sm:w-auto px-6 py-2.5 rounded-full bg-primary text-black text-xs font-bold uppercase tracking-wider hover:bg-primary/90 transition-all cursor-pointer shadow-lg flex items-center justify-center space-x-1.5"
+          >
+            <ShieldCheck className="h-4 w-4" />
+            <span>Sign In as Admin</span>
+          </NextLink>
+          <NextLink
+            href="/"
+            className="w-full sm:w-auto px-6 py-2.5 rounded-full bg-zinc-800 text-zinc-300 hover:text-white text-xs font-semibold tracking-wider hover:bg-zinc-700 transition-all cursor-pointer border border-zinc-700"
+          >
+            Back to Home
+          </NextLink>
+        </div>
       </div>
     );
   }

@@ -63,20 +63,39 @@ export default function ProfilePage() {
   const [userPhotos, setUserPhotos] = useState<any[]>([]);
 
   useEffect(() => {
-    const savedToken = localStorage.getItem('pixela_token');
-    const savedUser = localStorage.getItem('pixela_user');
+    const syncProfileAuth = () => {
+      const savedToken = localStorage.getItem('pixela_token');
+      const savedUser = localStorage.getItem('pixela_user');
 
-    if (!savedToken || !savedUser) {
-      setLoading(false);
-      return;
-    }
+      if (!savedToken || !savedUser) {
+        setToken(null);
+        setUser(null);
+        setLoading(false);
+        return;
+      }
 
-    setToken(savedToken);
-    const parsedUser = JSON.parse(savedUser);
-    setUser(parsedUser);
-    populateForm(parsedUser);
+      try {
+        setToken(savedToken);
+        const parsedUser = JSON.parse(savedUser);
+        setUser(parsedUser);
+        populateForm(parsedUser);
+        fetchFreshProfile(savedToken);
+      } catch (e) {
+        setToken(null);
+        setUser(null);
+        setLoading(false);
+      }
+    };
 
-    fetchFreshProfile(savedToken);
+    syncProfileAuth();
+
+    window.addEventListener('pixela_auth_change', syncProfileAuth);
+    window.addEventListener('storage', syncProfileAuth);
+
+    return () => {
+      window.removeEventListener('pixela_auth_change', syncProfileAuth);
+      window.removeEventListener('storage', syncProfileAuth);
+    };
   }, []);
 
   const populateForm = (userData: any) => {
@@ -307,13 +326,22 @@ export default function ProfilePage() {
         <p className="text-xs text-zinc-400 font-light leading-relaxed">
           Please log in to your Pixela account to view and customize your official photographer profile, handles, and gallery submissions.
         </p>
-        <NextLink
-          href="/"
-          className="inline-flex items-center space-x-2 px-6 py-2.5 rounded-full bg-white text-black text-xs font-bold uppercase tracking-wider hover:bg-white/90 transition-all cursor-pointer shadow-lg"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          <span>Back to Home</span>
-        </NextLink>
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
+          <NextLink
+            href="/login?redirect=/profile"
+            className="w-full sm:w-auto px-6 py-2.5 rounded-full bg-white text-black text-xs font-bold uppercase tracking-wider hover:bg-white/90 transition-all cursor-pointer shadow-lg flex items-center justify-center space-x-1.5"
+          >
+            <Lock className="h-4 w-4" />
+            <span>Sign In to Profile</span>
+          </NextLink>
+          <NextLink
+            href="/"
+            className="w-full sm:w-auto inline-flex items-center justify-center space-x-2 px-6 py-2.5 rounded-full bg-zinc-800 text-zinc-300 hover:text-white text-xs font-semibold uppercase tracking-wider hover:bg-zinc-700 transition-all cursor-pointer border border-zinc-700"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            <span>Back to Home</span>
+          </NextLink>
+        </div>
       </div>
     );
   }

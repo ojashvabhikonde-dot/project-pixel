@@ -1,9 +1,11 @@
 'use client';
 
 import React, { useState } from 'react';
+import NextLink from 'next/link';
 import { 
   X, Lock, Mail, User, ShieldCheck, Camera, Upload, Trash2, 
-  Sparkles, CheckCircle2, Plus, Globe, Link2, ExternalLink
+  Sparkles, CheckCircle2, Plus, Globe, Link2, ExternalLink,
+  Eye, EyeOff, ArrowRight
 } from 'lucide-react';
 import { API_URL } from '@/config/api';
 
@@ -36,9 +38,10 @@ export default function LoginModal({
   isOpen, 
   onClose, 
   onSuccess,
-  initialMode = 'register' 
+  initialMode = 'login' 
 }: LoginModalProps) {
   const [isRegister, setIsRegister] = useState(initialMode === 'register');
+  const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
@@ -69,10 +72,10 @@ export default function LoginModal({
       setIsRegister(initialMode === 'register');
       setError('');
       setRegistrationSuccessMsg('');
+      setShowPassword(false);
     }
   }, [isOpen, initialMode]);
 
-  const isSuperAdminEmail = email.trim().toLowerCase() === 'pixela@oriental.ac.in';
   const totalHandlesCount = (instagramUrl.trim() ? 1 : 0) + extraHandles.length;
 
   const handleAddExtraHandle = () => {
@@ -226,6 +229,10 @@ export default function LoginModal({
       // Save token and user details to localStorage
       localStorage.setItem('pixela_token', data.token);
       localStorage.setItem('pixela_user', JSON.stringify(data.user));
+
+      // Global sync across tabs & current page components
+      window.dispatchEvent(new Event('pixela_auth_change'));
+      window.dispatchEvent(new Event('storage'));
       
       if (isRegister && role === 'member' && !data.user.isApproved) {
         setRegistrationSuccessMsg('Registration submitted successfully! Your application has been sent to the Super Admin for roster approval.');
@@ -238,7 +245,11 @@ export default function LoginModal({
         onClose();
       }
     } catch (err: any) {
-      setError(err.message || 'Something went wrong. Please try again.');
+      if (err.message?.includes('Failed to fetch') || err.message?.includes('NetworkError')) {
+        setError('Cannot connect to Pixela backend server. Please verify backend is running at http://localhost:5000.');
+      } else {
+        setError(err.message || 'Something went wrong. Please try again.');
+      }
     } finally {
       setLoading(false);
     }
@@ -274,12 +285,32 @@ export default function LoginModal({
               ? 'Register with your photo & social handles to be featured on the official roster' 
               : 'Sign in to access gallery uploads, event hiring, and chatbot insights'}
           </p>
-          {isSuperAdminEmail && (
-            <div className="mt-2.5 inline-flex items-center space-x-1.5 px-3 py-1 rounded-full bg-primary/20 border border-primary/40 text-primary text-[10px] font-bold tracking-wider uppercase font-mono animate-pulse">
-              <Sparkles className="h-3 w-3" />
-              <span>Super Admin Account Identified</span>
-            </div>
-          )}
+        </div>
+
+        {/* Mode Tabs */}
+        <div className="grid grid-cols-2 p-1 bg-zinc-950/80 rounded-xl border border-zinc-800 mb-5 text-xs font-semibold">
+          <button
+            type="button"
+            onClick={() => { setIsRegister(false); setError(''); }}
+            className={`py-1.5 rounded-lg transition-all cursor-pointer ${
+              !isRegister
+                ? 'bg-white text-black font-bold shadow-md'
+                : 'text-zinc-400 hover:text-white'
+            }`}
+          >
+            Sign In
+          </button>
+          <button
+            type="button"
+            onClick={() => { setIsRegister(true); setError(''); }}
+            className={`py-1.5 rounded-lg transition-all cursor-pointer ${
+              isRegister
+                ? 'bg-white text-black font-bold shadow-md'
+                : 'text-zinc-400 hover:text-white'
+            }`}
+          >
+            Join Crew
+          </button>
         </div>
 
         {error && (
@@ -339,19 +370,22 @@ export default function LoginModal({
                 <Lock className="h-4 w-4" />
               </span>
               <input
-                type="password"
+                type={showPassword ? 'text' : 'password'}
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full bg-zinc-950 border border-zinc-800 rounded-lg py-2 pl-10 pr-4 text-xs focus:outline-none focus:border-primary transition-colors text-white"
-                placeholder={isSuperAdminEmail ? "Enter pixela@2026" : "••••••••"}
+                className="w-full bg-zinc-950 border border-zinc-800 rounded-lg py-2 pl-10 pr-10 text-xs focus:outline-none focus:border-primary transition-colors text-white"
+                placeholder="••••••••"
               />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute inset-y-0 right-0 pr-3 flex items-center text-zinc-500 hover:text-zinc-300 transition-colors cursor-pointer"
+                title={showPassword ? "Hide password" : "Show password"}
+              >
+                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </button>
             </div>
-            {isSuperAdminEmail && (
-              <p className="text-[10px] text-primary/80 mt-1 font-mono">
-                Super Admin Password: <span className="font-bold text-primary">pixela@2026</span> (or your chosen password)
-              </p>
-            )}
           </div>
 
           {isRegister && (
@@ -681,7 +715,7 @@ export default function LoginModal({
           </button>
         </form>
 
-        <div className="mt-6 text-center text-xs text-zinc-400 border-t border-zinc-800/80 pt-4">
+        <div className="mt-5 text-center text-xs text-zinc-400 border-t border-zinc-800/80 pt-4 flex flex-col items-center gap-2">
           {isRegister ? (
             <p>
               Already have an account?{' '}
@@ -705,6 +739,15 @@ export default function LoginModal({
               </button>
             </p>
           )}
+
+          <NextLink
+            href="/login"
+            onClick={onClose}
+            className="text-[11px] text-zinc-500 hover:text-zinc-300 transition-colors flex items-center gap-1 font-medium mt-1"
+          >
+            <span>Open Dedicated Login Page</span>
+            <ExternalLink className="h-3 w-3" />
+          </NextLink>
         </div>
       </div>
     </div>
