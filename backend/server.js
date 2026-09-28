@@ -34,6 +34,16 @@ app.use(cors({ origin: '*' }));
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
+// Serverless invocation DB connection middleware (must run before routes)
+app.use(async (req, res, next) => {
+  try {
+    await connectDB();
+  } catch (err) {
+    // Silently proceed with memory/file fallback
+  }
+  next();
+});
+
 // Routes mapping
 app.use('/api', apiRouter);
 
@@ -211,15 +221,6 @@ const seedDatabase = async () => {
   }
 };
 
-// Serverless invocation DB connection middleware
-app.use(async (req, res, next) => {
-  try {
-    await connectDB();
-  } catch (err) {
-    // Silently proceed with memory/file fallback
-  }
-  next();
-});
 
 // Start Server locally when not running in Vercel serverless function
 if (!process.env.VERCEL) {
