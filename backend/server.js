@@ -196,14 +196,27 @@ const seedDatabase = async () => {
   }
 };
 
-// Start Server immediately so APIs are accessible
-const server = app.listen(PORT, () => {
-  console.log(`Pixela API Server running on port ${PORT}`);
+// Serverless invocation DB connection middleware
+app.use(async (req, res, next) => {
+  try {
+    await connectDB();
+  } catch (err) {
+    // Silently proceed with memory/file fallback
+  }
+  next();
 });
 
-// Connect to MongoDB in background
-connectDB().then((connected) => {
-  if (connected) {
-    seedDatabase();
-  }
-});
+// Start Server locally when not running in Vercel serverless function
+if (!process.env.VERCEL) {
+  app.listen(PORT, () => {
+    console.log(`Pixela API Server running on port ${PORT}`);
+  });
+  // Connect to MongoDB in background locally
+  connectDB().then((connected) => {
+    if (connected) {
+      seedDatabase();
+    }
+  });
+}
+
+export default app;

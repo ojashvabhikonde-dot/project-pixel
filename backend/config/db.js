@@ -5,14 +5,24 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 export const connectDB = async () => {
+  if (mongoose.connection.readyState >= 1) {
+    return true;
+  }
+
+  const isVercel = !!process.env.VERCEL;
   const urisToTry = [
     process.env.MONGODB_URI,
-    'mongodb://127.0.0.1:27017/pixela',
-    'mongodb://localhost:27017/pixela'
+    !isVercel ? 'mongodb://127.0.0.1:27017/pixela' : null,
+    !isVercel ? 'mongodb://localhost:27017/pixela' : null
   ].filter(Boolean);
 
-  // Remove duplicates
-  const uniqueUris = Array.from(new Set(urisToTry));
+  // Remove duplicates and avoid localhost timeouts on Vercel cloud
+  const uniqueUris = Array.from(new Set(urisToTry)).filter(uri => {
+    if (isVercel && (uri.includes('127.0.0.1') || uri.includes('localhost'))) {
+      return false;
+    }
+    return true;
+  });
 
   for (const uri of uniqueUris) {
     try {

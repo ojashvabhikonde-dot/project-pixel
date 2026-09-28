@@ -4,15 +4,20 @@ import { fileURLToPath } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const DATA_DIR = path.resolve(__dirname, '../data');
+const IS_VERCEL = !!process.env.VERCEL;
+const DATA_DIR = IS_VERCEL ? '/tmp/pixela-data' : path.resolve(__dirname, '../data');
 
 const JSON_FILE = path.join(DATA_DIR, 'registrations.json');
 const TABLE_FILE = path.join(DATA_DIR, 'crew_registrations_table.md');
 const CSV_FILE = path.join(DATA_DIR, 'crew_registrations.csv');
 
-// Ensure data directory exists
-if (!fs.existsSync(DATA_DIR)) {
-  fs.mkdirSync(DATA_DIR, { recursive: true });
+// Ensure data directory exists safely
+try {
+  if (!fs.existsSync(DATA_DIR)) {
+    fs.mkdirSync(DATA_DIR, { recursive: true });
+  }
+} catch (e) {
+  // Silent fallback in serverless or read-only environments
 }
 
 // Initial default super admin account
@@ -64,6 +69,18 @@ const DEFAULT_SUPERADMIN = {
 export const loadRegistrationsFromFile = () => {
   try {
     if (!fs.existsSync(JSON_FILE)) {
+      // If deployed on Vercel, attempt to seed from the repo data directory
+      const bundledSource = path.resolve(__dirname, '../data/registrations.json');
+      if (fs.existsSync(bundledSource)) {
+        try {
+          const rawSource = fs.readFileSync(bundledSource, 'utf-8');
+          const parsedSource = JSON.parse(rawSource);
+          if (Array.isArray(parsedSource) && parsedSource.length > 0) {
+            saveAllRegistrationsToFile(parsedSource);
+            return parsedSource;
+          }
+        } catch (e) {}
+      }
       const initial = [DEFAULT_SUPERADMIN];
       saveAllRegistrationsToFile(initial);
       return initial;
@@ -196,6 +213,9 @@ const generateCsv = (users) => {
  */
 export const saveAllRegistrationsToFile = (users) => {
   try {
+    if (!fs.existsSync(DATA_DIR)) {
+      fs.mkdirSync(DATA_DIR, { recursive: true });
+    }
     fs.writeFileSync(JSON_FILE, JSON.stringify(users, null, 2), 'utf-8');
     fs.writeFileSync(TABLE_FILE, generateMarkdownTable(users), 'utf-8');
     fs.writeFileSync(CSV_FILE, generateCsv(users), 'utf-8');
