@@ -20,7 +20,6 @@ import {
   getRegistrationsTableMarkdown,
   getRegistrationsCsv
 } from '../config/fileStorage.js';
-import { PDFParse } from 'pdf-parse';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
 const router = express.Router();
@@ -1932,6 +1931,7 @@ router.post('/admin/bulk-upload-crew', protect, adminOnly, upload.single('file')
 
     if (isPdf) {
       try {
+        const { PDFParse } = await import('pdf-parse');
         const parser = new PDFParse({ data: req.file.buffer });
         await parser.load();
         const textResult = await parser.getText();
