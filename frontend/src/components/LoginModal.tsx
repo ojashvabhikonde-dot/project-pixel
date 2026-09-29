@@ -207,7 +207,7 @@ export default function LoginModal({
       : { email: cleanEmail, password: cleanPassword };
 
     try {
-      const targetApi = API_URL || 'http://localhost:5000';
+      const targetApi = API_URL || 'https://project-pixel-u4xs.vercel.app';
       const res = await fetch(`${targetApi}${url}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -219,7 +219,7 @@ export default function LoginModal({
       try {
         data = JSON.parse(rawText);
       } catch (parseErr) {
-        throw new Error(`Server returned unexpected response (${res.status}). Please ensure backend is running at http://localhost:5000.`);
+        throw new Error(`Server returned unexpected response (${res.status}). Please ensure backend is running at ${targetApi}.`);
       }
 
       if (!res.ok) {
@@ -246,7 +246,8 @@ export default function LoginModal({
       }
     } catch (err: any) {
       if (err.message?.includes('Failed to fetch') || err.message?.includes('NetworkError')) {
-        setError('Cannot connect to Pixela backend server. Please verify backend is running at http://localhost:5000.');
+        const targetApi = API_URL || 'https://project-pixel-u4xs.vercel.app';
+        setError(`Cannot connect to Pixela backend server. Please verify backend is running at ${targetApi}.`);
       } else {
         setError(err.message || 'Something went wrong. Please try again.');
       }

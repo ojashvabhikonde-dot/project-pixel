@@ -206,7 +206,7 @@ function LoginFormContent() {
       : { email: cleanEmail, password: cleanPassword };
 
     try {
-      const targetApi = API_URL || 'http://localhost:5000';
+      const targetApi = API_URL || 'https://project-pixel-u4xs.vercel.app';
       const res = await fetch(`${targetApi}${endpoint}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -218,7 +218,7 @@ function LoginFormContent() {
       try {
         data = JSON.parse(rawText);
       } catch (parseErr) {
-        throw new Error(`Server returned unexpected response (${res.status}). Please ensure backend is running at http://localhost:5000.`);
+        throw new Error(`Server returned unexpected response (${res.status}). Please ensure backend is running at ${targetApi}.`);
       }
 
       if (!res.ok) {
@@ -259,7 +259,8 @@ function LoginFormContent() {
       }
     } catch (err: any) {
       if (err.message?.includes('Failed to fetch') || err.message?.includes('NetworkError')) {
-        setError('Cannot connect to backend server. Please verify the backend is running at http://localhost:5000.');
+        const targetApi = API_URL || 'https://project-pixel-u4xs.vercel.app';
+        setError(`Cannot connect to backend server. Please verify the backend is running at ${targetApi}.`);
       } else {
         setError(err.message || 'Something went wrong. Please check your credentials and try again.');
       }
