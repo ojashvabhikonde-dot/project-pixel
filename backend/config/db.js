@@ -4,19 +4,31 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
+let cachedConn = null;
+let cachedPromise = null;
+
 export const connectDB = async () => {
-  if (mongoose.connection.readyState >= 1) {
+  if (mongoose.connection && mongoose.connection.readyState === 1) {
+    return true;
+  }
+  if (cachedConn) {
     return true;
   }
 
   const isVercel = !!process.env.VERCEL;
+  const mongoUri = process.env.MONGODB_URI;
+
+  // On Vercel, if MONGODB_URI is absent or accidentally points to local loopback, bail immediately without waiting
+  if (isVercel && (!mongoUri || mongoUri.includes('127.0.0.1') || mongoUri.includes('localhost'))) {
+    return false;
+  }
+
   const urisToTry = [
-    process.env.MONGODB_URI,
+    mongoUri,
     !isVercel ? 'mongodb://127.0.0.1:27017/pixela' : null,
     !isVercel ? 'mongodb://localhost:27017/pixela' : null
   ].filter(Boolean);
 
-  // Remove duplicates and avoid localhost timeouts on Vercel cloud
   const uniqueUris = Array.from(new Set(urisToTry)).filter(uri => {
     if (isVercel && (uri.includes('127.0.0.1') || uri.includes('localhost'))) {
       return false;
@@ -24,14 +36,34 @@ export const connectDB = async () => {
     return true;
   });
 
+  if (uniqueUris.length === 0) {
+    return false;
+  }
+
+  if (cachedPromise) {
+    try {
+      await cachedPromise;
+      return mongoose.connection.readyState === 1;
+    } catch {
+      cachedPromise = null;
+    }
+  }
+
   for (const uri of uniqueUris) {
     try {
-      const conn = await mongoose.connect(uri, {
+      cachedPromise = mongoose.connect(uri, {
         serverSelectionTimeoutMS: 3000,
+        connectTimeoutMS: 3000,
+        socketTimeoutMS: 5000,
+        bufferCommands: false, // Prevents hanging queries when connection drops or times out
       });
+      const conn = await cachedPromise;
+      cachedConn = conn;
       console.log(`MongoDB Connected successfully to: ${conn.connection.host}/${conn.connection.name}`);
       return true;
     } catch (error) {
+      cachedPromise = null;
+      cachedConn = null;
       // Continue to next fallback
     }
   }

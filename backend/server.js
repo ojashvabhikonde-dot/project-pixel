@@ -47,9 +47,17 @@ app.use(async (req, res, next) => {
 // Routes mapping
 app.use('/api', apiRouter);
 
-// Basic health check route
+// Basic health check routes
 app.get('/', (req, res) => {
-  res.json({ message: 'Pixela Photography Club API running successfully.' });
+  res.json({ message: 'Pixela Photography Club API running successfully.', status: 'online' });
+});
+
+app.get('/api', (req, res) => {
+  res.json({ message: 'Pixela Photography Club API running successfully.', status: 'online' });
+});
+
+app.get('/api/health', (req, res) => {
+  res.json({ message: 'Pixela Photography Club API is healthy.', status: 'ok', timestamp: new Date().toISOString() });
 });
 
 // Seed data function to populate DB on startup if empty or missing crew
@@ -221,6 +229,18 @@ const seedDatabase = async () => {
   }
 };
 
+
+// Global catch-all error handling middleware to prevent Vercel 500 FUNCTION_INVOCATION_FAILED crash
+app.use((err, req, res, next) => {
+  console.error('Unhandled server error:', err);
+  if (res.headersSent) {
+    return next(err);
+  }
+  res.status(500).json({
+    error: 'Internal Server Error',
+    message: process.env.NODE_ENV === 'production' ? 'An unexpected server error occurred.' : (err?.message || 'Server error')
+  });
+});
 
 // Start Server locally when not running in Vercel serverless function
 if (!process.env.VERCEL) {
