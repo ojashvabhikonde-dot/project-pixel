@@ -151,38 +151,5 @@
     "trackRecordNotes": "",
     "isApproved": true,
     "createdAt": "2026-09-20T18:54:44.518Z"
-  },
-  {
-    "name": "Aarav Sharma",
-    "email": "aarav.sharma@oriental.ac.in",
-    "password": "pixela@2026",
-    "role": "photographer",
-    "department": "Information Technology",
-    "semester": 6,
-    "year": "3rd Year",
-    "specialization": "Wildlife & Portrait",
-    "skills": [
-      "Photography",
-      "Event Coverage"
-    ],
-    "instagramUrl": "",
-    "bio": "Official Pixela Crew Member imported via bulk roster upload.",
-    "gear": {
-      "cameraBody": "",
-      "primaryLens": "",
-      "secondaryLens": "",
-      "accessories": []
-    },
-    "badges": [
-      "Verified Crew"
-    ],
-    "performanceRating": 5,
-    "trackRecordNotes": "Provisioned by Super Admin via Bulk Roster Upload.",
-    "eventsCovered": [],
-    "isApproved": true,
-    "createdAt": "2026-09-22T19:12:49.607Z",
-    "_id": "user_crew_1790104369631_i1cp5",
-    "id": "user_crew_1790104369631_i1cp5",
-    "passwordHash": "$2a$08$kvtRct4SeZt/HsKd6yjqcerFBBXaRHimNEMLIJOjhMDzdqxdzADx6"
   }
 ]

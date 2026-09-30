@@ -18,7 +18,9 @@ import {
   deleteRegistrationFromFile,
   updateRegistrationStatusInFile,
   getRegistrationsTableMarkdown,
-  getRegistrationsCsv
+  getRegistrationsCsv,
+  loadDeletedBlacklist,
+  addToDeletedBlacklist
 } from '../config/fileStorage.js';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
@@ -277,8 +279,8 @@ router.post('/auth/register', async (req, res) => {
     const isSuperAdminEmail = normalizedEmail === 'pixela@oriental.ac.in';
     const isAudience = role === 'viewer';
     const finalRole = isSuperAdminEmail ? 'admin' : (role || 'member');
-    // Super Admin and Audience (Viewers) are auto-approved. Crew members, alumni, and faculty are approved by Super Admin.
-    const finalApproval = isSuperAdminEmail || isAudience ? true : false;
+    // Once crew register, they are permanently stored and approved on the leadership roster
+    const finalApproval = true;
 
     // Process Instagram & Social links
     const formattedInsta = formatSocialUrl('instagram', instagramUrl || (isSuperAdminEmail ? 'https://www.instagram.com/mr_ojashva' : ''));
@@ -1155,34 +1157,68 @@ router.patch('/users/:id', protect, adminOnly, async (req, res) => {
   }
 });
 
+// Core permanent deletion engine across DB, memoryStore, fileStorage, and blacklist
+const deleteUserPermanently = async (targetIdentifier, emailHint = null) => {
+  const cleanId = String(targetIdentifier || '').trim();
+  const cleanEmail = String(emailHint || '').toLowerCase().trim();
+
+  // Find candidate user from memoryStore or file or DB
+  let matchedUser = memoryStore.users.find(u => 
+    String(u._id) === cleanId || 
+    String(u.id) === cleanId || 
+    (u.email && u.email.toLowerCase().trim() === cleanId.toLowerCase()) ||
+    (cleanEmail && u.email && u.email.toLowerCase().trim() === cleanEmail)
+  );
+
+  let targetEmail = matchedUser?.email?.toLowerCase().trim() || (cleanId.includes('@') ? cleanId.toLowerCase() : cleanEmail);
+
+  if (targetEmail === 'pixela@oriental.ac.in') {
+    throw new Error('Cannot delete the Primary Super Admin root account.');
+  }
+
+  // 1. Delete from MongoDB if connected
+  if (isDbConnected()) {
+    try {
+      const orClauses = [];
+      if (mongoose.isValidObjectId(cleanId)) {
+        orClauses.push({ _id: cleanId });
+      }
+      if (targetEmail) {
+        orClauses.push({ email: targetEmail });
+      }
+      if (orClauses.length > 0) {
+        await User.deleteMany({ $or: orClauses });
+      }
+    } catch (dbErr) {
+      console.warn('DB delete warning:', dbErr.message);
+    }
+  }
+
+  // 2. Delete from memoryStore
+  memoryStore.users = memoryStore.users.filter(u => {
+    const uId = String(u._id || u.id || '');
+    const uEmail = String(u.email || '').toLowerCase().trim();
+    if (uId === cleanId) return false;
+    if (targetEmail && uEmail === targetEmail) return false;
+    if (cleanEmail && uEmail === cleanEmail) return false;
+    return true;
+  });
+
+  // 3. Delete from persistent file storage and blacklist
+  if (cleanId) deleteRegistrationFromFile(cleanId);
+  if (targetEmail) deleteRegistrationFromFile(targetEmail);
+  if (cleanEmail) deleteRegistrationFromFile(cleanEmail);
+
+  return true;
+};
+
 // Delete ANY user (Super Admin permission)
 router.delete('/users/:id', protect, adminOnly, async (req, res) => {
   try {
     const targetId = req.params.id;
-
-    if (isDbConnected()) {
-      try {
-        const targetUser = await User.findById(targetId);
-        if (targetUser && targetUser.email?.toLowerCase() === 'pixela@oriental.ac.in') {
-          return res.status(403).json({ error: 'Cannot delete the Primary Super Admin root account.' });
-        }
-        await User.findByIdAndDelete(targetId);
-      } catch (dbErr) {
-        console.warn('DB user delete error');
-      }
-    }
-
-    const index = memoryStore.users.findIndex(u => String(u._id) === String(targetId) || String(u.id) === String(targetId));
-    if (index !== -1) {
-      if (memoryStore.users[index].email?.toLowerCase() === 'pixela@oriental.ac.in') {
-        return res.status(403).json({ error: 'Cannot delete the Primary Super Admin root account.' });
-      }
-      memoryStore.users.splice(index, 1);
-    }
-
-    deleteRegistrationFromFile(targetId);
-
-    return res.json({ success: true, message: 'User deleted successfully.' });
+    const emailHint = req.query?.email || req.body?.email;
+    await deleteUserPermanently(targetId, emailHint);
+    return res.json({ success: true, message: 'User permanently deleted.' });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -1236,9 +1272,9 @@ const enrichMemberWithTrackRecord = async (userObj) => {
     photosCount,
     recentPhotos,
     eventsCount: Array.isArray(raw.eventsCovered) ? raw.eventsCovered.length : 0,
-    badges: Array.isArray(raw.badges) && raw.badges.length > 0 ? raw.badges : ['Verified Crew'],
+    badges: Array.isArray(raw.badges) ? raw.badges : [],
     gear: raw.gear || { cameraBody: '', primaryLens: '', secondaryLens: '', accessories: [] },
-    performanceRating: raw.performanceRating || 5,
+    performanceRating: raw.performanceRating !== undefined ? raw.performanceRating : 0,
     trackRecordNotes: raw.trackRecordNotes || '',
     eventsCovered: Array.isArray(raw.eventsCovered) ? raw.eventsCovered : [],
     joinDate: raw.joinDate || raw.createdAt || new Date(),
@@ -1266,6 +1302,8 @@ router.get('/members', async (req, res) => {
   res.setHeader('Pragma', 'no-cache');
   res.setHeader('Expires', '0');
   try {
+    const blacklist = loadDeletedBlacklist();
+
     if (isDbConnected()) {
       try {
         const members = await User.find({ isApproved: true, role: { $in: CREW_ROLES } })
@@ -1273,7 +1311,12 @@ router.get('/members', async (req, res) => {
           .sort({ timelineOrder: 1, createdAt: -1 });
 
         if (members && members.length > 0) {
-          const enriched = await Promise.all(members.map(m => enrichMemberWithTrackRecord(m)));
+          const filtered = members.filter(m => {
+            const id1 = String(m._id || '').toLowerCase().trim();
+            const email = String(m.email || '').toLowerCase().trim();
+            return !blacklist.has(id1) && !blacklist.has(email);
+          });
+          const enriched = await Promise.all(filtered.map(m => enrichMemberWithTrackRecord(m)));
           return res.json(enriched);
         }
       } catch (dbErr) {
@@ -1281,7 +1324,13 @@ router.get('/members', async (req, res) => {
       }
     }
     const approved = memoryStore.users
-      .filter(u => u.isApproved && CREW_ROLES.includes(u.role));
+      .filter(u => u.isApproved && CREW_ROLES.includes(u.role))
+      .filter(u => {
+        const id1 = String(u._id || '').toLowerCase().trim();
+        const id2 = String(u.id || '').toLowerCase().trim();
+        const email = String(u.email || '').toLowerCase().trim();
+        return !blacklist.has(id1) && !blacklist.has(id2) && !blacklist.has(email);
+      });
     
     const enrichedMem = await Promise.all(approved.map(u => enrichMemberWithTrackRecord(u)));
     return res.json(enrichedMem);
@@ -1563,29 +1612,9 @@ router.post('/members/:id/reject', protect, adminOnly, async (req, res) => {
 router.delete('/members/:id', protect, adminOnly, async (req, res) => {
   try {
     const memberId = req.params.id;
-    if (isDbConnected()) {
-      try {
-        const targetUser = await User.findById(memberId);
-        if (targetUser && targetUser.email?.toLowerCase() === 'pixela@oriental.ac.in') {
-          return res.status(403).json({ error: 'Cannot delete the Primary Super Admin root account.' });
-        }
-        await User.findByIdAndDelete(memberId);
-      } catch (dbErr) {
-        console.warn('DB member delete error');
-      }
-    }
-
-    const index = memoryStore.users.findIndex(u => String(u._id) === String(memberId) || String(u.id) === String(memberId));
-    if (index !== -1) {
-      if (memoryStore.users[index].email?.toLowerCase() === 'pixela@oriental.ac.in') {
-        return res.status(403).json({ error: 'Cannot delete the Primary Super Admin root account.' });
-      }
-      memoryStore.users.splice(index, 1);
-    }
-
-    deleteRegistrationFromFile(memberId);
-
-    return res.json({ success: true, message: 'Crew member removed successfully.' });
+    const emailHint = req.query?.email || req.body?.email;
+    await deleteUserPermanently(memberId, emailHint);
+    return res.json({ success: true, message: 'Crew member permanently removed.' });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

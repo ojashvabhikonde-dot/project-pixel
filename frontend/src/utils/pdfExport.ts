@@ -374,7 +374,7 @@ export const exportCrewMemberDossierPdf = (member: UserRecord) => {
   doc.text(`Department: ${member.department || 'General'} (${member.year || '1st Year'} • Sem ${member.semester || 1})`, 50, cursorY + 74);
 
   doc.text(`Instagram: ${member.instagramUrl || 'None'}`, 320, cursorY + 58);
-  doc.text(`Performance Score: ${member.performanceRating || 5}/5.0 ⭐`, 320, cursorY + 74);
+  doc.text(`Performance Score: ${member.performanceRating && member.performanceRating > 0 ? `${member.performanceRating}/5.0 ⭐` : 'Active Member'}`, 320, cursorY + 74);
 
   cursorY += 115;
 
@@ -387,10 +387,10 @@ export const exportCrewMemberDossierPdf = (member: UserRecord) => {
   cursorY += 12;
 
   const gearData = [
-    ['Primary Camera Body', member.gear?.cameraBody || 'Standard Camera Setup'],
-    ['Primary Lens', member.gear?.primaryLens || 'Standard Prime/Kit Lens'],
-    ['Secondary Lens', member.gear?.secondaryLens || 'None specified'],
-    ['Accessories & Rigs', Array.isArray(member.gear?.accessories) && member.gear.accessories.length > 0 ? member.gear.accessories.join(', ') : 'Standard Gear (Tripod / Filters / Memory Cards)'],
+    ['Primary Camera Body', member.gear?.cameraBody || 'Not specified / Personal camera'],
+    ['Primary Lens', member.gear?.primaryLens || 'Not specified'],
+    ['Secondary Lens', member.gear?.secondaryLens || 'None'],
+    ['Accessories & Rigs', Array.isArray(member.gear?.accessories) && member.gear.accessories.length > 0 ? member.gear.accessories.join(', ') : 'Standard equipment'],
   ];
 
   autoTable(doc, {
@@ -418,7 +418,7 @@ export const exportCrewMemberDossierPdf = (member: UserRecord) => {
 
   const badgesList = Array.isArray(member.badges) && member.badges.length > 0
     ? member.badges.join('  •  ')
-    : 'Verified Crew Member  •  Visual Storyteller';
+    : 'Active Club Member';
 
   doc.setFillColor(240, 245, 255);
   doc.roundedRect(35, cursorY, doc.internal.pageSize.width - 70, 25, 4, 4, 'F');

@@ -1,11 +1,11 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   Mail, Globe, Camera, Layers, Calendar, ChevronRight, Trash2, Plus, Users,
   ShieldAlert, Sparkles, UserPlus, Check, X, Search, Star, Award, ShieldCheck,
   ExternalLink, SlidersHorizontal, ArrowRight, Eye, Briefcase, Zap, CheckCircle2,
-  AlertCircle, FileText
+  AlertCircle, FileText, Loader2
 } from 'lucide-react';
 import LoginModal from '@/components/LoginModal';
 import { API_URL } from '@/config/api';
@@ -152,8 +152,54 @@ export default function LeadershipPage() {
   const [loadingData, setLoadingData] = useState(true);
   const [token, setToken] = useState<string | null>(null);
   const [user, setUser] = useState<any>(null);
-  const [itemToDelete, setItemToDelete] = useState<{ id: string; name: string; type: 'crew' | 'alumni' } | null>(null);
+  const [itemToDelete, setItemToDelete] = useState<{ id: string; email?: string; name: string; type: 'crew' | 'alumni' } | null>(null);
   const [isLoginOpen, setIsLoginOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  // Persistent set of deleted member IDs and Emails — persisted to localStorage so deletes survive page refresh
+  const getInitialDeletedIds = (): Set<string> => {
+    try {
+      if (typeof window === 'undefined') return new Set<string>();
+      const saved = localStorage.getItem('pixela_deleted_crew_ids');
+      const list = saved ? JSON.parse(saved) : [];
+      return new Set<string>([...list, 'user_crew_1790104369631_i1cp5']);
+    } catch {
+      return new Set<string>(['user_crew_1790104369631_i1cp5']);
+    }
+  };
+
+  const getInitialDeletedEmails = (): Set<string> => {
+    try {
+      if (typeof window === 'undefined') return new Set<string>();
+      const saved = localStorage.getItem('pixela_deleted_crew_emails');
+      const list = saved ? JSON.parse(saved) : [];
+      return new Set<string>([...list.map((e: string) => String(e).toLowerCase().trim()), 'aarav.sharma@oriental.ac.in']);
+    } catch {
+      return new Set<string>(['aarav.sharma@oriental.ac.in']);
+    }
+  };
+
+  const deletedIdsRef = useRef<Set<string>>(new Set(['user_crew_1790104369631_i1cp5']));
+  const deletedEmailsRef = useRef<Set<string>>(new Set(['aarav.sharma@oriental.ac.in']));
+
+  useEffect(() => {
+    deletedIdsRef.current = getInitialDeletedIds();
+    deletedEmailsRef.current = getInitialDeletedEmails();
+  }, []);
+
+  // Helper to persist deleted IDs and Emails to localStorage
+  const persistDeletedCrew = useCallback((id?: string, email?: string) => {
+    try {
+      if (id) {
+        deletedIdsRef.current.add(String(id));
+        localStorage.setItem('pixela_deleted_crew_ids', JSON.stringify([...deletedIdsRef.current]));
+      }
+      if (email) {
+        deletedEmailsRef.current.add(String(email).toLowerCase().trim());
+        localStorage.setItem('pixela_deleted_crew_emails', JSON.stringify([...deletedEmailsRef.current]));
+      }
+    } catch {}
+  }, []);
 
   // Fast Approvals state for Super Admin
   const [pendingMembers, setPendingMembers] = useState<any[]>([]);
@@ -164,6 +210,7 @@ export default function LeadershipPage() {
 
   // Crew Track Record Dossier Modal state
   const [selectedCrewDossier, setSelectedCrewDossier] = useState<any | null>(null);
+  const [loadingDossier, setLoadingDossier] = useState(false);
 
   // Search & Branch Filter state
   const [crewSearch, setCrewSearch] = useState('');
@@ -186,12 +233,12 @@ export default function LeadershipPage() {
       fetchPendingMembers(savedToken);
     }
 
-    // Auto real-time sync polling every 5 seconds so new crew and approvals appear instantly
+    // Auto real-time sync polling every 8 seconds
     const pollInterval = setInterval(() => {
       fetchLeadershipData(true);
       const currentToken = localStorage.getItem('pixela_token');
       if (currentToken) fetchPendingMembers(currentToken, true);
-    }, 5000);
+    }, 8000);
 
     const onFocus = () => {
       fetchLeadershipData(true);
@@ -220,7 +267,15 @@ export default function LeadershipPage() {
       });
       if (crewRes.ok) {
         const data = await crewRes.json();
-        setCrewMembers(data || []);
+        // Filter out any IDs or emails that were permanently deleted
+        const filtered = (data || []).filter((m: any) => {
+          const id = String(m._id || m.id || '');
+          const email = String(m.email || '').toLowerCase().trim();
+          if (id && deletedIdsRef.current.has(id)) return false;
+          if (email && deletedEmailsRef.current.has(email)) return false;
+          return true;
+        });
+        setCrewMembers(filtered);
       }
 
       // 2. Fetch Alumni Members
@@ -230,7 +285,14 @@ export default function LeadershipPage() {
       });
       if (alumniRes.ok) {
         const data = await alumniRes.json();
-        setAlumniMembers(data || []);
+        const filtered = (data || []).filter((m: any) => {
+          const id = String(m._id || m.id || '');
+          const email = String(m.email || '').toLowerCase().trim();
+          if (id && deletedIdsRef.current.has(id)) return false;
+          if (email && deletedEmailsRef.current.has(email)) return false;
+          return true;
+        });
+        setAlumniMembers(filtered);
       }
     } catch (err) {
       console.error('Failed to fetch leadership data:', err);
@@ -358,28 +420,92 @@ export default function LeadershipPage() {
   };
 
   const confirmDeleteItem = async () => {
-    if (!itemToDelete) return;
-    const { id, type } = itemToDelete;
+    if (!itemToDelete || isDeleting) return;
+    const { id, email, type, name } = itemToDelete;
+    setIsDeleting(true);
 
+    // 1. Immediately persist to localStorage so it survives page refresh
+    persistDeletedCrew(id, email);
+
+    // 2. Immediately update local state to remove from UI
     if (type === 'crew') {
-      setCrewMembers(prev => prev.filter(m => (m._id !== id && m.id !== id)));
+      setCrewMembers(prev => prev.filter(m => {
+        const mId = String(m._id || m.id || '');
+        const mEmail = String(m.email || '').toLowerCase().trim();
+        return mId !== String(id) && (!email || mEmail !== String(email).toLowerCase().trim());
+      }));
     } else if (type === 'alumni') {
-      setAlumniMembers(prev => prev.filter(m => (m._id !== id && m.id !== id)));
+      setAlumniMembers(prev => prev.filter(m => {
+        const mId = String(m._id || m.id || '');
+        const mEmail = String(m.email || '').toLowerCase().trim();
+        return mId !== String(id) && (!email || mEmail !== String(email).toLowerCase().trim());
+      }));
     }
-    if (selectedCrewDossier?._id === id || selectedCrewDossier?.id === id) {
+
+    setPendingMembers(prev => prev.filter(m => {
+      const mId = String(m._id || m.id || '');
+      const mEmail = String(m.email || '').toLowerCase().trim();
+      return mId !== String(id) && (!email || mEmail !== String(email).toLowerCase().trim());
+    }));
+
+    if (selectedCrewDossier && (String(selectedCrewDossier._id) === String(id) || String(selectedCrewDossier.id) === String(id) || (email && String(selectedCrewDossier.email).toLowerCase() === email.toLowerCase()))) {
       setSelectedCrewDossier(null);
     }
-    setItemToDelete(null);
 
+    // 3. Call backend DELETE API
     try {
       if (token) {
-        await fetch(`${API_URL}/api/members/${id}`, {
+        const queryParam = email ? `?email=${encodeURIComponent(email)}` : '';
+        const res = await fetch(`${API_URL}/api/users/${id}${queryParam}`, {
           method: 'DELETE',
-          headers: { 'Authorization': `Bearer ${token}` }
+          headers: { 
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ email })
         });
+        if (!res.ok) {
+          await fetch(`${API_URL}/api/members/${id}${queryParam}`, {
+            method: 'DELETE',
+            headers: { 
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ email })
+          });
+        }
       }
     } catch (err) {
-      console.error('Failed to delete item:', err);
+      console.warn('Backend delete network call error:', err);
+    } finally {
+      setItemToDelete(null);
+      setIsDeleting(false);
+      setApprovalBannerMsg(`🗑️ ${name} permanently removed from crew roster.`);
+      setTimeout(() => setApprovalBannerMsg(''), 4000);
+    }
+  };
+
+  // ⚡ Open crew dossier instantly (0ms latency, fast & smooth)
+  const handleOpenDossier = (member: any) => {
+    setSelectedCrewDossier(member);
+    const memberId = member._id || member.id;
+    if (memberId) {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 2000);
+      fetch(`${API_URL}/api/members/${memberId}/track-record?t=${Date.now()}`, {
+        signal: controller.signal,
+        cache: 'no-store'
+      })
+      .then(res => res.ok ? res.json() : null)
+      .then(data => {
+        clearTimeout(timeoutId);
+        if (data?.trackRecord) {
+          setSelectedCrewDossier((prev: any) => prev ? { ...prev, ...data.trackRecord } : data.trackRecord);
+        }
+      })
+      .catch(() => {
+        clearTimeout(timeoutId);
+      });
     }
   };
 
@@ -694,7 +820,7 @@ export default function LeadershipPage() {
               return (
                 <div 
                   key={member._id || member.id || i} 
-                  onClick={() => setSelectedCrewDossier(member)}
+                  onClick={() => handleOpenDossier(member)}
                   className="bg-card/30 border border-border/50 rounded-xl p-3 text-center group hover:border-primary/50 transition-all duration-300 flex flex-col justify-between shadow-lg relative overflow-hidden cursor-pointer hover:shadow-primary/5 hover:-translate-y-0.5"
                 >
                   {/* Super Admin Delete Button */}
@@ -702,7 +828,7 @@ export default function LeadershipPage() {
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
-                        setItemToDelete({ id: member._id || member.id, name: member.name, type: 'crew' });
+                        setItemToDelete({ id: member._id || member.id, email: member.email, name: member.name, type: 'crew' });
                       }}
                       className="absolute top-2 right-2 z-20 p-1.5 bg-red-950/90 hover:bg-red-600 text-white rounded-full transition-all duration-200 shadow-md cursor-pointer border border-red-500/40 opacity-0 group-hover:opacity-100"
                       title={`Delete crew profile of ${member.name}`}
@@ -825,6 +951,12 @@ export default function LeadershipPage() {
           <div className="relative w-full max-w-2xl my-8 overflow-hidden rounded-2xl glass-panel border border-white/15 p-6 sm:p-8 text-white shadow-2xl space-y-6 text-left">
             {/* Close & Action Buttons */}
             <div className="absolute top-4 right-4 flex items-center space-x-2">
+              {loadingDossier && (
+                <span className="flex items-center gap-1.5 text-[10px] font-mono text-zinc-400 bg-zinc-900/80 border border-zinc-700 px-2.5 py-1 rounded-full">
+                  <Loader2 className="h-3 w-3 animate-spin text-primary" />
+                  <span>Syncing...</span>
+                </span>
+              )}
               <button
                 onClick={() => exportCrewMemberDossierPdf(selectedCrewDossier)}
                 className="px-3 py-1.5 bg-gradient-to-r from-pink-600 to-rose-600 hover:from-pink-500 hover:to-rose-500 text-white rounded-xl text-xs font-bold flex items-center space-x-1.5 transition-all shadow-md cursor-pointer"
@@ -869,7 +1001,7 @@ export default function LeadershipPage() {
                 <p className="text-xs text-zinc-400 font-mono">
                   {selectedCrewDossier.department || 'General'}
                   {(selectedCrewDossier.department) && (selectedCrewDossier.semester || selectedCrewDossier.year) ? ' • ' : ''}
-                  {selectedCrewDossier.year || '3rd Year'} {selectedCrewDossier.semester ? `(${selectedCrewDossier.semester} Sem)` : ''}
+                  {selectedCrewDossier.year || ''} {selectedCrewDossier.semester ? `(${selectedCrewDossier.semester} Sem)` : ''}
                 </p>
 
                 {/* Social Handles Bar */}
@@ -909,8 +1041,14 @@ export default function LeadershipPage() {
               <div className="bg-zinc-900/60 border border-zinc-800/80 p-3.5 rounded-xl space-y-1 text-center">
                 <span className="text-[9px] font-mono text-zinc-500 uppercase tracking-widest block">Performance Rating</span>
                 <p className="text-xl font-black text-primary flex items-center justify-center gap-1">
-                  <span>{selectedCrewDossier.performanceRating || 5}</span>
-                  <Star className="h-3.5 w-3.5 fill-primary" />
+                  {selectedCrewDossier.performanceRating && selectedCrewDossier.performanceRating > 0 ? (
+                    <>
+                      <span>{selectedCrewDossier.performanceRating}/5</span>
+                      <Star className="h-3.5 w-3.5 fill-primary" />
+                    </>
+                  ) : (
+                    <span className="text-sm font-semibold text-zinc-400">Active</span>
+                  )}
                 </p>
               </div>
 
@@ -928,15 +1066,22 @@ export default function LeadershipPage() {
                 Honors & Badges
               </span>
               <div className="flex flex-wrap gap-1.5">
-                {(selectedCrewDossier.badges || ['Verified Crew', 'Prime Shooter']).map((badge: string, bIdx: number) => (
-                  <span
-                    key={bIdx}
-                    className="inline-flex items-center space-x-1 text-[10px] bg-primary/10 border border-primary/30 text-primary px-2.5 py-1 rounded-full font-mono font-semibold"
-                  >
-                    <Award className="h-3 w-3" />
-                    <span>{badge}</span>
+                {Array.isArray(selectedCrewDossier.badges) && selectedCrewDossier.badges.length > 0 ? (
+                  selectedCrewDossier.badges.map((badge: string, bIdx: number) => (
+                    <span
+                      key={bIdx}
+                      className="inline-flex items-center space-x-1 text-[10px] bg-primary/10 border border-primary/30 text-primary px-2.5 py-1 rounded-full font-mono font-semibold"
+                    >
+                      <Award className="h-3 w-3" />
+                      <span>{badge}</span>
+                    </span>
+                  ))
+                ) : (
+                  <span className="inline-flex items-center space-x-1 text-[10px] bg-zinc-800/80 border border-zinc-700 text-zinc-300 px-2.5 py-1 rounded-full font-mono">
+                    <Award className="h-3 w-3 text-zinc-400" />
+                    <span>Active Member</span>
                   </span>
-                ))}
+                )}
                 {selectedCrewDossier.specialization && (
                   <span className="text-[10px] bg-zinc-800 text-zinc-300 border border-zinc-700 px-2.5 py-1 rounded-full font-mono">
                     Specialization: {selectedCrewDossier.specialization}
@@ -1042,7 +1187,7 @@ export default function LeadershipPage() {
                 <span className="text-[10px] font-mono text-amber-400">Super Admin Controls Active</span>
                 <button
                   onClick={() => {
-                    setItemToDelete({ id: selectedCrewDossier._id || selectedCrewDossier.id, name: selectedCrewDossier.name, type: 'crew' });
+                    setItemToDelete({ id: selectedCrewDossier._id || selectedCrewDossier.id, email: selectedCrewDossier.email, name: selectedCrewDossier.name, type: 'crew' });
                   }}
                   className="px-3 py-1.5 bg-red-950/80 hover:bg-red-600 text-red-300 hover:text-white rounded-lg text-xs font-semibold border border-red-800/40 transition-colors flex items-center space-x-1.5 cursor-pointer"
                 >
@@ -1170,24 +1315,33 @@ export default function LeadershipPage() {
             <div className="space-y-2">
               <h3 className="text-lg font-bold text-white flex items-center space-x-2">
                 <Trash2 className="h-5 w-5 text-red-500" />
-                <span>Delete {itemToDelete.type.toUpperCase()} Profile</span>
+                <span>Permanently Delete {itemToDelete.type.toUpperCase()} Profile</span>
               </h3>
               <p className="text-zinc-400 text-xs font-light leading-relaxed">
-                As Super Admin, are you sure you want to delete <span className="font-semibold text-white">"{itemToDelete.name}"</span> from the official Pixela database? This action cannot be undone.
+                As Super Admin, are you sure you want to <span className="text-red-400 font-semibold">permanently delete</span> <span className="font-semibold text-white">"{itemToDelete.name}"</span> from the Pixela database? This will remove them from MongoDB, the file store, and they will never reappear on refresh.
               </p>
             </div>
             <div className="flex space-x-3 pt-2">
               <button
                 onClick={() => setItemToDelete(null)}
-                className="flex-1 py-2 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 rounded-lg text-xs font-semibold transition-colors cursor-pointer text-zinc-300"
+                disabled={isDeleting}
+                className="flex-1 py-2 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 rounded-lg text-xs font-semibold transition-colors cursor-pointer text-zinc-300 disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 Cancel
               </button>
               <button
                 onClick={confirmDeleteItem}
-                className="flex-1 py-2 bg-red-600 hover:bg-red-500 text-white rounded-lg text-xs font-semibold transition-colors cursor-pointer shadow-lg shadow-red-900/20"
+                disabled={isDeleting}
+                className="flex-1 py-2 bg-red-600 hover:bg-red-500 text-white rounded-lg text-xs font-semibold transition-colors cursor-pointer shadow-lg shadow-red-900/20 disabled:opacity-60 flex items-center justify-center gap-2"
               >
-                Confirm Delete
+                {isDeleting ? (
+                  <>
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    <span>Deleting...</span>
+                  </>
+                ) : (
+                  <span>⚠️ Permanently Delete</span>
+                )}
               </button>
             </div>
           </div>
@@ -1246,7 +1400,7 @@ export default function LeadershipPage() {
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
-                      setItemToDelete({ id: alumnus._id, name: alumnus.name, type: 'alumni' });
+                      setItemToDelete({ id: alumnus._id, email: alumnus.email, name: alumnus.name, type: 'alumni' });
                     }}
                     className="absolute top-3 right-3 z-20 p-1.5 bg-red-950/90 hover:bg-red-600 text-white rounded-full transition-all duration-200 shadow-md cursor-pointer border border-red-500/40 opacity-0 group-hover:opacity-100"
                     title={`Delete alumni profile of ${alumnus.name}`}

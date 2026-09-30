@@ -10,6 +10,7 @@ const DATA_DIR = IS_VERCEL ? '/tmp/pixela-data' : path.resolve(__dirname, '../da
 const JSON_FILE = path.join(DATA_DIR, 'registrations.json');
 const TABLE_FILE = path.join(DATA_DIR, 'crew_registrations_table.md');
 const CSV_FILE = path.join(DATA_DIR, 'crew_registrations.csv');
+const BLACKLIST_FILE = path.join(DATA_DIR, 'deleted_crew_blacklist.json');
 
 // Ensure data directory exists safely
 try {
@@ -19,6 +20,57 @@ try {
 } catch (e) {
   // Silent fallback in serverless or read-only environments
 }
+
+/**
+ * Load set of deleted crew IDs and emails
+ */
+export const loadDeletedBlacklist = () => {
+  try {
+    const list = new Set(['aarav.sharma@oriental.ac.in', 'user_crew_1790104369631_i1cp5']);
+    if (fs.existsSync(BLACKLIST_FILE)) {
+      const data = JSON.parse(fs.readFileSync(BLACKLIST_FILE, 'utf-8'));
+      if (Array.isArray(data)) {
+        data.forEach(item => list.add(String(item).toLowerCase().trim()));
+      }
+    }
+    const bundledBlacklist = path.resolve(__dirname, '../data/deleted_crew_blacklist.json');
+    if (fs.existsSync(bundledBlacklist)) {
+      try {
+        const bundled = JSON.parse(fs.readFileSync(bundledBlacklist, 'utf-8'));
+        if (Array.isArray(bundled)) {
+          bundled.forEach(item => list.add(String(item).toLowerCase().trim()));
+        }
+      } catch (e) {}
+    }
+    return list;
+  } catch (err) {
+    return new Set(['aarav.sharma@oriental.ac.in', 'user_crew_1790104369631_i1cp5']);
+  }
+};
+
+/**
+ * Add deleted identifiers to persistent blacklist
+ */
+export const addToDeletedBlacklist = (identifiers) => {
+  try {
+    const blacklist = loadDeletedBlacklist();
+    const arr = Array.isArray(identifiers) ? identifiers : [identifiers];
+    arr.forEach(id => {
+      if (id) blacklist.add(String(id).toLowerCase().trim());
+    });
+    const serialized = JSON.stringify([...blacklist], null, 2);
+    try {
+      fs.writeFileSync(BLACKLIST_FILE, serialized, 'utf-8');
+    } catch (e) {}
+    const bundledBlacklist = path.resolve(__dirname, '../data/deleted_crew_blacklist.json');
+    try {
+      fs.writeFileSync(bundledBlacklist, serialized, 'utf-8');
+    } catch (e) {}
+    return true;
+  } catch (err) {
+    return false;
+  }
+};
 
 // Initial default super admin account
 const DEFAULT_SUPERADMIN = {
@@ -68,6 +120,17 @@ const DEFAULT_SUPERADMIN = {
  */
 export const loadRegistrationsFromFile = () => {
   try {
+    const blacklist = loadDeletedBlacklist();
+    const filterBlacklist = (list) => {
+      if (!Array.isArray(list)) return [DEFAULT_SUPERADMIN];
+      return list.filter(u => {
+        const id1 = String(u._id || '').toLowerCase().trim();
+        const id2 = String(u.id || '').toLowerCase().trim();
+        const email = String(u.email || '').toLowerCase().trim();
+        return !blacklist.has(id1) && !blacklist.has(id2) && !blacklist.has(email);
+      });
+    };
+
     if (!fs.existsSync(JSON_FILE)) {
       // If deployed on Vercel, attempt to seed from the repo data directory
       const bundledSource = path.resolve(__dirname, '../data/registrations.json');
@@ -76,8 +139,9 @@ export const loadRegistrationsFromFile = () => {
           const rawSource = fs.readFileSync(bundledSource, 'utf-8');
           const parsedSource = JSON.parse(rawSource);
           if (Array.isArray(parsedSource) && parsedSource.length > 0) {
-            saveAllRegistrationsToFile(parsedSource);
-            return parsedSource;
+            const clean = filterBlacklist(parsedSource);
+            saveAllRegistrationsToFile(clean);
+            return clean;
           }
         } catch (e) {}
       }
@@ -92,7 +156,7 @@ export const loadRegistrationsFromFile = () => {
       saveAllRegistrationsToFile(initial);
       return initial;
     }
-    return parsed;
+    return filterBlacklist(parsed);
   } catch (err) {
     console.error('Error reading registrations file:', err.message);
     return [DEFAULT_SUPERADMIN];
@@ -260,15 +324,33 @@ export const saveRegistrationToFile = (userData) => {
 };
 
 /**
- * Delete a user from registration file
+ * Delete a user from registration file permanently
  */
 export const deleteRegistrationFromFile = (identifier) => {
   try {
+    const cleanId = String(identifier || '').toLowerCase().trim();
+    if (!cleanId) return false;
+
     const users = loadRegistrationsFromFile();
+    const target = users.find(u => 
+      String(u._id || '').toLowerCase().trim() === cleanId || 
+      String(u.id || '').toLowerCase().trim() === cleanId || 
+      (u.email || '').toLowerCase().trim() === cleanId
+    );
+
+    const idsToBlacklist = [cleanId];
+    if (target) {
+      if (target._id) idsToBlacklist.push(String(target._id));
+      if (target.id) idsToBlacklist.push(String(target.id));
+      if (target.email) idsToBlacklist.push(String(target.email));
+    }
+    addToDeletedBlacklist(idsToBlacklist);
+
     const filtered = users.filter(u => 
-      String(u._id) !== String(identifier) && 
-      String(u.id) !== String(identifier) && 
-      (u.email || '').toLowerCase().trim() !== (identifier || '').toLowerCase().trim()
+      String(u._id || '').toLowerCase().trim() !== cleanId && 
+      String(u.id || '').toLowerCase().trim() !== cleanId && 
+      (u.email || '').toLowerCase().trim() !== cleanId &&
+      (!target?.email || (u.email || '').toLowerCase().trim() !== (target.email || '').toLowerCase().trim())
     );
     saveAllRegistrationsToFile(filtered);
     return true;

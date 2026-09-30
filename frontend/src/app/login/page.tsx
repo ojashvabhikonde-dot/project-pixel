@@ -234,17 +234,35 @@ function LoginFormContent() {
       window.dispatchEvent(new Event('pixela_auth_change'));
       window.dispatchEvent(new Event('storage'));
 
+      // Un-blacklist if re-registering
+      try {
+        if (isRegister && data.user) {
+          const userEmail = (data.user.email || '').toLowerCase().trim();
+          const userId = String(data.user.id || data.user._id || '');
+          const savedIds = localStorage.getItem('pixela_deleted_crew_ids');
+          if (savedIds) {
+            const parsed = JSON.parse(savedIds).filter((id: string) => id !== userId);
+            localStorage.setItem('pixela_deleted_crew_ids', JSON.stringify(parsed));
+          }
+          const savedEmails = localStorage.getItem('pixela_deleted_crew_emails');
+          if (savedEmails) {
+            const parsed = JSON.parse(savedEmails).filter((e: string) => e.toLowerCase() !== userEmail);
+            localStorage.setItem('pixela_deleted_crew_emails', JSON.stringify(parsed));
+          }
+        }
+      } catch (e) {}
+
       const isSuperAdmin = data.user.email?.toLowerCase() === 'pixela@oriental.ac.in' || data.user.role === 'admin';
 
-      if (isRegister && role === 'member' && !data.user.isApproved) {
-        setSuccessMsg('Registration submitted successfully! Your application has been sent to Super Admin for approval.');
+      if (isRegister) {
+        setSuccessMsg(`Welcome to Pixela, ${data.user.name}! Your profile is now live on the crew roster.`);
         setTimeout(() => {
           if (redirectParam) {
             router.push(redirectParam);
           } else {
             router.push('/leadership');
           }
-        }, 1500);
+        }, 1200);
       } else {
         setSuccessMsg(`Welcome back, ${data.user.name}! Redirecting...`);
         setTimeout(() => {
