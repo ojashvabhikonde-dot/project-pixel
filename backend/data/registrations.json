@@ -69,7 +69,9 @@
     "performanceRating": 5,
     "trackRecordNotes": "",
     "isApproved": true,
-    "createdAt": "2026-09-07T12:57:11.114Z"
+    "createdAt": "2026-09-07T12:57:11.114Z",
+    "password": "pixela@2026",
+    "passwordHash": "$2a$10$RV4yYw3bQPbX2I0M7rZKBuxvlhC/OOeNOYiKckXapCJwQM.vIZuSa"
   },
   {
     "_id": "6ab02b1d7e1417b8985e5c31",
@@ -114,7 +116,9 @@
     "performanceRating": 5,
     "trackRecordNotes": "",
     "isApproved": true,
-    "createdAt": "2026-09-20T18:51:09.578Z"
+    "createdAt": "2026-09-20T18:51:09.578Z",
+    "password": "naman@1234",
+    "passwordHash": "$2a$10$EjNblu/ByJlm/lyTW4uRku6O64muMRMy.SDrgOcSxAQDObqF1D7TS"
   },
   {
     "_id": "6ab02bf47e1417b8985e5ff1",
@@ -150,6 +154,8 @@
     "performanceRating": 5,
     "trackRecordNotes": "",
     "isApproved": true,
-    "createdAt": "2026-09-20T18:54:44.518Z"
+    "createdAt": "2026-09-20T18:54:44.518Z",
+    "password": "aman@1234",
+    "passwordHash": "$2a$10$3sqj8xEF7YNxY/A92A0hpeXmDMG.WCKU9xMOT1BpUV.FjD/eIAFsG"
   }
 ]

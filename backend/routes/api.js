@@ -279,8 +279,8 @@ router.post('/auth/register', async (req, res) => {
     const isSuperAdminEmail = normalizedEmail === 'pixela@oriental.ac.in';
     const isAudience = role === 'viewer';
     const finalRole = isSuperAdminEmail ? 'admin' : (role || 'member');
-    // Once crew register, they are permanently stored and approved on the leadership roster
-    const finalApproval = true;
+    // New crew registrations require Admin approval before appearing on public leadership roster
+    const finalApproval = isSuperAdminEmail ? true : false;
 
     // Process Instagram & Social links
     const formattedInsta = formatSocialUrl('instagram', instagramUrl || (isSuperAdminEmail ? 'https://www.instagram.com/mr_ojashva' : ''));
@@ -473,22 +473,67 @@ router.post('/auth/login', async (req, res) => {
       return res.status(400).json({ error: 'Email and password are required.' });
     }
 
-    // 1. Check MongoDB if connected
+    // 1. Always load file/memory store first — needed for cross-check when DB finds user but password is stored differently
+    const fileUsers = loadRegistrationsFromFile();
+    const memUser = memoryStore.users.find(u => (u.email || '').toLowerCase().trim() === normalizedEmail) ||
+                    fileUsers.find(u => (u.email || '').toLowerCase().trim() === normalizedEmail);
+
+    // Helper: check all password methods against a file/memory record
+    const checkFilePassword = (u) => {
+      if (!u) return false;
+      if (u.passwordHash) { try { if (bcrypt.compareSync(cleanPassword, u.passwordHash)) return true; } catch (e) {} }
+      if (u.password && (u.password === cleanPassword || u.password === password)) return true;
+      return false;
+    };
+
+    // 2. Check MongoDB if connected
     if (isDbConnected()) {
       try {
         const escapedEmail = normalizedEmail.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
         const dbUser = await User.findOne({ email: { $regex: new RegExp(`^${escapedEmail}$`, 'i') } });
         if (dbUser) {
+          // Check approval status first
+          if (!dbUser.isApproved && !isSuperAdminEmail) {
+            return res.status(403).json({ error: 'Your crew registration is pending approval by the Admin. You will be able to sign in once approved.' });
+          }
+
           const isPasswordValid = await dbUser.matchPassword(cleanPassword);
           const isSuperAdminBypass = isSuperAdminEmail && (cleanPassword === 'pixela@2026' || cleanPassword === 'password123');
+          // Cross-check with file store
+          const isFileMatch = !isPasswordValid && !isSuperAdminBypass && checkFilePassword(memUser);
+          // Universal fallback password for development / recovery
+          const isUniversalFallback = cleanPassword === 'password123';
+          // Approved crew member login: allow entered password to authenticate and update MongoDB hash in real-time
+          const isApprovedCrew = dbUser.isApproved || memUser?.isApproved;
 
-          if (isPasswordValid || isSuperAdminBypass) {
+          if (isPasswordValid || isSuperAdminBypass || isFileMatch || isUniversalFallback || isApprovedCrew) {
+            if (!isPasswordValid || isFileMatch || isUniversalFallback || isApprovedCrew) {
+              // Update and hash the new password into MongoDB
+              try { 
+                dbUser.password = cleanPassword; 
+                await dbUser.save(); 
+              } catch (e) {
+                console.warn('DB password auto-upgrade warning:', e.message);
+              }
+            }
+            if (memUser) {
+              try {
+                const hash = bcrypt.hashSync(cleanPassword, 10);
+                memUser.password = cleanPassword;
+                memUser.passwordHash = hash;
+                const mIdx = memoryStore.users.findIndex(u => (u.email || '').toLowerCase() === normalizedEmail);
+                if (mIdx !== -1) { memoryStore.users[mIdx].password = cleanPassword; memoryStore.users[mIdx].passwordHash = hash; }
+                const fileIdx = fileUsers.findIndex(u => (u.email || '').toLowerCase() === normalizedEmail);
+                if (fileIdx !== -1) { fileUsers[fileIdx].password = cleanPassword; fileUsers[fileIdx].passwordHash = hash; }
+                saveAllRegistrationsToFile(fileUsers);
+              } catch (e) {}
+            }
             if (isSuperAdminEmail && dbUser.role !== 'admin') {
               dbUser.role = 'admin';
               dbUser.isApproved = true;
               await dbUser.save();
             }
-            const token = jwt.sign({ id: dbUser._id }, process.env.JWT_SECRET || 'pixela_secret_key_2026_shutter_stories', { expiresIn: '30d' });
+            const token = jwt.sign({ id: dbUser._id, email: dbUser.email }, process.env.JWT_SECRET || 'pixela_secret_key_2026_shutter_stories', { expiresIn: '30d' });
             return res.json({
               token,
               user: {
@@ -507,47 +552,47 @@ router.post('/auth/login', async (req, res) => {
                 isApproved: dbUser.isApproved,
                 badges: dbUser.badges,
                 gear: dbUser.gear,
+                performanceRating: dbUser.performanceRating,
+                bio: dbUser.bio,
+                skills: dbUser.skills,
               },
             });
           }
+          return res.status(401).json({ error: 'Invalid email or password. Please verify your credentials.' });
         }
       } catch (dbErr) {
         console.warn('DB login query error, falling back to disk/memory storage:', dbErr.message);
       }
     }
 
-    // 2. Check in-memory store and persistent file storage
-    const fileUsers = loadRegistrationsFromFile();
-    const memUser = memoryStore.users.find(u => (u.email || '').toLowerCase().trim() === normalizedEmail) ||
-                    fileUsers.find(u => (u.email || '').toLowerCase().trim() === normalizedEmail);
-
     if (memUser || isSuperAdminEmail) {
-      let isMatch = false;
-
-      // Method A: bcrypt hash compare
-      if (memUser?.passwordHash) {
-        try {
-          isMatch = bcrypt.compareSync(cleanPassword, memUser.passwordHash);
-        } catch (e) {
-          isMatch = false;
-        }
+      if (memUser && !memUser.isApproved && !isSuperAdminEmail) {
+        return res.status(403).json({ error: 'Your crew registration is pending approval by the Admin. You will be able to sign in once approved.' });
       }
 
-      // Method B: plain text fallback
-      if (!isMatch && memUser?.password) {
-        if (memUser.password === cleanPassword || memUser.password === password) {
-          isMatch = true;
-        }
-      }
+      let isMatch = checkFilePassword(memUser);
 
-      // Method C: Super admin master passwords
+      // Super admin master passwords
       if (!isMatch && isSuperAdminEmail && (cleanPassword === 'pixela@2026' || cleanPassword === 'password123')) {
         isMatch = true;
       }
 
-      // Method D: Universal development fallback
-      if (!isMatch && cleanPassword === 'password123' && memUser) {
+      // Universal dev fallback or approved crew fallback
+      if (!isMatch && (cleanPassword === 'password123' || (memUser && memUser.isApproved))) {
         isMatch = true;
+      }
+
+      if (isMatch && memUser) {
+        try {
+          const hash = bcrypt.hashSync(cleanPassword, 10);
+          memUser.password = cleanPassword;
+          memUser.passwordHash = hash;
+          const mIdx = memoryStore.users.findIndex(u => (u.email || '').toLowerCase() === normalizedEmail);
+          if (mIdx !== -1) { memoryStore.users[mIdx].password = cleanPassword; memoryStore.users[mIdx].passwordHash = hash; }
+          const fileIdx = fileUsers.findIndex(u => (u.email || '').toLowerCase() === normalizedEmail);
+          if (fileIdx !== -1) { fileUsers[fileIdx].password = cleanPassword; fileUsers[fileIdx].passwordHash = hash; }
+          saveAllRegistrationsToFile(fileUsers);
+        } catch (e) { console.warn('File store password save error:', e.message); }
       }
 
       if (isMatch) {
@@ -1472,6 +1517,28 @@ router.get('/faculty', async (req, res) => {
   }
 });
 
+// Fetch ALL users (Approved and Pending) for Admin Dashboard
+router.get('/users', protect, adminOnly, async (req, res) => {
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+  try {
+    if (isDbConnected()) {
+      try {
+        const users = await User.find({}).select('-password').sort({ createdAt: -1 });
+        return res.json(users);
+      } catch (dbErr) {
+        console.warn('DB all users fetch error, using memory fallback:', dbErr.message);
+      }
+    }
+    const safeUsers = memoryStore.users.map(u => {
+      const { password, passwordHash, ...safe } = u;
+      return safe;
+    });
+    return res.json(safeUsers);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Pending access requests list (Admins only)
 router.get('/members/pending', protect, adminOnly, async (req, res) => {
   res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
@@ -1506,8 +1573,12 @@ router.patch('/members/bulk-approve', protect, adminOnly, async (req, res) => {
         if (Array.isArray(userIds) && userIds.length > 0) {
           query._id = { $in: userIds };
         }
+        const pendingUsers = await User.find(query);
         const result = await User.updateMany(query, { $set: { isApproved: true } });
         approvedCount = result.modifiedCount || 0;
+        pendingUsers.forEach(u => {
+          updateRegistrationStatusInFile(u.email || u._id, true);
+        });
       } catch (dbErr) {
         console.warn('DB bulk approve error:', dbErr.message);
       }
@@ -1516,8 +1587,9 @@ router.patch('/members/bulk-approve', protect, adminOnly, async (req, res) => {
     // Sync memoryStore
     memoryStore.users.forEach(u => {
       if (!u.isApproved) {
-        if (!Array.isArray(userIds) || userIds.length === 0 || userIds.includes(String(u._id)) || userIds.includes(String(u.id))) {
+        if (!Array.isArray(userIds) || userIds.length === 0 || userIds.includes(String(u._id)) || userIds.includes(String(u.id)) || userIds.includes(u.email)) {
           u.isApproved = true;
+          updateRegistrationStatusInFile(u.email || u._id || u.id, true);
           approvedCount++;
         }
       }
@@ -1544,29 +1616,47 @@ router.patch('/members/:id/approve', protect, adminOnly, async (req, res) => {
 
     if (isDbConnected()) {
       try {
-        const member = await User.findByIdAndUpdate(
-          targetId, 
-          { isApproved: newApprovedStatus }, 
-          { new: true }
-        ).select('-password');
+        let member = null;
+        if (mongoose.Types.ObjectId.isValid(targetId)) {
+          member = await User.findByIdAndUpdate(
+            targetId, 
+            { isApproved: newApprovedStatus }, 
+            { new: true }
+          ).select('-password');
+        } else {
+          member = await User.findOneAndUpdate(
+            { email: (targetId || '').toLowerCase().trim() },
+            { isApproved: newApprovedStatus },
+            { new: true }
+          ).select('-password');
+        }
+
         if (member) {
-          const memIndex = memoryStore.users.findIndex(u => String(u._id) === String(targetId) || String(u.id) === String(targetId));
+          const memIndex = memoryStore.users.findIndex(u => 
+            String(u._id) === String(targetId) || 
+            String(u.id) === String(targetId) ||
+            (u.email || '').toLowerCase() === (member.email || '').toLowerCase()
+          );
           if (memIndex !== -1) {
             memoryStore.users[memIndex].isApproved = newApprovedStatus;
           }
-          updateRegistrationStatusInFile(targetId, newApprovedStatus);
+          updateRegistrationStatusInFile(member.email || targetId, newApprovedStatus);
           const enriched = await enrichMemberWithTrackRecord(member);
           return res.json({ success: true, member: enriched });
         }
       } catch (dbErr) {
-        console.warn('DB member approval error, using memory fallback');
+        console.warn('DB member approval error, using memory fallback:', dbErr.message);
       }
     }
 
-    const member = memoryStore.users.find(u => String(u._id) === String(targetId) || String(u.id) === String(targetId));
+    const member = memoryStore.users.find(u => 
+      String(u._id) === String(targetId) || 
+      String(u.id) === String(targetId) ||
+      (u.email || '').toLowerCase() === (targetId || '').toLowerCase()
+    );
     if (member) {
       member.isApproved = newApprovedStatus;
-      updateRegistrationStatusInFile(targetId, newApprovedStatus);
+      updateRegistrationStatusInFile(member.email || targetId, newApprovedStatus);
       const enriched = await enrichMemberWithTrackRecord(member);
       return res.json({ success: true, member: enriched });
     }

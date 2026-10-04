@@ -1,5 +1,5 @@
 # Pixela Photography Club - Official Crew & Members Registration Table
-> **Total Registered Members**: 4 | **Last Updated**: 2026-09-30T00:00:00.000Z
+> **Total Registered Members**: 4 | **Last Updated**: 2026-10-04T08:38:58.913Z
 
 | # | Name | Email | Role | Department | Year / Sem | Instagram / Social | Camera & Gear | Badges | Event Coverage Dates | Approved | Registration Date |
 |---|---|---|---|---|---|---|---|---|---|---|---|

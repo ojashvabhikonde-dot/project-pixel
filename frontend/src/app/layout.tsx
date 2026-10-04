@@ -17,6 +17,9 @@ export default function RootLayout({
   const [isLoginOpen, setIsLoginOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
+  const [pendingCrewCount, setPendingCrewCount] = useState<number>(0);
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+
   const pathname = usePathname();
   const isActive = (path: string) => pathname === path;
 
@@ -52,6 +55,32 @@ export default function RootLayout({
       window.removeEventListener('storage', syncAuth);
     };
   }, []);
+
+  // Real-time pending requests tracker for fast admin approvals
+  useEffect(() => {
+    const isAdminUser = user?.role === 'admin' || user?.role === 'president' || user?.email?.toLowerCase() === 'pixela@oriental.ac.in';
+    if (!isAdminUser || !token) {
+      setPendingCrewCount(0);
+      return;
+    }
+
+    const checkPending = async () => {
+      try {
+        const res = await fetch(`${API_URL}/api/members/pending?t=${Date.now()}`, {
+          headers: { Authorization: `Bearer ${token}` },
+          cache: 'no-store',
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setPendingCrewCount(Array.isArray(data) ? data.length : 0);
+        }
+      } catch (err) {}
+    };
+
+    checkPending();
+    const interval = setInterval(checkPending, 8000);
+    return () => clearInterval(interval);
+  }, [user, token, API_URL]);
 
   const handleLoginSuccess = (newToken: string, newUser: any) => {
     setToken(newToken);
@@ -127,8 +156,17 @@ export default function RootLayout({
                     </NextLink>
 
                     {(user.role === 'admin' || user.role === 'president' || user.email?.toLowerCase() === 'pixela@oriental.ac.in') && (
-                      <NextLink href="/admin" className="text-[10px] bg-primary/20 text-primary px-2.5 py-0.5 rounded-full border border-primary/40 font-bold hover:bg-primary/30 transition-colors">
-                        Admin
+                      <NextLink
+                        href="/admin"
+                        className="relative inline-flex items-center space-x-1.5 text-[10px] bg-primary/20 text-primary px-2.5 py-0.5 rounded-full border border-primary/40 font-bold hover:bg-primary/30 transition-colors"
+                        title={pendingCrewCount > 0 ? `${pendingCrewCount} pending crew approvals awaiting review` : 'Admin Dashboard'}
+                      >
+                        <span>Admin</span>
+                        {pendingCrewCount > 0 && (
+                          <span className="inline-flex items-center justify-center bg-amber-500 text-black font-black text-[9px] h-4 min-w-[16px] px-1 rounded-full animate-pulse shadow-sm">
+                            {pendingCrewCount}
+                          </span>
+                        )}
                       </NextLink>
                     )}
                     <button 
@@ -174,7 +212,14 @@ export default function RootLayout({
                 <NextLink href="/profile" onClick={() => setMobileMenuOpen(false)} className={`block py-2 text-sm ${isActive('/profile') ? 'text-foreground font-bold' : 'text-primary font-semibold'}`}>My Profile & Edit Details</NextLink>
               )}
               {(user?.role === 'admin' || user?.role === 'president' || user?.email?.toLowerCase() === 'pixela@oriental.ac.in') && (
-                <NextLink href="/admin" onClick={() => setMobileMenuOpen(false)} className={`block py-2 text-sm text-primary font-bold`}>Admin Dashboard</NextLink>
+                <NextLink href="/admin" onClick={() => setMobileMenuOpen(false)} className={`flex items-center justify-between py-2 text-sm text-primary font-bold`}>
+                  <span>Admin Dashboard</span>
+                  {pendingCrewCount > 0 && (
+                    <span className="bg-amber-500 text-black font-black text-xs px-2 py-0.5 rounded-full animate-pulse">
+                      {pendingCrewCount} Pending
+                    </span>
+                  )}
+                </NextLink>
               )}
               <div className="pt-2 border-t border-border/40">
                 {user ? (
