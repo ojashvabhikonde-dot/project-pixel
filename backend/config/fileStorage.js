@@ -131,32 +131,43 @@ export const loadRegistrationsFromFile = () => {
       });
     };
 
-    if (!fs.existsSync(JSON_FILE)) {
-      // If deployed on Vercel, attempt to seed from the repo data directory
-      const bundledSource = path.resolve(__dirname, '../data/registrations.json');
-      if (fs.existsSync(bundledSource)) {
-        try {
-          const rawSource = fs.readFileSync(bundledSource, 'utf-8');
-          const parsedSource = JSON.parse(rawSource);
-          if (Array.isArray(parsedSource) && parsedSource.length > 0) {
-            const clean = filterBlacklist(parsedSource);
-            saveAllRegistrationsToFile(clean);
-            return clean;
-          }
-        } catch (e) {}
-      }
-      const initial = [DEFAULT_SUPERADMIN];
-      saveAllRegistrationsToFile(initial);
-      return initial;
+    let list = [];
+    if (fs.existsSync(JSON_FILE)) {
+      try {
+        const raw = fs.readFileSync(JSON_FILE, 'utf-8');
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) {
+          list = parsed;
+        }
+      } catch (e) {}
     }
-    const raw = fs.readFileSync(JSON_FILE, 'utf-8');
-    const parsed = JSON.parse(raw);
-    if (!Array.isArray(parsed) || parsed.length === 0) {
-      const initial = [DEFAULT_SUPERADMIN];
-      saveAllRegistrationsToFile(initial);
-      return initial;
+
+    // Always merge in bundled data from repository so updates are never lost across cold/warm starts
+    const bundledSource = path.resolve(__dirname, '../data/registrations.json');
+    if (fs.existsSync(bundledSource)) {
+      try {
+        const rawSource = fs.readFileSync(bundledSource, 'utf-8');
+        const parsedSource = JSON.parse(rawSource);
+        if (Array.isArray(parsedSource)) {
+          const existingKeys = new Set(
+            list.map(u => (u.email || u._id || u.id || '').toLowerCase().trim())
+          );
+          parsedSource.forEach(item => {
+            const key = (item.email || item._id || item.id || '').toLowerCase().trim();
+            if (key && !existingKeys.has(key)) {
+              list.push(item);
+              existingKeys.add(key);
+            }
+          });
+        }
+      } catch (e) {}
     }
-    return filterBlacklist(parsed);
+
+    const clean = filterBlacklist(list);
+    if (clean.length === 0) {
+      clean.push(DEFAULT_SUPERADMIN);
+    }
+    return clean;
   } catch (err) {
     console.error('Error reading registrations file:', err.message);
     return [DEFAULT_SUPERADMIN];
