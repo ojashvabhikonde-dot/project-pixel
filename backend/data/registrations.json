@@ -71,7 +71,7 @@
     "isApproved": true,
     "createdAt": "2026-09-07T12:57:11.114Z",
     "password": "pixela@2026",
-    "passwordHash": "$2a$10$fOJPmOAdodhTHdpZqhBejOnJTt.KgZpuG/aENHPhkYUMPfpeMIv7W"
+    "passwordHash": "$2a$10$yyeWYlX37MAUcpl3I1h1Zeb8HdbZ8q6sjVaokV/HdQ.Dw6rVm.WEa"
   },
   {
     "_id": "6ab02b1d7e1417b8985e5c31",
@@ -157,5 +157,48 @@
     "createdAt": "2026-09-20T18:54:44.518Z",
     "password": "aman@1234",
     "passwordHash": "$2a$10$3sqj8xEF7YNxY/A92A0hpeXmDMG.WCKU9xMOT1BpUV.FjD/eIAFsG"
+  },
+  {
+    "_id": "6ab02c77f88417b8985e6aa2",
+    "id": "6ab02c77f88417b8985e6aa2",
+    "name": "Rahul Gandhi",
+    "email": "rahulji@oriental.ac.in",
+    "role": "member",
+    "semester": 4,
+    "year": "2nd Year",
+    "department": "Computer Science & Engineering",
+    "bio": "Official Pixela Crew photographer and creative media editor.",
+    "skills": [
+      "Photography",
+      "Cinematography",
+      "Lightroom"
+    ],
+    "specialization": "Visual Creator",
+    "avatarUrl": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&auto=format&fit=crop&q=80",
+    "instagramUrl": "https://www.instagram.com/rahulji",
+    "socialLinks": [
+      {
+        "platform": "instagram",
+        "url": "https://www.instagram.com/rahulji"
+      }
+    ],
+    "currentProfession": "",
+    "pastRole": "",
+    "tenureYear": "2025-2026",
+    "designation": "Active Crew",
+    "gear": {
+      "cameraBody": "Canon EOS R6",
+      "primaryLens": "RF 24-70mm f/2.8L",
+      "secondaryLens": "",
+      "accessories": []
+    },
+    "badges": [
+      "Verified Crew",
+      "Prime Shooter"
+    ],
+    "performanceRating": 5,
+    "trackRecordNotes": "Active crew member verified on official Pixela leadership roster.",
+    "isApproved": true,
+    "createdAt": "2026-10-14T10:00:00.000Z"
   }
 ]

@@ -1,5 +1,5 @@
 # Pixela Photography Club - Official Crew & Members Registration Table
-> **Total Registered Members**: 4 | **Last Updated**: 2026-10-14T10:12:55.624Z
+> **Total Registered Members**: 5 | **Last Updated**: 2026-10-14T10:47:08.097Z
 
 | # | Name | Email | Role | Department | Year / Sem | Instagram / Social | Camera & Gear | Badges | Event Coverage Dates | Approved | Registration Date |
 |---|---|---|---|---|---|---|---|---|---|---|---|
@@ -7,6 +7,7 @@
 | 2 | **Pixela Super Admin** | `pixela@oriental.ac.in` | `ADMIN` | Information Technology | 3rd Year (6 Sem) | None | Standard Gear | Verified Crew | None | ✅ YES | 2026-09-07 |
 | 3 | **naman sable** | `namansable140@gmail.com` | `MEMBER` | cse | 3rd Year (5 Sem) | @mai_nikkuuuuu?stkn=MWpybjlhN2djb3l5eA== | Standard Gear | Verified Crew, Exhibition Curator | exibution (2026-09-22) | ✅ YES | 2026-09-20 |
 | 4 | **Aman Yadav** | `ay6674144@gmail.com` | `MEMBER` | Data Science  | 3rd Year (5 Sem) | @_amann__46?stkn=MXAyeTBoMXI0dnFreQ%3D%3D&utm_source=qr | Standard Gear | Verified Crew | None | ✅ YES | 2026-09-20 |
+| 5 | **Rahul Gandhi** | `rahulji@oriental.ac.in` | `MEMBER` | Computer Science & Engineering | 2nd Year (4 Sem) | @rahulji | Canon EOS R6 (RF 24-70mm f/2.8L) | Verified Crew, Prime Shooter | None | ✅ YES | 2026-10-14 |
 
 
 ## 📅 Crew Event Coverage Log & Dates Timeline
