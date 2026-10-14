@@ -14,6 +14,7 @@ if (typeof globalThis.Path2D === 'undefined') {
 }
 
 import express from 'express';
+import mongoose from 'mongoose';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import { connectDB } from './config/db.js';
@@ -103,7 +104,20 @@ app.get('/api', (req, res) => {
 });
 
 app.get('/api/health', (req, res) => {
-  res.json({ message: 'Pixela Photography Club API is healthy.', status: 'ok', timestamp: new Date().toISOString() });
+  const readyState = mongoose.connection ? mongoose.connection.readyState : 0;
+  const isDbConnected = readyState === 1;
+  const rawUri = process.env.MONGODB_URI || '';
+  const sanitizedUri = rawUri ? rawUri.replace(/:\/\/([^:]+):([^@]+)@/, '://$1:****@') : 'none';
+  res.json({
+    message: 'Pixela Photography Club API is healthy.',
+    status: 'ok',
+    timestamp: new Date().toISOString(),
+    isDbConnected,
+    dbReadyState: readyState,
+    hasMongoUri: !!rawUri,
+    mongoUriPreview: sanitizedUri.substring(0, 30) + '...',
+    isVercel: !!process.env.VERCEL
+  });
 });
 
 // Seed data function to populate DB on startup if empty or missing crew
