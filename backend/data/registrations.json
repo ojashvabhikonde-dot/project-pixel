@@ -71,7 +71,7 @@
     "isApproved": true,
     "createdAt": "2026-09-07T12:57:11.114Z",
     "password": "pixela@2026",
-    "passwordHash": "$2a$10$yyeWYlX37MAUcpl3I1h1Zeb8HdbZ8q6sjVaokV/HdQ.Dw6rVm.WEa"
+    "passwordHash": "$2a$10$645QxbzfJWMyfntrmnwnF.k4KThATe30tWRTdooKJLjVj0aFW2ZDC"
   },
   {
     "_id": "6ab02b1d7e1417b8985e5c31",
@@ -200,5 +200,48 @@
     "trackRecordNotes": "Active crew member verified on official Pixela leadership roster.",
     "isApproved": true,
     "createdAt": "2026-10-14T10:00:00.000Z"
+  },
+  {
+    "_id": "6ab02c88f88417b8985e7bb3",
+    "id": "6ab02c88f88417b8985e7bb3",
+    "name": "narendra modi",
+    "email": "pmmodi@oriental.ac.in",
+    "role": "member",
+    "semester": 5,
+    "year": "3rd Year",
+    "department": "AIML",
+    "bio": "Official Pixela Crew photographer and creative media editor.",
+    "skills": [
+      "Photography",
+      "Cinematography",
+      "Lighting"
+    ],
+    "specialization": "Visual Creator",
+    "avatarUrl": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c4/Narendra_Modi_2021.jpg/440px-Narendra_Modi_2021.jpg",
+    "instagramUrl": "https://www.instagram.com/pmmodi",
+    "socialLinks": [
+      {
+        "platform": "instagram",
+        "url": "https://www.instagram.com/pmmodi"
+      }
+    ],
+    "currentProfession": "",
+    "pastRole": "",
+    "tenureYear": "2025-2026",
+    "designation": "Active Crew",
+    "gear": {
+      "cameraBody": "Nikon Z6 II",
+      "primaryLens": "NIKKOR Z 24-70mm f/2.8 S",
+      "secondaryLens": "",
+      "accessories": []
+    },
+    "badges": [
+      "Verified Crew",
+      "Prime Shooter"
+    ],
+    "performanceRating": 5,
+    "trackRecordNotes": "Active crew member verified on official Pixela leadership roster.",
+    "isApproved": true,
+    "createdAt": "2026-10-14T11:00:00.000Z"
   }
 ]

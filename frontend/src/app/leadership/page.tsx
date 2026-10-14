@@ -304,7 +304,20 @@ export default function LeadershipPage() {
           if (email && deletedEmailsRef.current.has(email)) return false;
           return true;
         });
-        setCrewMembers(filtered);
+        setCrewMembers(prev => {
+          const incomingMap = new Set(filtered.map((m: any) => (m.email || m._id || m.id || '').toLowerCase().trim()));
+          const merged = [...filtered];
+          prev.forEach((oldMember: any) => {
+            const key = (oldMember.email || oldMember._id || oldMember.id || '').toLowerCase().trim();
+            const id = String(oldMember._id || oldMember.id || '');
+            const email = String(oldMember.email || '').toLowerCase().trim();
+            const isDeleted = (id && deletedIdsRef.current.has(id)) || (email && deletedEmailsRef.current.has(email));
+            if (key && !incomingMap.has(key) && !isDeleted && oldMember.isApproved) {
+              merged.push(oldMember);
+            }
+          });
+          return merged;
+        });
       }
 
       // 2. Fetch Alumni Members

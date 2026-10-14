@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import NextLink from 'next/link';
 import {
   ShieldCheck, Calendar, Image as ImageIcon, Users, BookOpen, AlertCircle,
@@ -32,6 +32,8 @@ export default function AdminPage() {
   const [pendingPhotos, setPendingPhotos] = useState<any[]>([]);
   const [pendingMembers, setPendingMembers] = useState<any[]>([]);
   const [allUsers, setAllUsers] = useState<any[]>([]);
+  const deletedIdsRef = useRef<Set<string>>(new Set());
+  const deletedEmailsRef = useRef<Set<string>>(new Set());
 
   // User Management State
   const [userSearch, setUserSearch] = useState('');
@@ -257,15 +259,40 @@ export default function AdminPage() {
       const usersRes = await fetch(`${API_URL}/api/users?t=${Date.now()}`, {
         headers: { 'Authorization': `Bearer ${authToken}` }
       });
+      let rawUsers: any[] = [];
       if (usersRes.ok) {
-        const usersData = await usersRes.json();
-        setAllUsers(usersData || []);
+        rawUsers = await usersRes.json();
       } else {
         const fallbackRes = await fetch(`${API_URL}/api/members?t=${Date.now()}`);
         if (fallbackRes.ok) {
-          const fallbackData = await fallbackRes.json();
-          setAllUsers(fallbackData || []);
+          rawUsers = await fallbackRes.json();
         }
+      }
+
+      if (Array.isArray(rawUsers)) {
+        const filtered = rawUsers.filter((u: any) => {
+          const id = String(u._id || u.id || '');
+          const email = String(u.email || '').toLowerCase().trim();
+          if (id && deletedIdsRef.current.has(id)) return false;
+          if (email && deletedEmailsRef.current.has(email)) return false;
+          return true;
+        });
+
+        setAllUsers(prev => {
+          if (!prev || prev.length === 0) return filtered;
+          const incomingKeys = new Set(filtered.map((u: any) => (u.email || u._id || u.id || '').toLowerCase().trim()));
+          const merged = [...filtered];
+          prev.forEach((oldUser: any) => {
+            const key = (oldUser.email || oldUser._id || oldUser.id || '').toLowerCase().trim();
+            const id = String(oldUser._id || oldUser.id || '');
+            const email = String(oldUser.email || '').toLowerCase().trim();
+            const isDeleted = (id && deletedIdsRef.current.has(id)) || (email && deletedEmailsRef.current.has(email));
+            if (key && !incomingKeys.has(key) && !isDeleted) {
+              merged.push(oldUser);
+            }
+          });
+          return merged;
+        });
       }
     } catch (err) {
       console.error('Failed to load admin panel data', err);
@@ -585,6 +612,10 @@ export default function AdminPage() {
       });
 
       if (res.ok) {
+        deletedIdsRef.current.add(String(targetId));
+        if (targetUser.email) {
+          deletedEmailsRef.current.add(String(targetUser.email).toLowerCase().trim());
+        }
         setAllUsers(prev => prev.filter(u => (u._id !== targetId && u.id !== targetId)));
         setUserSuccessMessage(`User "${targetUser.name}" deleted successfully.`);
         setTimeout(() => setUserSuccessMessage(''), 3000);
