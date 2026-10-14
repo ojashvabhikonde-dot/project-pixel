@@ -1354,6 +1354,7 @@ router.get('/members', async (req, res) => {
   res.setHeader('Expires', '0');
   try {
     const blacklist = loadDeletedBlacklist();
+    let membersList = [];
 
     if (isDbConnected()) {
       try {
@@ -1361,30 +1362,46 @@ router.get('/members', async (req, res) => {
           .select('-password')
           .sort({ timelineOrder: 1, createdAt: -1 });
 
-        if (members && members.length > 0) {
-          const filtered = members.filter(m => {
-            const id1 = String(m._id || '').toLowerCase().trim();
-            const email = String(m.email || '').toLowerCase().trim();
-            return !blacklist.has(id1) && !blacklist.has(email);
-          });
-          const enriched = await Promise.all(filtered.map(m => enrichMemberWithTrackRecord(m)));
-          return res.json(enriched);
+        if (Array.isArray(members)) {
+          membersList = [...members];
         }
       } catch (dbErr) {
         console.warn('DB members fetch error, using memory fallback:', dbErr.message);
       }
     }
-    const approved = memoryStore.users
-      .filter(u => u.isApproved && CREW_ROLES.includes(u.role))
-      .filter(u => {
-        const id1 = String(u._id || '').toLowerCase().trim();
-        const id2 = String(u.id || '').toLowerCase().trim();
-        const email = String(u.email || '').toLowerCase().trim();
-        return !blacklist.has(id1) && !blacklist.has(id2) && !blacklist.has(email);
-      });
-    
-    const enrichedMem = await Promise.all(approved.map(u => enrichMemberWithTrackRecord(u)));
-    return res.json(enrichedMem);
+
+    // Always merge fresh file storage approved crew members (deduplicating by email/ID)
+    const freshFileUsers = loadRegistrationsFromFile();
+    const existingEmails = new Set(membersList.map(m => (m.email || '').toLowerCase().trim()));
+    const existingIds = new Set(membersList.map(m => String(m._id || m.id || '')));
+
+    freshFileUsers.forEach(u => {
+      const email = (u.email || '').toLowerCase().trim();
+      const id = String(u._id || u.id || '');
+      const isCrew = (!u.role || CREW_ROLES.includes(u.role)) && u.role !== 'alumni' && u.role !== 'faculty';
+      if (
+        u.isApproved &&
+        isCrew &&
+        !blacklist.has(id) &&
+        !blacklist.has(email) &&
+        !existingEmails.has(email) &&
+        !existingIds.has(id)
+      ) {
+        membersList.push(u);
+        existingEmails.add(email);
+        existingIds.add(id);
+      }
+    });
+
+    const filtered = membersList.filter(m => {
+      const id1 = String(m._id || '').toLowerCase().trim();
+      const id2 = String(m.id || '').toLowerCase().trim();
+      const email = String(m.email || '').toLowerCase().trim();
+      return !blacklist.has(id1) && !blacklist.has(id2) && !blacklist.has(email);
+    });
+
+    const enriched = await Promise.all(filtered.map(m => enrichMemberWithTrackRecord(m)));
+    return res.json(enriched);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -1473,23 +1490,54 @@ router.get('/alumni', async (req, res) => {
   res.setHeader('Pragma', 'no-cache');
   res.setHeader('Expires', '0');
   try {
+    const blacklist = loadDeletedBlacklist();
+    let alumniList = [];
+
     if (isDbConnected()) {
       try {
         const alumni = await User.find({ isApproved: true, role: 'alumni' })
           .select('-password')
           .sort({ createdAt: -1 });
-        if (alumni) return res.json(alumni);
+        if (Array.isArray(alumni)) {
+          alumniList = [...alumni];
+        }
       } catch (dbErr) {
         console.warn('DB alumni fetch error, using memory fallback');
       }
     }
-    const approved = memoryStore.users
-      .filter(u => u.isApproved && u.role === 'alumni')
-      .map(u => {
-        const { passwordHash, ...safe } = u;
-        return safe;
-      });
-    return res.json(approved);
+
+    const freshFileUsers = loadRegistrationsFromFile();
+    const existingEmails = new Set(alumniList.map(m => (m.email || '').toLowerCase().trim()));
+    const existingIds = new Set(alumniList.map(m => String(m._id || m.id || '')));
+
+    freshFileUsers.forEach(u => {
+      const email = (u.email || '').toLowerCase().trim();
+      const id = String(u._id || u.id || '');
+      if (
+        u.isApproved &&
+        u.role === 'alumni' &&
+        !blacklist.has(id) &&
+        !blacklist.has(email) &&
+        !existingEmails.has(email) &&
+        !existingIds.has(id)
+      ) {
+        alumniList.push(u);
+        existingEmails.add(email);
+        existingIds.add(id);
+      }
+    });
+
+    const filtered = alumniList.filter(u => {
+      const id1 = String(u._id || '').toLowerCase().trim();
+      const id2 = String(u.id || '').toLowerCase().trim();
+      const email = String(u.email || '').toLowerCase().trim();
+      return !blacklist.has(id1) && !blacklist.has(id2) && !blacklist.has(email);
+    }).map(u => {
+      const { password, passwordHash, ...safe } = (u.toObject ? u.toObject() : u);
+      return safe;
+    });
+
+    return res.json(filtered);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -1501,23 +1549,54 @@ router.get('/faculty', async (req, res) => {
   res.setHeader('Pragma', 'no-cache');
   res.setHeader('Expires', '0');
   try {
+    const blacklist = loadDeletedBlacklist();
+    let facultyList = [];
+
     if (isDbConnected()) {
       try {
         const faculty = await User.find({ isApproved: true, role: 'faculty' })
           .select('-password')
           .sort({ createdAt: -1 });
-        if (faculty) return res.json(faculty);
+        if (Array.isArray(faculty)) {
+          facultyList = [...faculty];
+        }
       } catch (dbErr) {
         console.warn('DB faculty fetch error, using memory fallback');
       }
     }
-    const approved = memoryStore.users
-      .filter(u => u.isApproved && u.role === 'faculty')
-      .map(u => {
-        const { passwordHash, ...safe } = u;
-        return safe;
-      });
-    return res.json(approved);
+
+    const freshFileUsers = loadRegistrationsFromFile();
+    const existingEmails = new Set(facultyList.map(m => (m.email || '').toLowerCase().trim()));
+    const existingIds = new Set(facultyList.map(m => String(m._id || m.id || '')));
+
+    freshFileUsers.forEach(u => {
+      const email = (u.email || '').toLowerCase().trim();
+      const id = String(u._id || u.id || '');
+      if (
+        u.isApproved &&
+        u.role === 'faculty' &&
+        !blacklist.has(id) &&
+        !blacklist.has(email) &&
+        !existingEmails.has(email) &&
+        !existingIds.has(id)
+      ) {
+        facultyList.push(u);
+        existingEmails.add(email);
+        existingIds.add(id);
+      }
+    });
+
+    const filtered = facultyList.filter(u => {
+      const id1 = String(u._id || '').toLowerCase().trim();
+      const id2 = String(u.id || '').toLowerCase().trim();
+      const email = String(u.email || '').toLowerCase().trim();
+      return !blacklist.has(id1) && !blacklist.has(id2) && !blacklist.has(email);
+    }).map(u => {
+      const { password, passwordHash, ...safe } = (u.toObject ? u.toObject() : u);
+      return safe;
+    });
+
+    return res.json(filtered);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -1527,18 +1606,49 @@ router.get('/faculty', async (req, res) => {
 router.get('/users', protect, adminOnly, async (req, res) => {
   res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
   try {
+    const blacklist = loadDeletedBlacklist();
+    let usersList = [];
+
     if (isDbConnected()) {
       try {
         const users = await User.find({}).select('-password').sort({ createdAt: -1 });
-        return res.json(users);
+        if (Array.isArray(users)) {
+          usersList = [...users];
+        }
       } catch (dbErr) {
         console.warn('DB all users fetch error, using memory fallback:', dbErr.message);
       }
     }
-    const safeUsers = memoryStore.users.map(u => {
-      const { password, passwordHash, ...safe } = u;
+
+    const freshFileUsers = loadRegistrationsFromFile();
+    const existingEmails = new Set(usersList.map(m => (m.email || '').toLowerCase().trim()));
+    const existingIds = new Set(usersList.map(m => String(m._id || m.id || '')));
+
+    freshFileUsers.forEach(u => {
+      const email = (u.email || '').toLowerCase().trim();
+      const id = String(u._id || u.id || '');
+      if (
+        !blacklist.has(id) &&
+        !blacklist.has(email) &&
+        !existingEmails.has(email) &&
+        !existingIds.has(id)
+      ) {
+        usersList.push(u);
+        existingEmails.add(email);
+        existingIds.add(id);
+      }
+    });
+
+    const safeUsers = usersList.filter(u => {
+      const id1 = String(u._id || '').toLowerCase().trim();
+      const id2 = String(u.id || '').toLowerCase().trim();
+      const email = String(u.email || '').toLowerCase().trim();
+      return !blacklist.has(id1) && !blacklist.has(id2) && !blacklist.has(email);
+    }).map(u => {
+      const { password, passwordHash, ...safe } = (u.toObject ? u.toObject() : u);
       return safe;
     });
+
     return res.json(safeUsers);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -1606,19 +1716,47 @@ router.patch('/members/bulk-approve', protect, adminOnly, async (req, res) => {
       }
     }
 
-    // Sync memoryStore
-    memoryStore.users.forEach(u => {
+    // Sync memoryStore & persistent file storage
+    const freshUsers = loadRegistrationsFromFile();
+    for (const u of freshUsers) {
       if (!u.isApproved) {
-        if (!Array.isArray(userIds) || userIds.length === 0 || userIds.includes(String(u._id)) || userIds.includes(String(u.id)) || userIds.includes(u.email)) {
+        const uId = String(u._id || u.id || '');
+        const uEmail = (u.email || '').toLowerCase().trim();
+        if (!Array.isArray(userIds) || userIds.length === 0 || userIds.includes(uId) || userIds.includes(uEmail)) {
           u.isApproved = true;
-          updateRegistrationStatusInFile(u.email || u._id || u.id, true);
+          updateRegistrationStatusInFile(uEmail || uId, true);
           approvedCount++;
+
+          // Upsert to DB if connected so both stores remain identical
+          if (isDbConnected()) {
+            try {
+              await User.findOneAndUpdate(
+                { email: uEmail },
+                {
+                  $set: {
+                    name: u.name,
+                    email: uEmail,
+                    role: u.role || 'member',
+                    isApproved: true,
+                    department: u.department || '',
+                    year: u.year || '1st Year',
+                    semester: u.semester || 1,
+                    avatarUrl: u.avatarUrl || '',
+                    specialization: u.specialization || 'Visual Creator'
+                  },
+                  $setOnInsert: {
+                    password: u.passwordHash || bcrypt.hashSync('pixela@default2026', 10)
+                  }
+                },
+                { upsert: true, setDefaultsOnInsert: true }
+              );
+            } catch (e) {}
+          }
         }
       }
-    });
+    }
 
-    // Save updated states to persistent file storage
-    saveAllRegistrationsToFile(memoryStore.users);
+    memoryStore.users = loadRegistrationsFromFile();
 
     return res.json({
       success: true,
@@ -1635,51 +1773,94 @@ router.patch('/members/:id/approve', protect, adminOnly, async (req, res) => {
   try {
     const targetId = req.params.id;
     const newApprovedStatus = typeof req.body?.isApproved === 'boolean' ? req.body.isApproved : true;
+    let foundMember = null;
 
     if (isDbConnected()) {
       try {
-        let member = null;
         if (mongoose.Types.ObjectId.isValid(targetId)) {
-          member = await User.findByIdAndUpdate(
+          foundMember = await User.findByIdAndUpdate(
             targetId, 
             { isApproved: newApprovedStatus }, 
             { new: true }
           ).select('-password');
         } else {
-          member = await User.findOneAndUpdate(
+          foundMember = await User.findOneAndUpdate(
             { email: (targetId || '').toLowerCase().trim() },
             { isApproved: newApprovedStatus },
             { new: true }
           ).select('-password');
-        }
-
-        if (member) {
-          const memIndex = memoryStore.users.findIndex(u => 
-            String(u._id) === String(targetId) || 
-            String(u.id) === String(targetId) ||
-            (u.email || '').toLowerCase() === (member.email || '').toLowerCase()
-          );
-          if (memIndex !== -1) {
-            memoryStore.users[memIndex].isApproved = newApprovedStatus;
-          }
-          updateRegistrationStatusInFile(member.email || targetId, newApprovedStatus);
-          const enriched = await enrichMemberWithTrackRecord(member);
-          return res.json({ success: true, member: enriched });
         }
       } catch (dbErr) {
         console.warn('DB member approval error, using memory fallback:', dbErr.message);
       }
     }
 
-    const member = memoryStore.users.find(u => 
-      String(u._id) === String(targetId) || 
-      String(u.id) === String(targetId) ||
-      (u.email || '').toLowerCase() === (targetId || '').toLowerCase()
+    // Always update file storage and memoryStore
+    const freshUsers = loadRegistrationsFromFile();
+    const cleanTargetId = String(targetId || '').toLowerCase().trim();
+    const fileTarget = freshUsers.find(u => 
+      String(u._id || '').toLowerCase().trim() === cleanTargetId || 
+      String(u.id || '').toLowerCase().trim() === cleanTargetId || 
+      (u.email || '').toLowerCase().trim() === cleanTargetId
     );
-    if (member) {
-      member.isApproved = newApprovedStatus;
-      updateRegistrationStatusInFile(member.email || targetId, newApprovedStatus);
-      const enriched = await enrichMemberWithTrackRecord(member);
+
+    if (fileTarget) {
+      fileTarget.isApproved = newApprovedStatus;
+      updateRegistrationStatusInFile(fileTarget.email || targetId, newApprovedStatus);
+      
+      const memIndex = memoryStore.users.findIndex(u => 
+        String(u._id || '').toLowerCase().trim() === cleanTargetId || 
+        String(u.id || '').toLowerCase().trim() === cleanTargetId || 
+        (u.email || '').toLowerCase().trim() === cleanTargetId
+      );
+      if (memIndex !== -1) {
+        memoryStore.users[memIndex].isApproved = newApprovedStatus;
+      }
+
+      // If DB is connected and member was not in DB, upsert them into MongoDB so DB & file are in sync!
+      if (isDbConnected() && !foundMember) {
+        try {
+          const dbUpsert = await User.findOneAndUpdate(
+            { email: (fileTarget.email || '').toLowerCase().trim() },
+            {
+              $set: {
+                name: fileTarget.name,
+                email: (fileTarget.email || '').toLowerCase().trim(),
+                role: fileTarget.role || 'member',
+                isApproved: newApprovedStatus,
+                specialization: fileTarget.specialization || 'Visual Creator',
+                department: fileTarget.department || '',
+                semester: fileTarget.semester || 1,
+                year: fileTarget.year || '1st Year',
+                instagramUrl: fileTarget.instagramUrl || '',
+                socialLinks: fileTarget.socialLinks || [],
+                avatarUrl: fileTarget.avatarUrl || '',
+                bio: fileTarget.bio || '',
+                skills: fileTarget.skills || [],
+                badges: fileTarget.badges || ['Verified Crew'],
+                gear: fileTarget.gear || { cameraBody: '', primaryLens: '', secondaryLens: '', accessories: [] },
+                performanceRating: fileTarget.performanceRating || 5
+              },
+              $setOnInsert: {
+                password: fileTarget.passwordHash || bcrypt.hashSync('pixela@default2026', 10)
+              }
+            },
+            { upsert: true, new: true, setDefaultsOnInsert: true }
+          ).select('-password');
+          foundMember = dbUpsert;
+        } catch (upsertErr) {
+          console.warn('DB upsert during approval warning:', upsertErr.message);
+        }
+      }
+
+      if (!foundMember) {
+        foundMember = fileTarget;
+      }
+    }
+
+    if (foundMember) {
+      updateRegistrationStatusInFile(foundMember.email || targetId, newApprovedStatus);
+      const enriched = await enrichMemberWithTrackRecord(foundMember);
       return res.json({ success: true, member: enriched });
     }
     return res.status(404).json({ error: 'Member not found.' });
