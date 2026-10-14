@@ -226,9 +226,21 @@ export default function LoginModal({
         throw new Error(data.error || 'Authentication failed. Please check your credentials.');
       }
 
-      // Save token and user details to localStorage
-      localStorage.setItem('pixela_token', data.token);
-      localStorage.setItem('pixela_user', JSON.stringify(data.user));
+      // Check if the current browser session is already an authorized admin
+      const existingUserStr = localStorage.getItem('pixela_user');
+      let isExistingAdmin = false;
+      try {
+        if (existingUserStr) {
+          const parsed = JSON.parse(existingUserStr);
+          isExistingAdmin = parsed.role === 'admin' || parsed.role === 'president' || parsed.email?.toLowerCase() === 'pixela@oriental.ac.in';
+        }
+      } catch (e) {}
+
+      // If an existing admin is registering a member, keep the admin logged in!
+      if (!isExistingAdmin) {
+        localStorage.setItem('pixela_token', data.token);
+        localStorage.setItem('pixela_user', JSON.stringify(data.user));
+      }
 
       // Global sync across tabs & current page components
       window.dispatchEvent(new Event('pixela_auth_change'));
@@ -253,11 +265,20 @@ export default function LoginModal({
       } catch (e) {}
 
       if (isRegister) {
-        setRegistrationSuccessMsg('Welcome to Pixela! Your crew profile is now permanently live on the official leadership roster.');
+        const isApprovedNow = Boolean(data.user?.isApproved);
+        if (isExistingAdmin) {
+          setRegistrationSuccessMsg(`Registration submitted for ${data.user?.name || 'crew member'}! The approval request is now in your Super Admin queue.`);
+        } else if (isApprovedNow) {
+          setRegistrationSuccessMsg(`Welcome to Pixela, ${data.user?.name || 'Member'}! Your profile is live.`);
+        } else {
+          setRegistrationSuccessMsg('Registration submitted! Your request has been sent to the Super Admin for approval and will appear on the Leadership roster once approved.');
+        }
         setTimeout(() => {
-          onSuccess(data.token, data.user);
+          if (!isExistingAdmin) {
+            onSuccess(data.token, data.user);
+          }
           onClose();
-        }, 1000);
+        }, 1200);
       } else {
         onSuccess(data.token, data.user);
         onClose();

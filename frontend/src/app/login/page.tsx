@@ -225,10 +225,22 @@ function LoginFormContent() {
         throw new Error(data.error || 'Authentication failed. Please verify your credentials or try again.');
       }
 
-      // Save token and user details to localStorage
-      localStorage.setItem('pixela_token', data.token);
-      localStorage.setItem('pixela_user', JSON.stringify(data.user));
-      setCurrentUser(data.user);
+      // Check if current browser session is already an authorized admin
+      const existingUserStr = localStorage.getItem('pixela_user');
+      let isExistingAdmin = false;
+      try {
+        if (existingUserStr) {
+          const parsed = JSON.parse(existingUserStr);
+          isExistingAdmin = parsed.role === 'admin' || parsed.role === 'president' || parsed.email?.toLowerCase() === 'pixela@oriental.ac.in';
+        }
+      } catch (e) {}
+
+      // If an existing admin registered a member, preserve the admin session!
+      if (!isExistingAdmin) {
+        localStorage.setItem('pixela_token', data.token);
+        localStorage.setItem('pixela_user', JSON.stringify(data.user));
+        setCurrentUser(data.user);
+      }
 
       // Dispatch global auth event so all open views immediately update
       window.dispatchEvent(new Event('pixela_auth_change'));
@@ -255,14 +267,31 @@ function LoginFormContent() {
       const isSuperAdmin = data.user.email?.toLowerCase() === 'pixela@oriental.ac.in' || data.user.role === 'admin';
 
       if (isRegister) {
-        setSuccessMsg(`Welcome to Pixela, ${data.user.name}! Your profile is now live on the crew roster.`);
-        setTimeout(() => {
-          if (redirectParam) {
-            router.push(redirectParam);
-          } else {
+        const isApprovedNow = Boolean(data.user?.isApproved);
+        if (isExistingAdmin) {
+          setSuccessMsg(`Registration submitted for ${data.user?.name || 'crew member'}! The request is now waiting in your Super Admin approval queue.`);
+          setTimeout(() => {
             router.push('/leadership');
-          }
-        }, 1200);
+          }, 1200);
+        } else if (isApprovedNow) {
+          setSuccessMsg(`Welcome to Pixela, ${data.user.name}! Your profile is now live on the crew roster.`);
+          setTimeout(() => {
+            if (redirectParam) {
+              router.push(redirectParam);
+            } else {
+              router.push('/leadership');
+            }
+          }, 1200);
+        } else {
+          setSuccessMsg('Registration submitted! Your request has been sent to the Super Admin for approval and will appear on the Leadership roster once approved.');
+          setTimeout(() => {
+            if (redirectParam) {
+              router.push(redirectParam);
+            } else {
+              router.push('/leadership');
+            }
+          }, 1500);
+        }
       } else {
         setSuccessMsg(`Welcome back, ${data.user.name}! Redirecting...`);
         setTimeout(() => {

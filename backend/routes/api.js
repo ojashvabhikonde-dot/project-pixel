@@ -1549,19 +1549,35 @@ router.get('/users', protect, adminOnly, async (req, res) => {
 router.get('/members/pending', protect, adminOnly, async (req, res) => {
   res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
   try {
+    let pendingList = [];
     if (isDbConnected()) {
       try {
-        const members = await User.find({ isApproved: false }).select('-password').sort({ createdAt: -1 });
-        return res.json(members);
+        const dbPending = await User.find({ isApproved: false }).select('-password').sort({ createdAt: -1 });
+        if (Array.isArray(dbPending)) {
+          pendingList = [...dbPending];
+        }
       } catch (dbErr) {
-        console.warn('DB pending members fetch error, using memory fallback');
+        console.warn('DB pending members fetch error, using memory fallback:', dbErr.message);
       }
     }
-    const pending = memoryStore.users.filter(u => !u.isApproved).map(u => {
-      const { passwordHash, ...safe } = u;
-      return safe;
+
+    // Always merge fresh file storage pending members (deduplicating by email/ID)
+    const freshFileUsers = loadRegistrationsFromFile();
+    const existingEmails = new Set(pendingList.map(m => (m.email || '').toLowerCase().trim()));
+    const existingIds = new Set(pendingList.map(m => String(m._id || m.id || '')));
+
+    freshFileUsers.forEach(u => {
+      const email = (u.email || '').toLowerCase().trim();
+      const id = String(u._id || u.id || '');
+      if (!u.isApproved && !existingEmails.has(email) && !existingIds.has(id)) {
+        const { passwordHash, ...safe } = u;
+        pendingList.push(safe);
+        existingEmails.add(email);
+        existingIds.add(id);
+      }
     });
-    return res.json(pending);
+
+    return res.json(pendingList);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

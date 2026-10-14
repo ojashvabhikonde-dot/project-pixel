@@ -217,39 +217,68 @@ export default function LeadershipPage() {
   const [selectedDeptFilter, setSelectedDeptFilter] = useState('All');
 
   useEffect(() => {
-    const savedToken = localStorage.getItem('pixela_token');
-    const savedUser = localStorage.getItem('pixela_user');
-    if (savedToken) setToken(savedToken);
-    if (savedUser) {
-      try {
-        setUser(JSON.parse(savedUser));
-      } catch (e) {
+    const syncLeadershipAuth = () => {
+      const savedToken = localStorage.getItem('pixela_token');
+      const savedUser = localStorage.getItem('pixela_user');
+      setToken(savedToken || null);
+      if (savedUser) {
+        try {
+          const parsed = JSON.parse(savedUser);
+          setUser(parsed);
+          const adminCheck = parsed.role === 'admin' || parsed.role === 'president' || parsed.email?.toLowerCase() === 'pixela@oriental.ac.in';
+          if (savedToken && adminCheck) {
+            fetchPendingMembers(savedToken);
+          }
+        } catch (e) {
+          setUser(null);
+        }
+      } else {
         setUser(null);
+        setPendingMembers([]);
       }
-    }
+    };
 
+    syncLeadershipAuth();
     fetchLeadershipData();
-    if (savedToken) {
-      fetchPendingMembers(savedToken);
-    }
 
-    // Auto real-time sync polling every 8 seconds
+    window.addEventListener('pixela_auth_change', syncLeadershipAuth);
+    window.addEventListener('storage', syncLeadershipAuth);
+
+    // Auto real-time sync polling every 5 seconds
     const pollInterval = setInterval(() => {
       fetchLeadershipData(true);
       const currentToken = localStorage.getItem('pixela_token');
-      if (currentToken) fetchPendingMembers(currentToken, true);
-    }, 8000);
+      const currentUser = localStorage.getItem('pixela_user');
+      let isAdmin = false;
+      try {
+        if (currentUser) {
+          const p = JSON.parse(currentUser);
+          isAdmin = p.role === 'admin' || p.role === 'president' || p.email?.toLowerCase() === 'pixela@oriental.ac.in';
+        }
+      } catch (e) {}
+      if (currentToken && isAdmin) fetchPendingMembers(currentToken, true);
+    }, 5000);
 
     const onFocus = () => {
       fetchLeadershipData(true);
       const currentToken = localStorage.getItem('pixela_token');
-      if (currentToken) fetchPendingMembers(currentToken, true);
+      const currentUser = localStorage.getItem('pixela_user');
+      let isAdmin = false;
+      try {
+        if (currentUser) {
+          const p = JSON.parse(currentUser);
+          isAdmin = p.role === 'admin' || p.role === 'president' || p.email?.toLowerCase() === 'pixela@oriental.ac.in';
+        }
+      } catch (e) {}
+      if (currentToken && isAdmin) fetchPendingMembers(currentToken, true);
     };
     window.addEventListener('focus', onFocus);
     window.addEventListener('visibilitychange', onFocus);
 
     return () => {
       clearInterval(pollInterval);
+      window.removeEventListener('pixela_auth_change', syncLeadershipAuth);
+      window.removeEventListener('storage', syncLeadershipAuth);
       window.removeEventListener('focus', onFocus);
       window.removeEventListener('visibilitychange', onFocus);
     };
