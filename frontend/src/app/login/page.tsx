@@ -276,9 +276,9 @@ function LoginFormContent() {
         }, 800);
       }
     } catch (err: any) {
-      if (err.message?.includes('Failed to fetch') || err.message?.includes('NetworkError')) {
+      if (err.message?.includes('Failed to fetch') || err.message?.includes('NetworkError') || err.message?.includes('Load failed')) {
         const targetApi = API_URL || 'https://project-pixel-u4xs.vercel.app';
-        setError(`Cannot connect to backend server. Please verify the backend is running at ${targetApi}.`);
+        setError(`Cannot connect to backend server. Please verify the backend is running at ${targetApi} and CORS is allowed for this domain.`);
       } else {
         setError(err.message || 'Something went wrong. Please check your credentials and try again.');
       }

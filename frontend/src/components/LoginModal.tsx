@@ -263,9 +263,9 @@ export default function LoginModal({
         onClose();
       }
     } catch (err: any) {
-      if (err.message?.includes('Failed to fetch') || err.message?.includes('NetworkError')) {
+      if (err.message?.includes('Failed to fetch') || err.message?.includes('NetworkError') || err.message?.includes('Load failed')) {
         const targetApi = API_URL || 'https://project-pixel-u4xs.vercel.app';
-        setError(`Cannot connect to Pixela backend server. Please verify backend is running at ${targetApi}.`);
+        setError(`Cannot connect to Pixela backend server. Please verify backend is running at ${targetApi} and CORS is allowed for this domain.`);
       } else {
         setError(err.message || 'Something went wrong. Please try again.');
       }
