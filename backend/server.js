@@ -43,8 +43,12 @@ const isAllowedOrigin = (origin) => {
       /^192\.168\.\d{1,3}\.\d{1,3}$/.test(host) ||
       /^172\.(1[6-9]|2\d|3[0-1])\.\d{1,3}\.\d{1,3}$/.test(host)
     ) return true;
-    // Allow production Vercel deployment & previews
-    if (host === 'project-pixel-u4xs.vercel.app' || /^project-pixel[a-z0-9-]*\.vercel\.app$/.test(host)) return true;
+    // Allow production Vercel deployments, previews, and pixela-jpeg.vercel.app
+    if (
+      host === 'pixela-jpeg.vercel.app' ||
+      host === 'project-pixel-u4xs.vercel.app' ||
+      host.endsWith('.vercel.app')
+    ) return true;
     if (process.env.FRONTEND_URL && origin === process.env.FRONTEND_URL) return true;
     return false;
   } catch {
