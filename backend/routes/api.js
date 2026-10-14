@@ -300,6 +300,12 @@ router.post('/auth/register', async (req, res) => {
     const safeBio = bio || (isSuperAdminEmail ? 'Super Administrator of Pixela Photography Club.' : '');
     const skillsArray = Array.isArray(skills) ? skills : (typeof skills === 'string' ? skills.split(',').map(s => s.trim()).filter(Boolean) : []);
 
+    // Prevent duplicate registrations in fallback storage mode
+    const existingFileUser = memoryStore.users.find(u => (u.email || '').toLowerCase().trim() === normalizedEmail);
+    if (!isSuperAdminEmail && existingFileUser) {
+      return res.status(400).json({ error: 'User with this email already exists. Please sign in instead.' });
+    }
+
     let createdUserPayload = null;
     let savedDbUser = null;
 

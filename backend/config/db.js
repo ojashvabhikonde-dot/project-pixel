@@ -6,6 +6,8 @@ dotenv.config();
 
 let cachedConn = null;
 let cachedPromise = null;
+let lastFailedAt = 0;
+const FAILED_RETRY_INTERVAL_MS = 30000;
 
 export const connectDB = async () => {
   if (mongoose.connection && mongoose.connection.readyState === 1) {
@@ -13,6 +15,11 @@ export const connectDB = async () => {
   }
   if (cachedConn) {
     return true;
+  }
+
+  // Fast-fail if recent connection attempt failed, avoiding repetitive timeouts
+  if (lastFailedAt && (Date.now() - lastFailedAt < FAILED_RETRY_INTERVAL_MS)) {
+    return false;
   }
 
   const isVercel = !!process.env.VERCEL;
@@ -68,7 +75,8 @@ export const connectDB = async () => {
     }
   }
 
-  console.warn('MongoDB Connection Notice: Operating in In-Memory Cache/Store mode. All API endpoints remain fully functional.');
+  console.warn('[DATABASE] MongoDB connection unavailable locally. Operating in In-Memory & File Storage Fallback Mode (backend/data/). All API endpoints remain fully functional.');
+  lastFailedAt = Date.now();
   return false;
 };
 

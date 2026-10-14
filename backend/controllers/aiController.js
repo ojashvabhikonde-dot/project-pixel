@@ -9,6 +9,10 @@ const genAI = process.env.GEMINI_API_KEY
   ? new GoogleGenerativeAI(process.env.GEMINI_API_KEY)
   : null;
 
+if (!process.env.GEMINI_API_KEY) {
+  console.log('[AI] GEMINI_API_KEY is not configured in .env. Pixie Chatbot and Photo Critique will use built-in photography knowledge base fallbacks.');
+}
+
 // Smart local fallback response generator for photography topics
 const generateSmartFallbackReply = (query, ragDocs = []) => {
   const q = query.toLowerCase();

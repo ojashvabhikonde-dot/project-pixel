@@ -276,6 +276,9 @@ export default function AdminPage() {
 
   // ⚡ 1-Click Fast Approval of Individual Member (Optimistic UI)
   const handleApproveMember = async (memberId: string) => {
+    const originalPending = [...pendingMembers];
+    const originalAll = [...allUsers];
+
     // Optimistic UI update
     setPendingMembers(prev => prev.filter(m => (m._id !== memberId && m.id !== memberId)));
     setAllUsers(prev => prev.map(u => (u._id === memberId || u.id === memberId) ? { ...u, isApproved: true } : u));
@@ -283,7 +286,7 @@ export default function AdminPage() {
     setTimeout(() => setUserSuccessMessage(''), 3000);
 
     try {
-      await fetch(`${API_URL}/api/members/${memberId}/approve`, {
+      const res = await fetch(`${API_URL}/api/members/${memberId}/approve`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -291,27 +294,45 @@ export default function AdminPage() {
         },
         body: JSON.stringify({ isApproved: true })
       });
-    } catch (err) {
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.error || 'Server approval failed');
+      }
+    } catch (err: any) {
       console.error('Failed to approve member:', err);
+      // Rollback optimistic state
+      setPendingMembers(originalPending);
+      setAllUsers(originalAll);
+      setUserSuccessMessage(`Approval failed: ${err.message || 'Server error'}`);
+      setTimeout(() => setUserSuccessMessage(''), 4000);
     }
   };
 
   // ⚡ 1-Click Fast Decline / Reject of Member (Optimistic UI)
   const handleDeclineMember = async (memberId: string) => {
+    const originalPending = [...pendingMembers];
+
     // Optimistic UI update
     setPendingMembers(prev => prev.filter(m => (m._id !== memberId && m.id !== memberId)));
     setUserSuccessMessage('Member request declined.');
     setTimeout(() => setUserSuccessMessage(''), 3000);
 
     try {
-      await fetch(`${API_URL}/api/members/${memberId}/reject`, {
+      const res = await fetch(`${API_URL}/api/members/${memberId}/reject`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`
         }
       });
-    } catch (err) {
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.error || 'Server rejection failed');
+      }
+    } catch (err: any) {
       console.error('Failed to decline member:', err);
+      setPendingMembers(originalPending);
+      setUserSuccessMessage(`Decline failed: ${err.message || 'Server error'}`);
+      setTimeout(() => setUserSuccessMessage(''), 4000);
     }
   };
 
@@ -320,7 +341,10 @@ export default function AdminPage() {
     if (pendingMembers.length === 0) return;
     setIsBulkApproving(true);
 
+    const originalPending = [...pendingMembers];
+    const originalAll = [...allUsers];
     const pendingIds = pendingMembers.map(m => m._id || m.id);
+
     // Optimistically update
     setPendingMembers([]);
     setAllUsers(prev => prev.map(u => pendingIds.includes(u._id || u.id) ? { ...u, isApproved: true } : u));
@@ -328,7 +352,7 @@ export default function AdminPage() {
     setTimeout(() => setUserSuccessMessage(''), 4000);
 
     try {
-      await fetch(`${API_URL}/api/members/bulk-approve`, {
+      const res = await fetch(`${API_URL}/api/members/bulk-approve`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -336,8 +360,16 @@ export default function AdminPage() {
         },
         body: JSON.stringify({ userIds: pendingIds })
       });
-    } catch (err) {
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.error || 'Server bulk approval failed');
+      }
+    } catch (err: any) {
       console.error('Bulk approval failed:', err);
+      setPendingMembers(originalPending);
+      setAllUsers(originalAll);
+      setUserSuccessMessage(`Bulk approval failed: ${err.message || 'Server error'}`);
+      setTimeout(() => setUserSuccessMessage(''), 4000);
     } finally {
       setIsBulkApproving(false);
     }

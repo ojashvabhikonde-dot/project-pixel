@@ -28,9 +28,51 @@ import { ChatbotKnowledge } from './models/ChatbotKnowledge.js';
 dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5001;
 
-app.use(cors({ origin: '*' }));
+const isAllowedOrigin = (origin) => {
+  if (!origin) return true;
+  try {
+    const url = new URL(origin);
+    const host = url.hostname;
+    // Allow loopback (localhost, 127.0.0.1, ::1)
+    if (host === 'localhost' || host === '127.0.0.1' || host === '[::1]' || host === '::1') return true;
+    // Allow private LAN IPs (e.g. 10.x.x.x, 192.168.x.x, 172.16-31.x.x)
+    if (
+      /^10\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(host) ||
+      /^192\.168\.\d{1,3}\.\d{1,3}$/.test(host) ||
+      /^172\.(1[6-9]|2\d|3[0-1])\.\d{1,3}\.\d{1,3}$/.test(host)
+    ) return true;
+    // Allow production Vercel deployment & previews
+    if (host === 'project-pixel-u4xs.vercel.app' || /^project-pixel[a-z0-9-]*\.vercel\.app$/.test(host)) return true;
+    if (process.env.FRONTEND_URL && origin === process.env.FRONTEND_URL) return true;
+    return false;
+  } catch {
+    return false;
+  }
+};
+
+app.use(cors({
+  origin: (origin, callback) => {
+    if (isAllowedOrigin(origin)) {
+      callback(null, true);
+    } else {
+      callback(null, false);
+    }
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: [
+    'Content-Type',
+    'Authorization',
+    'Cache-Control',
+    'X-Requested-With',
+    'Accept',
+    'Origin',
+    'Pragma'
+  ],
+  exposedHeaders: ['Content-Range', 'X-Content-Range']
+}));
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
@@ -242,15 +284,19 @@ app.use((err, req, res, next) => {
   });
 });
 
-// Start Server locally when not running in Vercel serverless function
-if (!process.env.VERCEL) {
+// Start Server locally when not running in Vercel serverless function or automated test runner
+if (!process.env.VERCEL && process.env.NODE_ENV !== 'test') {
   app.listen(PORT, () => {
     console.log(`Pixela API Server running on port ${PORT}`);
+    console.log(`Local endpoints ready: http://localhost:${PORT}/api/health`);
   });
   // Connect to MongoDB in background locally
   connectDB().then((connected) => {
     if (connected) {
+      console.log('[DATABASE] Running in MongoDB-backed mode.');
       seedDatabase();
+    } else {
+      console.log('[DATABASE] Operating in In-Memory & Persistent File Storage Fallback Mode (backend/data/).');
     }
   });
 }

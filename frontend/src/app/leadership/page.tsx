@@ -335,7 +335,7 @@ export default function LeadershipPage() {
 
     try {
       if (token) {
-        await fetch(`${API_URL}/api/members/${memberId}/approve`, {
+        const res = await fetch(`${API_URL}/api/members/${memberId}/approve`, {
           method: 'PATCH',
           headers: {
             'Content-Type': 'application/json',
@@ -343,10 +343,19 @@ export default function LeadershipPage() {
           },
           body: JSON.stringify({ isApproved: true })
         });
+        if (!res.ok) {
+          const errData = await res.json().catch(() => ({}));
+          throw new Error(errData.error || 'Server rejected approval request');
+        }
         fetchLeadershipData(true);
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error approving member:', err);
+      // Revert optimistic updates
+      setCrewMembers(prev => prev.filter(m => (m._id !== memberId && m.id !== memberId)));
+      setPendingMembers(prev => [member, ...prev]);
+      setApprovalBannerMsg(err?.message || 'Failed to approve member on server.');
+      setTimeout(() => setApprovalBannerMsg(''), 4000);
     } finally {
       setProcessingMemberId(null);
     }
