@@ -34,12 +34,14 @@ app.use(cors({ origin: '*' }));
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
-// Serverless invocation DB connection middleware (must run before routes)
+// Fast DB connection middleware (re-uses existing connection or respects retry cooldown)
 app.use(async (req, res, next) => {
-  try {
-    await connectDB();
-  } catch (err) {
-    // Silently proceed with memory/file fallback
+  if (process.env.VERCEL) {
+    try {
+      await connectDB();
+    } catch (err) {
+      // Silently proceed with memory/file fallback
+    }
   }
   next();
 });

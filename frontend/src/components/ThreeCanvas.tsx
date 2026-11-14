@@ -1,8 +1,45 @@
 'use client';
 
-import React, { useRef, useMemo, useEffect, useState } from 'react';
+import React, { useRef, useMemo, useEffect, useState, useSyncExternalStore } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
+
+const particleCount = 2000;
+
+// Deterministic static initialization for particle positions and colors
+const [staticPositions, staticColors] = (() => {
+  const pos = new Float32Array(particleCount * 3);
+  const cols = new Float32Array(particleCount * 3);
+  
+  const colorA = new THREE.Color('#0066ff'); // Electric Blue
+  const colorB = new THREE.Color('#ff007a'); // Pink/Magenta
+  const colorC = new THREE.Color('#8a2be2'); // Violet/Purple
+  
+  let seed = 12345;
+  const pseudoRandom = () => {
+    seed = (seed * 16807) % 2147483647;
+    return (seed - 1) / 2147483646;
+  };
+
+  for (let i = 0; i < particleCount; i++) {
+    pos[i * 3] = (pseudoRandom() - 0.5) * 15;
+    pos[i * 3 + 1] = (pseudoRandom() - 0.5) * 15;
+    pos[i * 3 + 2] = (pseudoRandom() - 0.5) * 8 - 2;
+
+    const factor = (pos[i * 3] + 7.5) / 15;
+    const interpColor = new THREE.Color();
+    if (factor < 0.5) {
+      interpColor.lerpColors(colorA, colorB, factor * 2);
+    } else {
+      interpColor.lerpColors(colorB, colorC, (factor - 0.5) * 2);
+    }
+    
+    cols[i * 3] = interpColor.r;
+    cols[i * 3 + 1] = interpColor.g;
+    cols[i * 3 + 2] = interpColor.b;
+  }
+  return [pos, cols];
+})();
 
 // 3D Particles that drift and respond to mouse/pointer movement
 function ParticleField({ isDark }: { isDark: boolean }) {
@@ -22,40 +59,8 @@ function ParticleField({ isDark }: { isDark: boolean }) {
     return () => window.removeEventListener('mousemove', handleMouseMove);
   }, []);
 
-  const particleCount = 2000;
-  
-  // Initialize positions and colors
-  const [positions, colors] = useMemo(() => {
-    const pos = new Float32Array(particleCount * 3);
-    const cols = new Float32Array(particleCount * 3);
-    
-    // Pixela Brand Gradient Colors (Stitch Theme)
-    // Blue: #0066ff, Pink: #ff007a, Violet: #8a2be2
-    const colorA = new THREE.Color('#0066ff'); // Electric Blue
-    const colorB = new THREE.Color('#ff007a'); // Pink/Magenta
-    const colorC = new THREE.Color('#8a2be2'); // Violet/Purple
-    
-    for (let i = 0; i < particleCount; i++) {
-      // Random coordinates inside viewport-based bounds
-      pos[i * 3] = (Math.random() - 0.5) * 15;
-      pos[i * 3 + 1] = (Math.random() - 0.5) * 15;
-      pos[i * 3 + 2] = (Math.random() - 0.5) * 8 - 2;
-
-      // Color interpolation along X/Y coordinates to simulate the gradient
-      const factor = (pos[i * 3] + 7.5) / 15;
-      const interpColor = new THREE.Color();
-      if (factor < 0.5) {
-        interpColor.lerpColors(colorA, colorB, factor * 2);
-      } else {
-        interpColor.lerpColors(colorB, colorC, (factor - 0.5) * 2);
-      }
-      
-      cols[i * 3] = interpColor.r;
-      cols[i * 3 + 1] = interpColor.g;
-      cols[i * 3 + 2] = interpColor.b;
-    }
-    return [pos, cols];
-  }, []);
+  const positions = staticPositions;
+  const colors = staticColors;
 
   useFrame((state) => {
     if (!pointsRef.current) return;
@@ -130,13 +135,13 @@ function ShutterRing({ isDark }: { isDark: boolean }) {
   );
 }
 
-export default function ThreeCanvas() {
-  const [mounted, setMounted] = useState(false);
-  const [isDark, setIsDark] = useState(true);
+const subscribe = () => () => {};
+const getClientSnapshot = () => true;
+const getServerSnapshot = () => false;
 
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+export default function ThreeCanvas() {
+  const mounted = useSyncExternalStore(subscribe, getClientSnapshot, getServerSnapshot);
+  const isDark = true;
 
   if (!mounted) {
     // Fallback static gradient backdrop while canvas mounts

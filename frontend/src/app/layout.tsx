@@ -78,8 +78,16 @@ export default function RootLayout({
     };
 
     checkPending();
-    const interval = setInterval(checkPending, 8000);
-    return () => clearInterval(interval);
+    const interval = setInterval(checkPending, 5000);
+    window.addEventListener('pixela_crew_updated', checkPending);
+    window.addEventListener('pixela_auth_change', checkPending);
+    window.addEventListener('storage', checkPending);
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('pixela_crew_updated', checkPending);
+      window.removeEventListener('pixela_auth_change', checkPending);
+      window.removeEventListener('storage', checkPending);
+    };
   }, [user, token, API_URL]);
 
   const handleLoginSuccess = (newToken: string, newUser: any) => {

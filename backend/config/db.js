@@ -6,13 +6,21 @@ dotenv.config();
 
 let cachedConn = null;
 let cachedPromise = null;
+let lastAttemptTime = 0;
+const RETRY_COOLDOWN_MS = 15000; // 15 seconds cooldown after failed connection to prevent request hang
 
-export const connectDB = async () => {
+export const connectDB = async (force = false) => {
   if (mongoose.connection && mongoose.connection.readyState === 1) {
     return true;
   }
-  if (cachedConn) {
+  if (cachedConn && mongoose.connection.readyState === 1) {
     return true;
+  }
+
+  // Prevent stalling HTTP requests when DB is known to be unreachable
+  const now = Date.now();
+  if (!force && lastAttemptTime > 0 && now - lastAttemptTime < RETRY_COOLDOWN_MS && !cachedPromise) {
+    return false;
   }
 
   const isVercel = !!process.env.VERCEL;
@@ -26,7 +34,6 @@ export const connectDB = async () => {
   const urisToTry = [
     mongoUri,
     !isVercel ? 'mongodb://127.0.0.1:27017/pixela' : null,
-    !isVercel ? 'mongodb://localhost:27017/pixela' : null
   ].filter(Boolean);
 
   const uniqueUris = Array.from(new Set(urisToTry)).filter(uri => {
@@ -49,16 +56,19 @@ export const connectDB = async () => {
     }
   }
 
+  lastAttemptTime = now;
+
   for (const uri of uniqueUris) {
     try {
       cachedPromise = mongoose.connect(uri, {
-        serverSelectionTimeoutMS: 3000,
-        connectTimeoutMS: 3000,
-        socketTimeoutMS: 5000,
+        serverSelectionTimeoutMS: 2000,
+        connectTimeoutMS: 2000,
+        socketTimeoutMS: 3000,
         bufferCommands: false, // Prevents hanging queries when connection drops or times out
       });
       const conn = await cachedPromise;
       cachedConn = conn;
+      cachedPromise = null;
       console.log(`MongoDB Connected successfully to: ${conn.connection.host}/${conn.connection.name}`);
       return true;
     } catch (error) {
@@ -68,7 +78,8 @@ export const connectDB = async () => {
     }
   }
 
-  console.warn('MongoDB Connection Notice: Operating in In-Memory Cache/Store mode. All API endpoints remain fully functional.');
+  // Set lastAttemptTime to current timestamp to activate cooldown
+  lastAttemptTime = Date.now();
   return false;
 };
 

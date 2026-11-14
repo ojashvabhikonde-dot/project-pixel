@@ -277,7 +277,7 @@ export const exportAllRegistrationsPdf = (users: UserRecord[], customTitle?: str
   }
 
   // --- Add Page Numbers & Footer ---
-  const pageCount = (doc.internal as any).getNumberOfPages();
+  const pageCount = (doc.internal as { getNumberOfPages: () => number }).getNumberOfPages();
   for (let i = 1; i <= pageCount; i++) {
     doc.setPage(i);
     doc.setFont('helvetica', 'normal');

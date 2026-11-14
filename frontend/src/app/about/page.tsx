@@ -31,7 +31,7 @@ export default function AboutPage() {
               Behind the <span className="pixela-gradient">Glass</span>.
             </h1>
             <p className="text-zinc-400 text-sm md:text-base font-light leading-relaxed">
-              Pixela is more than a photography club; it's a collective of visual storytellers dedicated to finding the art within the camera. We explore the intersection of light, technology, and human emotion through every frame.
+              Pixela is more than a photography club; it&apos;s a collective of visual storytellers dedicated to finding the art within the camera. We explore the intersection of light, technology, and human emotion through every frame.
             </p>
           </div>
 
@@ -100,7 +100,7 @@ export default function AboutPage() {
               </div>
               <h3 className="text-base font-bold text-white uppercase tracking-wider">Perspective</h3>
               <p className="text-zinc-400 text-xs font-light leading-relaxed">
-                We prioritize unique angles and unconventional frames that challenge the viewer's expectations.
+                We prioritize unique angles and unconventional frames that challenge the viewer&apos;s expectations.
               </p>
             </div>
 
@@ -128,7 +128,7 @@ export default function AboutPage() {
               Faculty Coordinator
             </h2>
             <p className="text-zinc-500 text-xs font-light">
-              Guiding mind behind the club's growth and creative vision.
+              Guiding mind behind the club&apos;s growth and creative vision.
             </p>
           </div>
           <NextLink
@@ -163,7 +163,7 @@ export default function AboutPage() {
                   <p className="text-[10px] text-zinc-500">HOD of AIML Department, OIST Bhopal</p>
                 </div>
                 <p className="text-zinc-400 text-xs font-light leading-relaxed">
-                  "Media and documentation are critical to any institution. We guide Pixela to capture the vibrant campus life and technical fests of Bhopal."
+                  &ldquo;Media and documentation are critical to any institution. We guide Pixela to capture the vibrant campus life and technical fests of Bhopal.&rdquo;
                 </p>
               </div>
             </div>

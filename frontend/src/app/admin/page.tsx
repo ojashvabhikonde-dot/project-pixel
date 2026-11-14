@@ -283,6 +283,12 @@ export default function AdminPage() {
     setTimeout(() => setUserSuccessMessage(''), 3000);
 
     try {
+      localStorage.setItem('pixela_crew_updated', Date.now().toString());
+      window.dispatchEvent(new CustomEvent('pixela_crew_updated', { detail: { memberId } }));
+      window.dispatchEvent(new Event('storage'));
+    } catch (e) {}
+
+    try {
       await fetch(`${API_URL}/api/members/${memberId}/approve`, {
         method: 'PATCH',
         headers: {
@@ -291,6 +297,8 @@ export default function AdminPage() {
         },
         body: JSON.stringify({ isApproved: true })
       });
+      fetchAdminData(true);
+      fetchTableMarkdown(true);
     } catch (err) {
       console.error('Failed to approve member:', err);
     }
@@ -328,6 +336,12 @@ export default function AdminPage() {
     setTimeout(() => setUserSuccessMessage(''), 4000);
 
     try {
+      localStorage.setItem('pixela_crew_updated', Date.now().toString());
+      window.dispatchEvent(new CustomEvent('pixela_crew_updated', { detail: { count: pendingIds.length } }));
+      window.dispatchEvent(new Event('storage'));
+    } catch (e) {}
+
+    try {
       await fetch(`${API_URL}/api/members/bulk-approve`, {
         method: 'PATCH',
         headers: {
@@ -336,6 +350,8 @@ export default function AdminPage() {
         },
         body: JSON.stringify({ userIds: pendingIds })
       });
+      fetchAdminData(true);
+      fetchTableMarkdown(true);
     } catch (err) {
       console.error('Bulk approval failed:', err);
     } finally {
@@ -614,6 +630,11 @@ export default function AdminPage() {
       });
       if (res.ok) {
         setAllUsers(prev => prev.map(u => (u._id === targetId || u.id === targetId) ? { ...u, isApproved: !currentApproved } : u));
+        try {
+          localStorage.setItem('pixela_crew_updated', Date.now().toString());
+          window.dispatchEvent(new CustomEvent('pixela_crew_updated', { detail: { targetId } }));
+          window.dispatchEvent(new Event('storage'));
+        } catch (e) {}
       } else {
         alert('Failed to update approval status.');
       }

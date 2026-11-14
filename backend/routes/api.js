@@ -1348,36 +1348,55 @@ router.get('/members', async (req, res) => {
   res.setHeader('Expires', '0');
   try {
     const blacklist = loadDeletedBlacklist();
+    const membersMap = new Map(); // Key: normalized email or identifier
 
+    // 1. First seed with local memoryStore & persistent file storage
+    const fileUsers = loadRegistrationsFromFile();
+    const localUsers = [...memoryStore.users, ...fileUsers];
+
+    for (const u of localUsers) {
+      if (!u || !u.isApproved || !CREW_ROLES.includes(u.role)) continue;
+      const email = String(u.email || '').toLowerCase().trim();
+      const id1 = String(u._id || '').toLowerCase().trim();
+      const id2 = String(u.id || '').toLowerCase().trim();
+      if (blacklist.has(id1) || blacklist.has(id2) || (email && blacklist.has(email))) continue;
+
+      const key = email || id1 || id2;
+      if (key && !membersMap.has(key)) {
+        membersMap.set(key, { ...u, id: u.id || u._id, _id: u._id || u.id, isApproved: true });
+      }
+    }
+
+    // 2. Merge from MongoDB if connected (enriching or adding)
     if (isDbConnected()) {
       try {
         const members = await User.find({ isApproved: true, role: { $in: CREW_ROLES } })
           .select('-password')
           .sort({ timelineOrder: 1, createdAt: -1 });
 
-        if (members && members.length > 0) {
-          const filtered = members.filter(m => {
-            const id1 = String(m._id || '').toLowerCase().trim();
+        if (Array.isArray(members)) {
+          for (const m of members) {
             const email = String(m.email || '').toLowerCase().trim();
-            return !blacklist.has(id1) && !blacklist.has(email);
-          });
-          const enriched = await Promise.all(filtered.map(m => enrichMemberWithTrackRecord(m)));
-          return res.json(enriched);
+            const id1 = String(m._id || '').toLowerCase().trim();
+            if (blacklist.has(id1) || (email && blacklist.has(email))) continue;
+
+            const plain = m.toObject ? m.toObject() : m;
+            const key = email || id1;
+            const existing = membersMap.get(key);
+            if (existing) {
+              membersMap.set(key, { ...existing, ...plain, isApproved: true });
+            } else {
+              membersMap.set(key, { ...plain, id: plain._id, isApproved: true });
+            }
+          }
         }
       } catch (dbErr) {
-        console.warn('DB members fetch error, using memory fallback:', dbErr.message);
+        console.warn('DB members fetch error, using memory/file members:', dbErr.message);
       }
     }
-    const approved = memoryStore.users
-      .filter(u => u.isApproved && CREW_ROLES.includes(u.role))
-      .filter(u => {
-        const id1 = String(u._id || '').toLowerCase().trim();
-        const id2 = String(u.id || '').toLowerCase().trim();
-        const email = String(u.email || '').toLowerCase().trim();
-        return !blacklist.has(id1) && !blacklist.has(id2) && !blacklist.has(email);
-      });
-    
-    const enrichedMem = await Promise.all(approved.map(u => enrichMemberWithTrackRecord(u)));
+
+    const mergedList = Array.from(membersMap.values());
+    const enrichedMem = await Promise.all(mergedList.map(u => enrichMemberWithTrackRecord(u)));
     return res.json(enrichedMem);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -1467,23 +1486,44 @@ router.get('/alumni', async (req, res) => {
   res.setHeader('Pragma', 'no-cache');
   res.setHeader('Expires', '0');
   try {
+    const blacklist = loadDeletedBlacklist();
+    const alumniMap = new Map();
+
+    const fileUsers = loadRegistrationsFromFile();
+    const localUsers = [...memoryStore.users, ...fileUsers];
+    for (const u of localUsers) {
+      if (!u || !u.isApproved || u.role !== 'alumni') continue;
+      const email = String(u.email || '').toLowerCase().trim();
+      const id1 = String(u._id || '').toLowerCase().trim();
+      const id2 = String(u.id || '').toLowerCase().trim();
+      if (blacklist.has(id1) || blacklist.has(id2) || (email && blacklist.has(email))) continue;
+      const key = email || id1 || id2;
+      if (!alumniMap.has(key)) {
+        const { password, passwordHash, ...safe } = u;
+        alumniMap.set(key, safe);
+      }
+    }
+
     if (isDbConnected()) {
       try {
         const alumni = await User.find({ isApproved: true, role: 'alumni' })
           .select('-password')
           .sort({ createdAt: -1 });
-        if (alumni) return res.json(alumni);
+        if (Array.isArray(alumni)) {
+          for (const a of alumni) {
+            const email = String(a.email || '').toLowerCase().trim();
+            const id1 = String(a._id || '').toLowerCase().trim();
+            if (blacklist.has(id1) || (email && blacklist.has(email))) continue;
+            const plain = a.toObject ? a.toObject() : a;
+            alumniMap.set(email || id1, plain);
+          }
+        }
       } catch (dbErr) {
         console.warn('DB alumni fetch error, using memory fallback');
       }
     }
-    const approved = memoryStore.users
-      .filter(u => u.isApproved && u.role === 'alumni')
-      .map(u => {
-        const { passwordHash, ...safe } = u;
-        return safe;
-      });
-    return res.json(approved);
+
+    return res.json(Array.from(alumniMap.values()));
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -1495,23 +1535,44 @@ router.get('/faculty', async (req, res) => {
   res.setHeader('Pragma', 'no-cache');
   res.setHeader('Expires', '0');
   try {
+    const blacklist = loadDeletedBlacklist();
+    const facultyMap = new Map();
+
+    const fileUsers = loadRegistrationsFromFile();
+    const localUsers = [...memoryStore.users, ...fileUsers];
+    for (const u of localUsers) {
+      if (!u || !u.isApproved || u.role !== 'faculty') continue;
+      const email = String(u.email || '').toLowerCase().trim();
+      const id1 = String(u._id || '').toLowerCase().trim();
+      const id2 = String(u.id || '').toLowerCase().trim();
+      if (blacklist.has(id1) || blacklist.has(id2) || (email && blacklist.has(email))) continue;
+      const key = email || id1 || id2;
+      if (!facultyMap.has(key)) {
+        const { password, passwordHash, ...safe } = u;
+        facultyMap.set(key, safe);
+      }
+    }
+
     if (isDbConnected()) {
       try {
         const faculty = await User.find({ isApproved: true, role: 'faculty' })
           .select('-password')
           .sort({ createdAt: -1 });
-        if (faculty) return res.json(faculty);
+        if (Array.isArray(faculty)) {
+          for (const f of faculty) {
+            const email = String(f.email || '').toLowerCase().trim();
+            const id1 = String(f._id || '').toLowerCase().trim();
+            if (blacklist.has(id1) || (email && blacklist.has(email))) continue;
+            const plain = f.toObject ? f.toObject() : f;
+            facultyMap.set(email || id1, plain);
+          }
+        }
       } catch (dbErr) {
         console.warn('DB faculty fetch error, using memory fallback');
       }
     }
-    const approved = memoryStore.users
-      .filter(u => u.isApproved && u.role === 'faculty')
-      .map(u => {
-        const { passwordHash, ...safe } = u;
-        return safe;
-      });
-    return res.json(approved);
+
+    return res.json(Array.from(facultyMap.values()));
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -1520,20 +1581,55 @@ router.get('/faculty', async (req, res) => {
 // Fetch ALL users (Approved and Pending) for Admin Dashboard
 router.get('/users', protect, adminOnly, async (req, res) => {
   res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
   try {
+    const blacklist = loadDeletedBlacklist();
+    const usersMap = new Map();
+
+    // 1. Memory and file users
+    const fileUsers = loadRegistrationsFromFile();
+    const localUsers = [...memoryStore.users, ...fileUsers];
+    for (const u of localUsers) {
+      if (!u) continue;
+      const email = String(u.email || '').toLowerCase().trim();
+      const id1 = String(u._id || '').toLowerCase().trim();
+      const id2 = String(u.id || '').toLowerCase().trim();
+      if (blacklist.has(id1) || blacklist.has(id2) || (email && blacklist.has(email))) continue;
+
+      const key = email || id1 || id2;
+      if (key && !usersMap.has(key)) {
+        const { password, passwordHash, ...safe } = u;
+        usersMap.set(key, safe);
+      }
+    }
+
+    // 2. Merge from MongoDB if connected
     if (isDbConnected()) {
       try {
         const users = await User.find({}).select('-password').sort({ createdAt: -1 });
-        return res.json(users);
+        if (Array.isArray(users)) {
+          for (const u of users) {
+            const email = String(u.email || '').toLowerCase().trim();
+            const id1 = String(u._id || '').toLowerCase().trim();
+            if (blacklist.has(id1) || (email && blacklist.has(email))) continue;
+
+            const plain = u.toObject ? u.toObject() : u;
+            const key = email || id1;
+            const existing = usersMap.get(key);
+            if (existing) {
+              usersMap.set(key, { ...existing, ...plain });
+            } else {
+              usersMap.set(key, plain);
+            }
+          }
+        }
       } catch (dbErr) {
-        console.warn('DB all users fetch error, using memory fallback:', dbErr.message);
+        console.warn('DB all users fetch error, returning local users:', dbErr.message);
       }
     }
-    const safeUsers = memoryStore.users.map(u => {
-      const { password, passwordHash, ...safe } = u;
-      return safe;
-    });
-    return res.json(safeUsers);
+
+    return res.json(Array.from(usersMap.values()));
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -1542,20 +1638,73 @@ router.get('/users', protect, adminOnly, async (req, res) => {
 // Pending access requests list (Admins only)
 router.get('/members/pending', protect, adminOnly, async (req, res) => {
   res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
   try {
-    if (isDbConnected()) {
-      try {
-        const members = await User.find({ isApproved: false }).select('-password').sort({ createdAt: -1 });
-        return res.json(members);
-      } catch (dbErr) {
-        console.warn('DB pending members fetch error, using memory fallback');
+    const blacklist = loadDeletedBlacklist();
+    const pendingMap = new Map();
+    const approvedKeys = new Set();
+
+    // Track all approved identifiers across memoryStore and file
+    const fileUsers = loadRegistrationsFromFile();
+    const allKnown = [...memoryStore.users, ...fileUsers];
+    for (const u of allKnown) {
+      if (u?.isApproved) {
+        if (u.email) approvedKeys.add(String(u.email).toLowerCase().trim());
+        if (u._id) approvedKeys.add(String(u._id).toLowerCase().trim());
+        if (u.id) approvedKeys.add(String(u.id).toLowerCase().trim());
       }
     }
-    const pending = memoryStore.users.filter(u => !u.isApproved).map(u => {
-      const { passwordHash, ...safe } = u;
-      return safe;
+
+    // 1. Query MongoDB if connected
+    if (isDbConnected()) {
+      try {
+        const dbUsers = await User.find({}).select('-password').sort({ createdAt: -1 });
+        if (Array.isArray(dbUsers)) {
+          for (const u of dbUsers) {
+            const email = String(u.email || '').toLowerCase().trim();
+            const id1 = String(u._id || '').toLowerCase().trim();
+            if (u.isApproved) {
+              if (email) approvedKeys.add(email);
+              if (id1) approvedKeys.add(id1);
+            } else {
+              if (!blacklist.has(id1) && (!email || !blacklist.has(email))) {
+                const plain = u.toObject ? u.toObject() : u;
+                pendingMap.set(email || id1, plain);
+              }
+            }
+          }
+        }
+      } catch (dbErr) {
+        console.warn('DB pending members fetch error:', dbErr.message);
+      }
+    }
+
+    // 2. Add local pending users that aren't approved yet
+    for (const u of allKnown) {
+      if (!u || u.isApproved) continue;
+      const email = String(u.email || '').toLowerCase().trim();
+      const id1 = String(u._id || '').toLowerCase().trim();
+      const id2 = String(u.id || '').toLowerCase().trim();
+      if (blacklist.has(id1) || blacklist.has(id2) || (email && blacklist.has(email))) continue;
+      if (approvedKeys.has(email) || approvedKeys.has(id1) || approvedKeys.has(id2)) continue;
+
+      const key = email || id1 || id2;
+      if (!pendingMap.has(key)) {
+        const { password, passwordHash, ...safe } = u;
+        pendingMap.set(key, safe);
+      }
+    }
+
+    // Clean out any that got approved
+    const finalList = Array.from(pendingMap.values()).filter(u => {
+      const email = String(u.email || '').toLowerCase().trim();
+      const id1 = String(u._id || '').toLowerCase().trim();
+      const id2 = String(u.id || '').toLowerCase().trim();
+      return !approvedKeys.has(email) && !approvedKeys.has(id1) && !approvedKeys.has(id2);
     });
-    return res.json(pending);
+
+    return res.json(finalList);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -1564,39 +1713,54 @@ router.get('/members/pending', protect, adminOnly, async (req, res) => {
 // ⚡ 1-Click Mass / Bulk Approval for all or selected pending requests
 router.patch('/members/bulk-approve', protect, adminOnly, async (req, res) => {
   try {
-    const { userIds } = req.body; // Optional array of IDs. If empty/omitted, approves ALL pending.
+    const { userIds } = req.body; // Optional array of IDs or emails. If empty/omitted, approves ALL pending.
     let approvedCount = 0;
+    const targetIdsSet = Array.isArray(userIds) && userIds.length > 0 
+      ? new Set(userIds.map(id => String(id).toLowerCase().trim())) 
+      : null;
 
-    if (isDbConnected()) {
-      try {
-        const query = { isApproved: false };
-        if (Array.isArray(userIds) && userIds.length > 0) {
-          query._id = { $in: userIds };
-        }
-        const pendingUsers = await User.find(query);
-        const result = await User.updateMany(query, { $set: { isApproved: true } });
-        approvedCount = result.modifiedCount || 0;
-        pendingUsers.forEach(u => {
-          updateRegistrationStatusInFile(u.email || u._id, true);
-        });
-      } catch (dbErr) {
-        console.warn('DB bulk approve error:', dbErr.message);
-      }
-    }
+    const approvedEmails = new Set();
+    const approvedIds = new Set();
 
-    // Sync memoryStore
+    // 1. Sync local memoryStore
     memoryStore.users.forEach(u => {
-      if (!u.isApproved) {
-        if (!Array.isArray(userIds) || userIds.length === 0 || userIds.includes(String(u._id)) || userIds.includes(String(u.id)) || userIds.includes(u.email)) {
-          u.isApproved = true;
-          updateRegistrationStatusInFile(u.email || u._id || u.id, true);
-          approvedCount++;
-        }
+      const uId = String(u._id || '').toLowerCase().trim();
+      const uId2 = String(u.id || '').toLowerCase().trim();
+      const uEmail = String(u.email || '').toLowerCase().trim();
+
+      const matches = !targetIdsSet || targetIdsSet.has(uId) || targetIdsSet.has(uId2) || targetIdsSet.has(uEmail);
+      if (!u.isApproved && matches) {
+        u.isApproved = true;
+        u.updatedAt = new Date();
+        approvedCount++;
+        if (uEmail) approvedEmails.add(uEmail);
+        if (uId) approvedIds.add(uId);
+        updateRegistrationStatusInFile(uEmail || uId, true);
       }
     });
 
     // Save updated states to persistent file storage
     saveAllRegistrationsToFile(memoryStore.users);
+
+    // 2. Sync MongoDB
+    if (isDbConnected()) {
+      try {
+        const query = { isApproved: false };
+        if (targetIdsSet) {
+          const queryOr = [];
+          const validObjectIds = Array.from(targetIdsSet).filter(id => mongoose.Types.ObjectId.isValid(id));
+          if (validObjectIds.length > 0) queryOr.push({ _id: { $in: validObjectIds } });
+          if (approvedEmails.size > 0) queryOr.push({ email: { $in: Array.from(approvedEmails) } });
+          if (queryOr.length > 0) query.$or = queryOr;
+        }
+        const result = await User.updateMany(query, { $set: { isApproved: true } });
+        if (result.modifiedCount > approvedCount) {
+          approvedCount = result.modifiedCount;
+        }
+      } catch (dbErr) {
+        console.warn('DB bulk approve error:', dbErr.message);
+      }
+    }
 
     return res.json({
       success: true,
@@ -1608,59 +1772,102 @@ router.patch('/members/bulk-approve', protect, adminOnly, async (req, res) => {
   }
 });
 
-// Approve individual member
+// Approve individual member (Immediate synchronization across MongoDB, memoryStore, and persistent file)
 router.patch('/members/:id/approve', protect, adminOnly, async (req, res) => {
   try {
     const targetId = req.params.id;
     const newApprovedStatus = typeof req.body?.isApproved === 'boolean' ? req.body.isApproved : true;
 
+    // 1. Resolve user in memoryStore or file storage first
+    let localUser = memoryStore.users.find(u => 
+      String(u._id) === String(targetId) || 
+      String(u.id) === String(targetId) ||
+      (u.email || '').toLowerCase().trim() === String(targetId).toLowerCase().trim()
+    );
+    if (!localUser) {
+      const fileUsers = loadRegistrationsFromFile();
+      localUser = fileUsers.find(u => 
+        String(u._id) === String(targetId) || 
+        String(u.id) === String(targetId) ||
+        (u.email || '').toLowerCase().trim() === String(targetId).toLowerCase().trim()
+      );
+      if (localUser) {
+        memoryStore.users.unshift(localUser);
+      }
+    }
+
+    const targetEmail = (localUser?.email || (targetId.includes('@') ? targetId : '')).toLowerCase().trim();
+
+    // 2. Update memoryStore and persistent file
+    if (localUser) {
+      localUser.isApproved = newApprovedStatus;
+      localUser.updatedAt = new Date();
+    }
+    memoryStore.users.forEach(u => {
+      if (
+        String(u._id) === String(targetId) || 
+        String(u.id) === String(targetId) || 
+        (targetEmail && (u.email || '').toLowerCase().trim() === targetEmail)
+      ) {
+        u.isApproved = newApprovedStatus;
+        u.updatedAt = new Date();
+      }
+    });
+
+    updateRegistrationStatusInFile(targetEmail || targetId, newApprovedStatus);
+
+    // 3. Update or upsert in MongoDB
+    let dbUser = null;
     if (isDbConnected()) {
       try {
-        let member = null;
         if (mongoose.Types.ObjectId.isValid(targetId)) {
-          member = await User.findByIdAndUpdate(
+          dbUser = await User.findByIdAndUpdate(
             targetId, 
             { isApproved: newApprovedStatus }, 
             { new: true }
           ).select('-password');
-        } else {
-          member = await User.findOneAndUpdate(
-            { email: (targetId || '').toLowerCase().trim() },
+        }
+        if (!dbUser && targetEmail) {
+          dbUser = await User.findOneAndUpdate(
+            { email: targetEmail },
             { isApproved: newApprovedStatus },
             { new: true }
           ).select('-password');
         }
-
-        if (member) {
-          const memIndex = memoryStore.users.findIndex(u => 
-            String(u._id) === String(targetId) || 
-            String(u.id) === String(targetId) ||
-            (u.email || '').toLowerCase() === (member.email || '').toLowerCase()
-          );
-          if (memIndex !== -1) {
-            memoryStore.users[memIndex].isApproved = newApprovedStatus;
-          }
-          updateRegistrationStatusInFile(member.email || targetId, newApprovedStatus);
-          const enriched = await enrichMemberWithTrackRecord(member);
-          return res.json({ success: true, member: enriched });
+        if (!dbUser && localUser && targetEmail) {
+          dbUser = await User.findOneAndUpdate(
+            { email: targetEmail },
+            {
+              $set: {
+                name: localUser.name,
+                email: targetEmail,
+                password: localUser.password || 'pixela@2026',
+                role: localUser.role || 'member',
+                department: localUser.department || 'General',
+                semester: Number(localUser.semester) || 1,
+                year: localUser.year || '1st Year',
+                avatarUrl: localUser.avatarUrl || '',
+                instagramUrl: localUser.instagramUrl || '',
+                socialLinks: localUser.socialLinks || [],
+                specialization: localUser.specialization || 'Visual Creator',
+                bio: localUser.bio || '',
+                gear: localUser.gear || { cameraBody: '', primaryLens: '', secondaryLens: '', accessories: [] },
+                badges: localUser.badges || ['Verified Crew'],
+                performanceRating: localUser.performanceRating || 5,
+                isApproved: newApprovedStatus,
+              }
+            },
+            { upsert: true, new: true, setDefaultsOnInsert: true }
+          ).select('-password');
         }
       } catch (dbErr) {
-        console.warn('DB member approval error, using memory fallback:', dbErr.message);
+        console.warn('DB member approval error, proceeding with memory sync:', dbErr.message);
       }
     }
 
-    const member = memoryStore.users.find(u => 
-      String(u._id) === String(targetId) || 
-      String(u.id) === String(targetId) ||
-      (u.email || '').toLowerCase() === (targetId || '').toLowerCase()
-    );
-    if (member) {
-      member.isApproved = newApprovedStatus;
-      updateRegistrationStatusInFile(member.email || targetId, newApprovedStatus);
-      const enriched = await enrichMemberWithTrackRecord(member);
-      return res.json({ success: true, member: enriched });
-    }
-    return res.status(404).json({ error: 'Member not found.' });
+    const finalMember = dbUser ? (dbUser.toObject ? dbUser.toObject() : dbUser) : (localUser || { _id: targetId, id: targetId, email: targetEmail, isApproved: newApprovedStatus });
+    const enriched = await enrichMemberWithTrackRecord(finalMember);
+    return res.json({ success: true, member: enriched });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

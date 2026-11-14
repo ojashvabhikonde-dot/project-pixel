@@ -71,7 +71,7 @@
     "isApproved": true,
     "createdAt": "2026-09-07T12:57:11.114Z",
     "password": "pixela@2026",
-    "passwordHash": "$2a$10$RV4yYw3bQPbX2I0M7rZKBuxvlhC/OOeNOYiKckXapCJwQM.vIZuSa"
+    "passwordHash": "$2a$10$OUFAhX1urhHdXeEbiT5NfeEfOMaAuQ1f29btfejBBcXUkgfg0zYI2"
   },
   {
     "_id": "6ab02b1d7e1417b8985e5c31",
@@ -118,7 +118,7 @@
     "isApproved": true,
     "createdAt": "2026-09-20T18:51:09.578Z",
     "password": "naman@1234",
-    "passwordHash": "$2a$10$EjNblu/ByJlm/lyTW4uRku6O64muMRMy.SDrgOcSxAQDObqF1D7TS"
+    "passwordHash": "$2a$10$VxXB5F9UgL5ITUyHPCazpOrUJeOb7w4IOPA/bhc72dy7YgDK/LxAu"
   },
   {
     "_id": "6ab02bf47e1417b8985e5ff1",
@@ -156,6 +156,6 @@
     "isApproved": true,
     "createdAt": "2026-09-20T18:54:44.518Z",
     "password": "aman@1234",
-    "passwordHash": "$2a$10$3sqj8xEF7YNxY/A92A0hpeXmDMG.WCKU9xMOT1BpUV.FjD/eIAFsG"
+    "passwordHash": "$2a$10$xDu8mt1ixIdQom2wRr5l7.7G2rth6mYvm5Riqv0pH9JnKAI.GoCLq"
   }
 ]

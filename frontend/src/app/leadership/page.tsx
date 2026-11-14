@@ -233,25 +233,32 @@ export default function LeadershipPage() {
       fetchPendingMembers(savedToken);
     }
 
-    // Auto real-time sync polling every 8 seconds
+    // Auto real-time sync polling every 4 seconds
     const pollInterval = setInterval(() => {
       fetchLeadershipData(true);
       const currentToken = localStorage.getItem('pixela_token');
       if (currentToken) fetchPendingMembers(currentToken, true);
-    }, 8000);
+    }, 4000);
 
-    const onFocus = () => {
+    const onFocusOrEvent = () => {
       fetchLeadershipData(true);
       const currentToken = localStorage.getItem('pixela_token');
       if (currentToken) fetchPendingMembers(currentToken, true);
     };
-    window.addEventListener('focus', onFocus);
-    window.addEventListener('visibilitychange', onFocus);
+
+    window.addEventListener('focus', onFocusOrEvent);
+    window.addEventListener('visibilitychange', onFocusOrEvent);
+    window.addEventListener('pixela_crew_updated', onFocusOrEvent);
+    window.addEventListener('pixela_auth_change', onFocusOrEvent);
+    window.addEventListener('storage', onFocusOrEvent);
 
     return () => {
       clearInterval(pollInterval);
-      window.removeEventListener('focus', onFocus);
-      window.removeEventListener('visibilitychange', onFocus);
+      window.removeEventListener('focus', onFocusOrEvent);
+      window.removeEventListener('visibilitychange', onFocusOrEvent);
+      window.removeEventListener('pixela_crew_updated', onFocusOrEvent);
+      window.removeEventListener('pixela_auth_change', onFocusOrEvent);
+      window.removeEventListener('storage', onFocusOrEvent);
     };
   }, []);
 
@@ -332,6 +339,12 @@ export default function LeadershipPage() {
 
     setApprovalBannerMsg(`Approved ${member.name} to official crew roster!`);
     setTimeout(() => setApprovalBannerMsg(''), 3500);
+
+    try {
+      localStorage.setItem('pixela_crew_updated', Date.now().toString());
+      window.dispatchEvent(new CustomEvent('pixela_crew_updated', { detail: { memberId } }));
+      window.dispatchEvent(new Event('storage'));
+    } catch {}
 
     try {
       if (token) {
