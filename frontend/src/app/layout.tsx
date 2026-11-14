@@ -5,6 +5,7 @@ import NextLink from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Camera, User, LogOut, Menu, X, ShieldAlert, Award, Sun, Moon } from 'lucide-react';
 import LoginModal from '@/components/LoginModal';
+import { API_URL } from '@/config/api';
 import '@/app/globals.css';
 
 export default function RootLayout({
@@ -18,7 +19,6 @@ export default function RootLayout({
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const [pendingCrewCount, setPendingCrewCount] = useState<number>(0);
-  const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
   const pathname = usePathname();
   const isActive = (path: string) => pathname === path;

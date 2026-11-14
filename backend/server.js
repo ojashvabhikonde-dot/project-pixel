@@ -14,6 +14,7 @@ if (typeof globalThis.Path2D === 'undefined') {
 }
 
 import express from 'express';
+import mongoose from 'mongoose';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import { connectDB } from './config/db.js';
@@ -28,9 +29,55 @@ import { ChatbotKnowledge } from './models/ChatbotKnowledge.js';
 dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5001;
 
-app.use(cors({ origin: '*' }));
+const isAllowedOrigin = (origin) => {
+  if (!origin) return true;
+  try {
+    const url = new URL(origin);
+    const host = url.hostname;
+    // Allow loopback (localhost, 127.0.0.1, ::1)
+    if (host === 'localhost' || host === '127.0.0.1' || host === '[::1]' || host === '::1') return true;
+    // Allow private LAN IPs (e.g. 10.x.x.x, 192.168.x.x, 172.16-31.x.x)
+    if (
+      /^10\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(host) ||
+      /^192\.168\.\d{1,3}\.\d{1,3}$/.test(host) ||
+      /^172\.(1[6-9]|2\d|3[0-1])\.\d{1,3}\.\d{1,3}$/.test(host)
+    ) return true;
+    // Allow production Vercel deployments, previews, and pixela-jpeg.vercel.app
+    if (
+      host === 'pixela-jpeg.vercel.app' ||
+      host === 'project-pixel-u4xs.vercel.app' ||
+      host.endsWith('.vercel.app')
+    ) return true;
+    if (process.env.FRONTEND_URL && origin === process.env.FRONTEND_URL) return true;
+    return false;
+  } catch {
+    return false;
+  }
+};
+
+app.use(cors({
+  origin: (origin, callback) => {
+    if (isAllowedOrigin(origin)) {
+      callback(null, true);
+    } else {
+      callback(null, false);
+    }
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: [
+    'Content-Type',
+    'Authorization',
+    'Cache-Control',
+    'X-Requested-With',
+    'Accept',
+    'Origin',
+    'Pragma'
+  ],
+  exposedHeaders: ['Content-Range', 'X-Content-Range']
+}));
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
@@ -59,7 +106,20 @@ app.get('/api', (req, res) => {
 });
 
 app.get('/api/health', (req, res) => {
-  res.json({ message: 'Pixela Photography Club API is healthy.', status: 'ok', timestamp: new Date().toISOString() });
+  const readyState = mongoose.connection ? mongoose.connection.readyState : 0;
+  const isDbConnected = readyState === 1;
+  const rawUri = process.env.MONGODB_URI || '';
+  const sanitizedUri = rawUri ? rawUri.replace(/:\/\/([^:]+):([^@]+)@/, '://$1:****@') : 'none';
+  res.json({
+    message: 'Pixela Photography Club API is healthy.',
+    status: 'ok',
+    timestamp: new Date().toISOString(),
+    isDbConnected,
+    dbReadyState: readyState,
+    hasMongoUri: !!rawUri,
+    mongoUriPreview: sanitizedUri.substring(0, 30) + '...',
+    isVercel: !!process.env.VERCEL
+  });
 });
 
 // Seed data function to populate DB on startup if empty or missing crew
@@ -244,15 +304,19 @@ app.use((err, req, res, next) => {
   });
 });
 
-// Start Server locally when not running in Vercel serverless function
-if (!process.env.VERCEL) {
+// Start Server locally when not running in Vercel serverless function or automated test runner
+if (!process.env.VERCEL && process.env.NODE_ENV !== 'test') {
   app.listen(PORT, () => {
     console.log(`Pixela API Server running on port ${PORT}`);
+    console.log(`Local endpoints ready: http://localhost:${PORT}/api/health`);
   });
   // Connect to MongoDB in background locally
   connectDB().then((connected) => {
     if (connected) {
+      console.log('[DATABASE] Running in MongoDB-backed mode.');
       seedDatabase();
+    } else {
+      console.log('[DATABASE] Operating in In-Memory & Persistent File Storage Fallback Mode (backend/data/).');
     }
   });
 }

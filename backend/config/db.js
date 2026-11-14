@@ -1,4 +1,4 @@
-import mongoose from 'mongoose';
+﻿import mongoose from 'mongoose';
 import Redis from 'ioredis';
 import dotenv from 'dotenv';
 
@@ -7,7 +7,7 @@ dotenv.config();
 let cachedConn = null;
 let cachedPromise = null;
 let lastAttemptTime = 0;
-const RETRY_COOLDOWN_MS = 15000; // 15 seconds cooldown after failed connection to prevent request hang
+const RETRY_COOLDOWN_MS = 20000; // 20 seconds cooldown after failed connection to prevent request hang
 
 export const connectDB = async (force = false) => {
   if (mongoose.connection && mongoose.connection.readyState === 1) {
@@ -19,7 +19,7 @@ export const connectDB = async (force = false) => {
 
   // Prevent stalling HTTP requests when DB is known to be unreachable
   const now = Date.now();
-  if (!force && lastAttemptTime > 0 && now - lastAttemptTime < RETRY_COOLDOWN_MS && !cachedPromise) {
+  if (!force && lastAttemptTime > 0 && (now - lastAttemptTime < RETRY_COOLDOWN_MS) && !cachedPromise) {
     return false;
   }
 
@@ -78,7 +78,7 @@ export const connectDB = async (force = false) => {
     }
   }
 
-  // Set lastAttemptTime to current timestamp to activate cooldown
+  console.warn('[DATABASE] MongoDB connection unavailable locally. Operating in In-Memory & File Storage Fallback Mode (backend/data/). All API endpoints remain fully functional.');
   lastAttemptTime = Date.now();
   return false;
 };
@@ -166,4 +166,3 @@ class CacheManager {
 }
 
 export const redis = new CacheManager();
-

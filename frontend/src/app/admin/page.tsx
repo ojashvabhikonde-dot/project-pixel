@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import NextLink from 'next/link';
 import {
   ShieldCheck, Calendar, Image as ImageIcon, Users, BookOpen, AlertCircle,
@@ -32,6 +32,8 @@ export default function AdminPage() {
   const [pendingPhotos, setPendingPhotos] = useState<any[]>([]);
   const [pendingMembers, setPendingMembers] = useState<any[]>([]);
   const [allUsers, setAllUsers] = useState<any[]>([]);
+  const deletedIdsRef = useRef<Set<string>>(new Set());
+  const deletedEmailsRef = useRef<Set<string>>(new Set());
 
   // User Management State
   const [userSearch, setUserSearch] = useState('');
@@ -257,15 +259,40 @@ export default function AdminPage() {
       const usersRes = await fetch(`${API_URL}/api/users?t=${Date.now()}`, {
         headers: { 'Authorization': `Bearer ${authToken}` }
       });
+      let rawUsers: any[] = [];
       if (usersRes.ok) {
-        const usersData = await usersRes.json();
-        setAllUsers(usersData || []);
+        rawUsers = await usersRes.json();
       } else {
         const fallbackRes = await fetch(`${API_URL}/api/members?t=${Date.now()}`);
         if (fallbackRes.ok) {
-          const fallbackData = await fallbackRes.json();
-          setAllUsers(fallbackData || []);
+          rawUsers = await fallbackRes.json();
         }
+      }
+
+      if (Array.isArray(rawUsers)) {
+        const filtered = rawUsers.filter((u: any) => {
+          const id = String(u._id || u.id || '');
+          const email = String(u.email || '').toLowerCase().trim();
+          if (id && deletedIdsRef.current.has(id)) return false;
+          if (email && deletedEmailsRef.current.has(email)) return false;
+          return true;
+        });
+
+        setAllUsers(prev => {
+          if (!prev || prev.length === 0) return filtered;
+          const incomingKeys = new Set(filtered.map((u: any) => (u.email || u._id || u.id || '').toLowerCase().trim()));
+          const merged = [...filtered];
+          prev.forEach((oldUser: any) => {
+            const key = (oldUser.email || oldUser._id || oldUser.id || '').toLowerCase().trim();
+            const id = String(oldUser._id || oldUser.id || '');
+            const email = String(oldUser.email || '').toLowerCase().trim();
+            const isDeleted = (id && deletedIdsRef.current.has(id)) || (email && deletedEmailsRef.current.has(email));
+            if (key && !incomingKeys.has(key) && !isDeleted) {
+              merged.push(oldUser);
+            }
+          });
+          return merged;
+        });
       }
     } catch (err) {
       console.error('Failed to load admin panel data', err);
@@ -276,6 +303,9 @@ export default function AdminPage() {
 
   // ⚡ 1-Click Fast Approval of Individual Member (Optimistic UI)
   const handleApproveMember = async (memberId: string) => {
+    const originalPending = [...pendingMembers];
+    const originalAll = [...allUsers];
+
     // Optimistic UI update
     setPendingMembers(prev => prev.filter(m => (m._id !== memberId && m.id !== memberId)));
     setAllUsers(prev => prev.map(u => (u._id === memberId || u.id === memberId) ? { ...u, isApproved: true } : u));
@@ -286,10 +316,10 @@ export default function AdminPage() {
       localStorage.setItem('pixela_crew_updated', Date.now().toString());
       window.dispatchEvent(new CustomEvent('pixela_crew_updated', { detail: { memberId } }));
       window.dispatchEvent(new Event('storage'));
-    } catch (e) {}
+    } catch (e) { }
 
     try {
-      await fetch(`${API_URL}/api/members/${memberId}/approve`, {
+      const res = await fetch(`${API_URL}/api/members/${memberId}/approve`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -297,29 +327,41 @@ export default function AdminPage() {
         },
         body: JSON.stringify({ isApproved: true })
       });
-      fetchAdminData(true);
-      fetchTableMarkdown(true);
     } catch (err) {
       console.error('Failed to approve member:', err);
+      // Rollback optimistic state
+      setPendingMembers(originalPending);
+      setAllUsers(originalAll);
+      setUserSuccessMessage(`Approval failed: ${err.message || 'Server error'}`);
+      setTimeout(() => setUserSuccessMessage(''), 4000);
     }
   };
 
   // ⚡ 1-Click Fast Decline / Reject of Member (Optimistic UI)
   const handleDeclineMember = async (memberId: string) => {
+    const originalPending = [...pendingMembers];
+
     // Optimistic UI update
     setPendingMembers(prev => prev.filter(m => (m._id !== memberId && m.id !== memberId)));
     setUserSuccessMessage('Member request declined.');
     setTimeout(() => setUserSuccessMessage(''), 3000);
 
     try {
-      await fetch(`${API_URL}/api/members/${memberId}/reject`, {
+      const res = await fetch(`${API_URL}/api/members/${memberId}/reject`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`
         }
       });
-    } catch (err) {
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.error || 'Server rejection failed');
+      }
+    } catch (err: any) {
       console.error('Failed to decline member:', err);
+      setPendingMembers(originalPending);
+      setUserSuccessMessage(`Decline failed: ${err.message || 'Server error'}`);
+      setTimeout(() => setUserSuccessMessage(''), 4000);
     }
   };
 
@@ -328,7 +370,10 @@ export default function AdminPage() {
     if (pendingMembers.length === 0) return;
     setIsBulkApproving(true);
 
+    const originalPending = [...pendingMembers];
+    const originalAll = [...allUsers];
     const pendingIds = pendingMembers.map(m => m._id || m.id);
+
     // Optimistically update
     setPendingMembers([]);
     setAllUsers(prev => prev.map(u => pendingIds.includes(u._id || u.id) ? { ...u, isApproved: true } : u));
@@ -339,10 +384,10 @@ export default function AdminPage() {
       localStorage.setItem('pixela_crew_updated', Date.now().toString());
       window.dispatchEvent(new CustomEvent('pixela_crew_updated', { detail: { count: pendingIds.length } }));
       window.dispatchEvent(new Event('storage'));
-    } catch (e) {}
+    } catch (e) { }
 
     try {
-      await fetch(`${API_URL}/api/members/bulk-approve`, {
+      const res = await fetch(`${API_URL}/api/members/bulk-approve`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -350,10 +395,12 @@ export default function AdminPage() {
         },
         body: JSON.stringify({ userIds: pendingIds })
       });
-      fetchAdminData(true);
-      fetchTableMarkdown(true);
     } catch (err) {
       console.error('Bulk approval failed:', err);
+      setPendingMembers(originalPending);
+      setAllUsers(originalAll);
+      setUserSuccessMessage(`Bulk approval failed: ${err.message || 'Server error'}`);
+      setTimeout(() => setUserSuccessMessage(''), 4000);
     } finally {
       setIsBulkApproving(false);
     }
@@ -569,6 +616,10 @@ export default function AdminPage() {
       });
 
       if (res.ok) {
+        deletedIdsRef.current.add(String(targetId));
+        if (targetUser.email) {
+          deletedEmailsRef.current.add(String(targetUser.email).toLowerCase().trim());
+        }
         setAllUsers(prev => prev.filter(u => (u._id !== targetId && u.id !== targetId)));
         setUserSuccessMessage(`User "${targetUser.name}" deleted successfully.`);
         setTimeout(() => setUserSuccessMessage(''), 3000);
@@ -634,7 +685,7 @@ export default function AdminPage() {
           localStorage.setItem('pixela_crew_updated', Date.now().toString());
           window.dispatchEvent(new CustomEvent('pixela_crew_updated', { detail: { targetId } }));
           window.dispatchEvent(new Event('storage'));
-        } catch (e) {}
+        } catch (e) { }
       } else {
         alert('Failed to update approval status.');
       }
@@ -746,7 +797,7 @@ export default function AdminPage() {
   });
 
   // Crew for Track Record Management
-  const crewAndLeaders = allUsers.filter(u => 
+  const crewAndLeaders = allUsers.filter(u =>
     ['member', 'crew', 'photographer', 'tech_head', 'creative_head', 'photography_head', 'social_media_head', 'president', 'vice_president', 'admin'].includes(u.role)
   );
 
@@ -775,17 +826,15 @@ export default function AdminPage() {
           <div className="flex items-center bg-zinc-900 border border-zinc-800 rounded-xl p-1 text-xs">
             <button
               onClick={() => setActiveTab('dashboard')}
-              className={`px-3 py-1.5 rounded-lg font-semibold transition-colors cursor-pointer ${
-                activeTab === 'dashboard' ? 'bg-primary text-primary-foreground font-bold' : 'text-zinc-400 hover:text-white'
-              }`}
+              className={`px-3 py-1.5 rounded-lg font-semibold transition-colors cursor-pointer ${activeTab === 'dashboard' ? 'bg-primary text-primary-foreground font-bold' : 'text-zinc-400 hover:text-white'
+                }`}
             >
               Dashboard & Approvals
             </button>
             <button
               onClick={() => setActiveTab('trackRecords')}
-              className={`px-3 py-1.5 rounded-lg font-semibold transition-colors cursor-pointer flex items-center gap-1.5 ${
-                activeTab === 'trackRecords' ? 'bg-primary text-primary-foreground font-bold' : 'text-zinc-400 hover:text-white'
-              }`}
+              className={`px-3 py-1.5 rounded-lg font-semibold transition-colors cursor-pointer flex items-center gap-1.5 ${activeTab === 'trackRecords' ? 'bg-primary text-primary-foreground font-bold' : 'text-zinc-400 hover:text-white'
+                }`}
             >
               <Award className="h-3.5 w-3.5" />
               <span>Crew Track Records ({crewAndLeaders.length})</span>
@@ -795,18 +844,16 @@ export default function AdminPage() {
                 setActiveTab('tableFile');
                 loadTableData();
               }}
-              className={`px-3 py-1.5 rounded-lg font-semibold transition-colors cursor-pointer flex items-center gap-1.5 ${
-                activeTab === 'tableFile' ? 'bg-primary text-primary-foreground font-bold' : 'text-zinc-400 hover:text-white'
-              }`}
+              className={`px-3 py-1.5 rounded-lg font-semibold transition-colors cursor-pointer flex items-center gap-1.5 ${activeTab === 'tableFile' ? 'bg-primary text-primary-foreground font-bold' : 'text-zinc-400 hover:text-white'
+                }`}
             >
               <Table className="h-3.5 w-3.5" />
               <span>Registration Table File</span>
             </button>
             <button
               onClick={() => setActiveTab('users')}
-              className={`px-3 py-1.5 rounded-lg font-semibold transition-colors cursor-pointer ${
-                activeTab === 'users' ? 'bg-primary text-primary-foreground font-bold' : 'text-zinc-400 hover:text-white'
-              }`}
+              className={`px-3 py-1.5 rounded-lg font-semibold transition-colors cursor-pointer ${activeTab === 'users' ? 'bg-primary text-primary-foreground font-bold' : 'text-zinc-400 hover:text-white'
+                }`}
             >
               All Users ({allUsers.length})
             </button>
@@ -859,7 +906,7 @@ export default function AdminPage() {
             <p className="text-[10px] text-zinc-500 uppercase tracking-widest font-semibold">Active Crew Records</p>
           </div>
         </div>
-        <div 
+        <div
           onClick={() => { setActiveTab('tableFile'); loadTableData(); }}
           className="bg-card border border-primary/30 bg-primary/5 p-5 rounded-xl flex items-center space-x-4 shadow-sm cursor-pointer hover:border-primary transition-colors"
         >
@@ -876,9 +923,8 @@ export default function AdminPage() {
             <p className="text-[10px] text-zinc-500 uppercase tracking-widest font-semibold">Pending Gallery</p>
           </div>
         </div>
-        <div className={`bg-card border p-5 rounded-xl flex items-center space-x-4 shadow-sm ${
-          pendingMembers.length > 0 ? 'border-amber-500/50 bg-amber-500/5' : 'border-border/40'
-        }`}>
+        <div className={`bg-card border p-5 rounded-xl flex items-center space-x-4 shadow-sm ${pendingMembers.length > 0 ? 'border-amber-500/50 bg-amber-500/5' : 'border-border/40'
+          }`}>
           <ShieldAlert className={`h-7 w-7 shrink-0 ${pendingMembers.length > 0 ? 'text-amber-400 animate-pulse' : 'text-zinc-500'}`} />
           <div>
             <h3 className="text-2xl font-black text-white">{pendingMembers.length}</h3>
@@ -1155,13 +1201,12 @@ export default function AdminPage() {
                           <h4 className="font-bold text-white text-sm">{booking.eventType}</h4>
                           <p className="text-[10px] text-zinc-400">Venue: {booking.venue} • Date: {new Date(booking.eventDate).toLocaleDateString()}</p>
                         </div>
-                        <span className={`text-[9px] uppercase px-2 py-0.5 rounded font-semibold border ${
-                          booking.status === 'accepted'
+                        <span className={`text-[9px] uppercase px-2 py-0.5 rounded font-semibold border ${booking.status === 'accepted'
                             ? 'bg-green-500/10 text-green-500 border-green-500/20'
                             : booking.status === 'declined'
-                            ? 'bg-red-500/10 text-red-500 border-red-500/20'
-                            : 'bg-primary/10 text-primary border-primary/20 animate-pulse'
-                        }`}>
+                              ? 'bg-red-500/10 text-red-500 border-red-500/20'
+                              : 'bg-primary/10 text-primary border-primary/20 animate-pulse'
+                          }`}>
                           {booking.status}
                         </span>
                       </div>
@@ -1303,9 +1348,8 @@ export default function AdminPage() {
                   <button
                     key={tab}
                     onClick={() => setUserRoleFilter(tab)}
-                    className={`px-3 py-1 rounded-md font-medium uppercase text-[10px] tracking-wider transition-colors capitalize ${
-                      userRoleFilter === tab ? 'bg-primary text-primary-foreground font-bold' : 'text-zinc-400 hover:text-white'
-                    }`}
+                    className={`px-3 py-1 rounded-md font-medium uppercase text-[10px] tracking-wider transition-colors capitalize ${userRoleFilter === tab ? 'bg-primary text-primary-foreground font-bold' : 'text-zinc-400 hover:text-white'
+                      }`}
                   >
                     {tab === 'all' ? 'All Users' : tab}
                   </button>
@@ -1529,9 +1573,8 @@ export default function AdminPage() {
 
               <button
                 onClick={() => setViewRawMarkdown(!viewRawMarkdown)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center space-x-1.5 transition-colors border cursor-pointer ${
-                  viewRawMarkdown ? 'bg-primary text-primary-foreground border-primary' : 'bg-zinc-800 hover:bg-zinc-700 text-white border-zinc-700'
-                }`}
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center space-x-1.5 transition-colors border cursor-pointer ${viewRawMarkdown ? 'bg-primary text-primary-foreground border-primary' : 'bg-zinc-800 hover:bg-zinc-700 text-white border-zinc-700'
+                  }`}
               >
                 <FileCode className="h-3.5 w-3.5" />
                 <span>{viewRawMarkdown ? 'View Table UI' : 'View Raw Markdown'}</span>
@@ -1664,11 +1707,10 @@ export default function AdminPage() {
                               <code>{u.email}</code>
                             </td>
                             <td className="py-3 px-3">
-                              <span className={`px-2 py-0.5 rounded-full text-[10px] font-mono uppercase font-bold border ${
-                                u.role === 'admin' ? 'bg-amber-500/10 text-amber-400 border-amber-500/30' :
-                                ['president', 'tech_head', 'creative_head'].includes(u.role) ? 'bg-primary/10 text-primary border-primary/30' :
-                                'bg-zinc-800 text-zinc-300 border-zinc-700'
-                              }`}>
+                              <span className={`px-2 py-0.5 rounded-full text-[10px] font-mono uppercase font-bold border ${u.role === 'admin' ? 'bg-amber-500/10 text-amber-400 border-amber-500/30' :
+                                  ['president', 'tech_head', 'creative_head'].includes(u.role) ? 'bg-primary/10 text-primary border-primary/30' :
+                                    'bg-zinc-800 text-zinc-300 border-zinc-700'
+                                }`}>
                                 {u.role || 'member'}
                               </span>
                             </td>
@@ -1817,7 +1859,7 @@ export default function AdminPage() {
             </div>
 
             <form onSubmit={handleSaveTrackRecord} className="space-y-5">
-              
+
               {/* 1. Camera & Gear Loadout */}
               <div className="space-y-3 bg-zinc-950/70 p-4 rounded-xl border border-zinc-800">
                 <h4 className="text-xs font-bold text-primary uppercase tracking-widest font-mono flex items-center gap-1.5">
@@ -1887,11 +1929,10 @@ export default function AdminPage() {
                         type="button"
                         key={b}
                         onClick={() => handleToggleBadge(b)}
-                        className={`text-[11px] font-mono px-3 py-1 rounded-full border transition-all cursor-pointer ${
-                          isSelected
+                        className={`text-[11px] font-mono px-3 py-1 rounded-full border transition-all cursor-pointer ${isSelected
                             ? 'bg-primary text-primary-foreground font-bold border-primary shadow-sm'
                             : 'bg-zinc-900 border-zinc-800 text-zinc-400 hover:text-white'
-                        }`}
+                          }`}
                       >
                         {isSelected ? '✓ ' : '+ '} {b}
                       </button>
@@ -2258,9 +2299,8 @@ export default function AdminPage() {
                 <label className="block text-xs font-semibold text-zinc-300 mb-2">
                   Select Roster File (.pdf, .csv, .json, .txt) *
                 </label>
-                <div className={`relative border-2 border-dashed rounded-2xl p-6 text-center transition-all ${
-                  uploadFile ? 'border-primary/60 bg-primary/5' : 'border-zinc-700 hover:border-zinc-500 bg-zinc-900/40'
-                }`}>
+                <div className={`relative border-2 border-dashed rounded-2xl p-6 text-center transition-all ${uploadFile ? 'border-primary/60 bg-primary/5' : 'border-zinc-700 hover:border-zinc-500 bg-zinc-900/40'
+                  }`}>
                   <input
                     type="file"
                     accept=".pdf,.csv,.json,.txt"

@@ -198,7 +198,7 @@ export default function LeadershipPage() {
         deletedEmailsRef.current.add(String(email).toLowerCase().trim());
         localStorage.setItem('pixela_deleted_crew_emails', JSON.stringify([...deletedEmailsRef.current]));
       }
-    } catch {}
+    } catch { }
   }, []);
 
   // Fast Approvals state for Super Admin
@@ -217,33 +217,49 @@ export default function LeadershipPage() {
   const [selectedDeptFilter, setSelectedDeptFilter] = useState('All');
 
   useEffect(() => {
-    const savedToken = localStorage.getItem('pixela_token');
-    const savedUser = localStorage.getItem('pixela_user');
-    if (savedToken) setToken(savedToken);
-    if (savedUser) {
-      try {
-        setUser(JSON.parse(savedUser));
-      } catch (e) {
+    const syncLeadershipAuth = () => {
+      const savedToken = localStorage.getItem('pixela_token');
+      const savedUser = localStorage.getItem('pixela_user');
+      setToken(savedToken || null);
+      if (savedUser) {
+        try {
+          const parsed = JSON.parse(savedUser);
+          setUser(parsed);
+          const adminCheck = parsed.role === 'admin' || parsed.role === 'president' || parsed.email?.toLowerCase() === 'pixela@oriental.ac.in';
+          if (savedToken && adminCheck) {
+            fetchPendingMembers(savedToken);
+          }
+        } catch (e) {
+          setUser(null);
+        }
+      } else {
         setUser(null);
+        setPendingMembers([]);
       }
-    }
+    };
 
+    syncLeadershipAuth();
     fetchLeadershipData();
-    if (savedToken) {
-      fetchPendingMembers(savedToken);
-    }
 
-    // Auto real-time sync polling every 4 seconds
+    // Auto real-time sync polling every 8 seconds
     const pollInterval = setInterval(() => {
       fetchLeadershipData(true);
       const currentToken = localStorage.getItem('pixela_token');
       if (currentToken) fetchPendingMembers(currentToken, true);
-    }, 4000);
+    }, 8000);
 
     const onFocusOrEvent = () => {
       fetchLeadershipData(true);
       const currentToken = localStorage.getItem('pixela_token');
-      if (currentToken) fetchPendingMembers(currentToken, true);
+      const currentUser = localStorage.getItem('pixela_user');
+      let isAdmin = false;
+      try {
+        if (currentUser) {
+          const p = JSON.parse(currentUser);
+          isAdmin = p.role === 'admin' || p.role === 'president' || p.email?.toLowerCase() === 'pixela@oriental.ac.in';
+        }
+      } catch (e) { }
+      if (currentToken && isAdmin) fetchPendingMembers(currentToken, true);
     };
 
     window.addEventListener('focus', onFocusOrEvent);
@@ -254,11 +270,8 @@ export default function LeadershipPage() {
 
     return () => {
       clearInterval(pollInterval);
-      window.removeEventListener('focus', onFocusOrEvent);
-      window.removeEventListener('visibilitychange', onFocusOrEvent);
-      window.removeEventListener('pixela_crew_updated', onFocusOrEvent);
-      window.removeEventListener('pixela_auth_change', onFocusOrEvent);
-      window.removeEventListener('storage', onFocusOrEvent);
+      window.removeEventListener('focus', onFocus);
+      window.removeEventListener('visibilitychange', onFocus);
     };
   }, []);
 
@@ -282,7 +295,20 @@ export default function LeadershipPage() {
           if (email && deletedEmailsRef.current.has(email)) return false;
           return true;
         });
-        setCrewMembers(filtered);
+        setCrewMembers(prev => {
+          const incomingMap = new Set(filtered.map((m: any) => (m.email || m._id || m.id || '').toLowerCase().trim()));
+          const merged = [...filtered];
+          prev.forEach((oldMember: any) => {
+            const key = (oldMember.email || oldMember._id || oldMember.id || '').toLowerCase().trim();
+            const id = String(oldMember._id || oldMember.id || '');
+            const email = String(oldMember.email || '').toLowerCase().trim();
+            const isDeleted = (id && deletedIdsRef.current.has(id)) || (email && deletedEmailsRef.current.has(email));
+            if (key && !incomingMap.has(key) && !isDeleted && oldMember.isApproved) {
+              merged.push(oldMember);
+            }
+          });
+          return merged;
+        });
       }
 
       // 2. Fetch Alumni Members
@@ -344,11 +370,11 @@ export default function LeadershipPage() {
       localStorage.setItem('pixela_crew_updated', Date.now().toString());
       window.dispatchEvent(new CustomEvent('pixela_crew_updated', { detail: { memberId } }));
       window.dispatchEvent(new Event('storage'));
-    } catch {}
+    } catch { }
 
     try {
       if (token) {
-        await fetch(`${API_URL}/api/members/${memberId}/approve`, {
+        const res = await fetch(`${API_URL}/api/members/${memberId}/approve`, {
           method: 'PATCH',
           headers: {
             'Content-Type': 'application/json',
@@ -356,10 +382,19 @@ export default function LeadershipPage() {
           },
           body: JSON.stringify({ isApproved: true })
         });
+        if (!res.ok) {
+          const errData = await res.json().catch(() => ({}));
+          throw new Error(errData.error || 'Server rejected approval request');
+        }
         fetchLeadershipData(true);
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error approving member:', err);
+      // Revert optimistic updates
+      setCrewMembers(prev => prev.filter(m => (m._id !== memberId && m.id !== memberId)));
+      setPendingMembers(prev => [member, ...prev]);
+      setApprovalBannerMsg(err?.message || 'Failed to approve member on server.');
+      setTimeout(() => setApprovalBannerMsg(''), 4000);
     } finally {
       setProcessingMemberId(null);
     }
@@ -471,7 +506,7 @@ export default function LeadershipPage() {
         const queryParam = email ? `?email=${encodeURIComponent(email)}` : '';
         const res = await fetch(`${API_URL}/api/users/${id}${queryParam}`, {
           method: 'DELETE',
-          headers: { 
+          headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json'
           },
@@ -480,7 +515,7 @@ export default function LeadershipPage() {
         if (!res.ok) {
           await fetch(`${API_URL}/api/members/${id}${queryParam}`, {
             method: 'DELETE',
-            headers: { 
+            headers: {
               'Authorization': `Bearer ${token}`,
               'Content-Type': 'application/json'
             },
@@ -509,16 +544,16 @@ export default function LeadershipPage() {
         signal: controller.signal,
         cache: 'no-store'
       })
-      .then(res => res.ok ? res.json() : null)
-      .then(data => {
-        clearTimeout(timeoutId);
-        if (data?.trackRecord) {
-          setSelectedCrewDossier((prev: any) => prev ? { ...prev, ...data.trackRecord } : data.trackRecord);
-        }
-      })
-      .catch(() => {
-        clearTimeout(timeoutId);
-      });
+        .then(res => res.ok ? res.json() : null)
+        .then(data => {
+          clearTimeout(timeoutId);
+          if (data?.trackRecord) {
+            setSelectedCrewDossier((prev: any) => prev ? { ...prev, ...data.trackRecord } : data.trackRecord);
+          }
+        })
+        .catch(() => {
+          clearTimeout(timeoutId);
+        });
     }
   };
 
@@ -643,15 +678,15 @@ export default function LeadershipPage() {
       {/* 2. Core Leaders Grid */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
         {LEADERS.map((leader, i) => (
-          <div 
-            key={i} 
+          <div
+            key={i}
             className="bg-card/25 border border-border/50 rounded overflow-hidden group hover:border-white/20 transition-all duration-300 shadow-xl relative flex flex-col justify-between"
           >
             {/* Image section with relative hover gradient overlay */}
             <div className="relative aspect-[4/5] bg-zinc-950 overflow-hidden">
-              <div 
-                className="absolute inset-0 bg-cover group-hover:scale-102 transition-transform duration-500" 
-                style={{ 
+              <div
+                className="absolute inset-0 bg-cover group-hover:scale-102 transition-transform duration-500"
+                style={{
                   backgroundImage: `url('${leader.photo}')`,
                   backgroundPosition: leader.photoPosition || 'center center'
                 }}
@@ -770,11 +805,10 @@ export default function LeadershipPage() {
                 <button
                   key={dept}
                   onClick={() => setSelectedDeptFilter(dept)}
-                  className={`text-[10px] font-mono px-3 py-1 rounded-md transition-colors whitespace-nowrap cursor-pointer ${
-                    selectedDeptFilter === dept
+                  className={`text-[10px] font-mono px-3 py-1 rounded-md transition-colors whitespace-nowrap cursor-pointer ${selectedDeptFilter === dept
                       ? 'bg-primary text-primary-foreground font-bold'
                       : 'bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-white'
-                  }`}
+                    }`}
                 >
                   {dept}
                 </button>
@@ -798,7 +832,7 @@ export default function LeadershipPage() {
                 {crewSearch || selectedDeptFilter !== 'All' ? 'No Matching Crew Members Found' : 'No Crew Members Registered Yet'}
               </h4>
               <p className="text-xs text-zinc-400 max-w-md mx-auto font-light leading-relaxed">
-                {crewSearch || selectedDeptFilter !== 'All' 
+                {crewSearch || selectedDeptFilter !== 'All'
                   ? 'Try clearing your search query or selecting a different department filter.'
                   : 'Register as an Active Crew Member with your profile photo and Instagram handle to be featured on this official roster.'}
               </p>
@@ -831,8 +865,8 @@ export default function LeadershipPage() {
               const eventsCount = member.eventsCount || (member.eventsCovered?.length || 0);
 
               return (
-                <div 
-                  key={member._id || member.id || i} 
+                <div
+                  key={member._id || member.id || i}
                   onClick={() => handleOpenDossier(member)}
                   className="bg-card/30 border border-border/50 rounded-xl p-3 text-center group hover:border-primary/50 transition-all duration-300 flex flex-col justify-between shadow-lg relative overflow-hidden cursor-pointer hover:shadow-primary/5 hover:-translate-y-0.5"
                 >
@@ -852,13 +886,13 @@ export default function LeadershipPage() {
 
                   <div>
                     <div className="relative aspect-square w-full rounded-lg overflow-hidden bg-zinc-950 mb-2.5 border border-white/5">
-                      <img 
-                        src={photoUrl} 
+                      <img
+                        src={photoUrl}
                         alt={member.name}
-                        className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-500" 
+                        className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-500"
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
-                      
+
                       {/* Track Record Pill on Card */}
                       <div className="absolute bottom-1.5 left-1.5 right-1.5 flex items-center justify-between text-[8px] font-mono font-bold text-white/90">
                         {photosCount > 0 ? (
@@ -899,7 +933,7 @@ export default function LeadershipPage() {
                       )}
 
                       <h4 className="text-xs font-bold text-white truncate" title={member.name}>{member.name}</h4>
-                      
+
                       <p className="text-[8px] text-zinc-500 font-mono truncate">
                         {member.department || member.dept || 'General'}
                         {(member.department || member.dept) && (member.semester || member.year) ? ' • ' : ''}
@@ -1364,7 +1398,7 @@ export default function LeadershipPage() {
       {/* 3. Ex Leaders & Alumni Grid with Timeline Switcher */}
       <div className="space-y-10 bg-card/25 border border-border/50 rounded-2xl p-6 sm:p-12 relative overflow-hidden text-left shadow-2xl">
         <div className="absolute top-0 right-0 w-48 h-48 rounded-full pixela-gradient-bg opacity-10 blur-3xl pointer-events-none" />
-        
+
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-6 border-b border-border/30">
           <div className="space-y-2">
             <span className="text-[10px] font-bold text-primary uppercase tracking-widest block font-mono">
@@ -1387,11 +1421,10 @@ export default function LeadershipPage() {
               <button
                 key={year}
                 onClick={() => setSelectedYear(year)}
-                className={`text-[10px] font-mono font-semibold uppercase tracking-wider px-3.5 py-1.5 rounded-full transition-all duration-200 cursor-pointer whitespace-nowrap ${
-                  selectedYear === year 
-                    ? 'bg-white text-zinc-950 shadow-md font-bold' 
+                className={`text-[10px] font-mono font-semibold uppercase tracking-wider px-3.5 py-1.5 rounded-full transition-all duration-200 cursor-pointer whitespace-nowrap ${selectedYear === year
+                    ? 'bg-white text-zinc-950 shadow-md font-bold'
                     : 'bg-zinc-900/60 border border-border/40 text-zinc-400 hover:text-white hover:border-white/20'
-                }`}
+                  }`}
               >
                 {year} Tenure
               </button>
@@ -1423,9 +1456,9 @@ export default function LeadershipPage() {
                 )}
 
                 <div className="relative h-28 w-28 sm:h-36 sm:w-36 rounded-lg bg-zinc-950 shrink-0 overflow-hidden border border-white/10 shadow-md group-hover:scale-102 transition-transform duration-300 mx-auto sm:mx-0">
-                  <div 
+                  <div
                     className="absolute inset-0 bg-cover bg-no-repeat"
-                    style={{ 
+                    style={{
                       backgroundImage: `url('${alumnus.photo}')`,
                       backgroundPosition: alumnus.photoPosition || 'center center',
                       backgroundSize: alumnus.photoSize || 'cover'
