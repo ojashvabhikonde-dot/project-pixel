@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
 import NextLink from 'next/link';
@@ -202,7 +202,7 @@ export default function AdminPage() {
       });
       if (res.ok) {
         const data = await res.json();
-        setUserSuccessMessage(`⚡ ${data.message || 'File storage synchronized successfully!'}`);
+        setUserSuccessMessage(`âš¡ ${data.message || 'File storage synchronized successfully!'}`);
         setTimeout(() => setUserSuccessMessage(''), 4000);
         await loadTableData(token);
         if (token) loadAdminData(token, true);
@@ -301,7 +301,7 @@ export default function AdminPage() {
     }
   };
 
-  // ⚡ 1-Click Fast Approval of Individual Member (Optimistic UI)
+  // âš¡ 1-Click Fast Approval of Individual Member (Optimistic UI)
   const handleApproveMember = async (memberId: string) => {
     const originalPending = [...pendingMembers];
     const originalAll = [...allUsers];
@@ -327,7 +327,7 @@ export default function AdminPage() {
         },
         body: JSON.stringify({ isApproved: true })
       });
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed to approve member:', err);
       // Rollback optimistic state
       setPendingMembers(originalPending);
@@ -337,7 +337,7 @@ export default function AdminPage() {
     }
   };
 
-  // ⚡ 1-Click Fast Decline / Reject of Member (Optimistic UI)
+  // âš¡ 1-Click Fast Decline / Reject of Member (Optimistic UI)
   const handleDeclineMember = async (memberId: string) => {
     const originalPending = [...pendingMembers];
 
@@ -365,7 +365,7 @@ export default function AdminPage() {
     }
   };
 
-  // ⚡ 1-Click Mass / Bulk Approval for all pending requests
+  // âš¡ 1-Click Mass / Bulk Approval for all pending requests
   const handleBulkApprovePending = async () => {
     if (pendingMembers.length === 0) return;
     setIsBulkApproving(true);
@@ -377,7 +377,7 @@ export default function AdminPage() {
     // Optimistically update
     setPendingMembers([]);
     setAllUsers(prev => prev.map(u => pendingIds.includes(u._id || u.id) ? { ...u, isApproved: true } : u));
-    setUserSuccessMessage(`⚡ Approved all ${pendingIds.length} pending request(s)!`);
+    setUserSuccessMessage(`âš¡ Approved all ${pendingIds.length} pending request(s)!`);
     setTimeout(() => setUserSuccessMessage(''), 4000);
 
     try {
@@ -395,7 +395,7 @@ export default function AdminPage() {
         },
         body: JSON.stringify({ userIds: pendingIds })
       });
-    } catch (err) {
+    } catch (err: any) {
       console.error('Bulk approval failed:', err);
       setPendingMembers(originalPending);
       setAllUsers(originalAll);
@@ -549,7 +549,7 @@ export default function AdminPage() {
     }
   };
 
-  // 📤 1-Click Bulk Crew Upload & Auto-Approval Handler
+  // ðŸ“¤ 1-Click Bulk Crew Upload & Auto-Approval Handler
   const handleBulkUploadCrew = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!uploadFile) {
@@ -580,7 +580,7 @@ export default function AdminPage() {
       const data = await res.json();
       if (res.ok) {
         setBulkUploadResult(data);
-        setUserSuccessMessage(`⚡ ${data.message || `Successfully processed and auto-approved ${data.count} crew members!`}`);
+        setUserSuccessMessage(`âš¡ ${data.message || `Successfully processed and auto-approved ${data.count} crew members!`}`);
         loadAdminData(token);
         loadTableData(token);
         setTimeout(() => setUserSuccessMessage(''), 8000);
@@ -974,7 +974,7 @@ export default function AdminPage() {
                         <div>
                           <h4 className="font-bold text-white text-sm truncate">{member.name}</h4>
                           <p className="text-[10px] text-zinc-400 font-mono truncate">
-                            {member.department || 'General'} • {member.year || '3rd Year'}
+                            {member.department || 'General'} â€¢ {member.year || '3rd Year'}
                           </p>
                           <span className="text-[9px] font-mono text-primary font-semibold block uppercase">
                             {member.role || 'CREW'}
@@ -1079,7 +1079,7 @@ export default function AdminPage() {
                     className="inline-flex items-center space-x-1.5 px-4 py-2 bg-gradient-to-r from-green-600 to-green-500 hover:from-green-500 hover:to-green-400 text-white rounded-xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer shadow-md disabled:opacity-50"
                   >
                     <Zap className="h-3.5 w-3.5" />
-                    <span>{isBulkApproving ? 'Approving...' : '⚡ 1-Click Approve All'}</span>
+                    <span>{isBulkApproving ? 'Approving...' : 'âš¡ 1-Click Approve All'}</span>
                   </button>
                 )}
               </div>
@@ -1120,7 +1120,7 @@ export default function AdminPage() {
                               </span>
                             </div>
                             <p className="text-[10px] text-zinc-400 font-mono mt-0.5">
-                              {member.department || 'General'} • {member.year || '3rd Year'} ({member.semester || 1} Sem)
+                              {member.department || 'General'} â€¢ {member.year || '3rd Year'} ({member.semester || 1} Sem)
                             </p>
                             <p className="text-[9px] text-zinc-500 font-mono">{member.email}</p>
                           </div>
@@ -1167,7 +1167,7 @@ export default function AdminPage() {
                       <div className="p-3 space-y-2">
                         <div>
                           <h4 className="font-bold text-white text-xs truncate">{photo.title}</h4>
-                          <p className="text-[9px] text-zinc-400 mt-0.5">By {photo.photographer?.name || 'Pixela Crew'} • {photo.category}</p>
+                          <p className="text-[9px] text-zinc-400 mt-0.5">By {photo.photographer?.name || 'Pixela Crew'} â€¢ {photo.category}</p>
                         </div>
                         <button
                           onClick={() => handleApprovePhoto(photo._id)}
@@ -1199,7 +1199,7 @@ export default function AdminPage() {
                       <div className="flex justify-between items-start">
                         <div>
                           <h4 className="font-bold text-white text-sm">{booking.eventType}</h4>
-                          <p className="text-[10px] text-zinc-400">Venue: {booking.venue} • Date: {new Date(booking.eventDate).toLocaleDateString()}</p>
+                          <p className="text-[10px] text-zinc-400">Venue: {booking.venue} â€¢ Date: {new Date(booking.eventDate).toLocaleDateString()}</p>
                         </div>
                         <span className={`text-[9px] uppercase px-2 py-0.5 rounded font-semibold border ${booking.status === 'accepted'
                             ? 'bg-green-500/10 text-green-500 border-green-500/20'
@@ -1716,7 +1716,7 @@ export default function AdminPage() {
                             </td>
                             <td className="py-3 px-4 text-[11px]">
                               <span className="font-medium text-white">{u.department || 'General'}</span>
-                              <div className="text-[10px] text-zinc-500 font-mono">{u.year || '1st Year'} • Sem {u.semester || 1}</div>
+                              <div className="text-[10px] text-zinc-500 font-mono">{u.year || '1st Year'} â€¢ Sem {u.semester || 1}</div>
                             </td>
                             <td className="py-3 px-3">
                               {u.instagramUrl ? (
@@ -1934,7 +1934,7 @@ export default function AdminPage() {
                             : 'bg-zinc-900 border-zinc-800 text-zinc-400 hover:text-white'
                           }`}
                       >
-                        {isSelected ? '✓ ' : '+ '} {b}
+                        {isSelected ? 'âœ“ ' : '+ '} {b}
                       </button>
                     );
                   })}
@@ -1950,11 +1950,11 @@ export default function AdminPage() {
                     onChange={(e) => setTrackRecordForm({ ...trackRecordForm, performanceRating: Number(e.target.value) })}
                     className="w-full bg-zinc-900 border border-zinc-800 rounded-lg py-2 px-3 text-xs text-white focus:outline-none focus:border-primary cursor-pointer"
                   >
-                    <option value={5}>⭐⭐⭐⭐⭐ (5.0 - Outstanding)</option>
-                    <option value={4}>⭐⭐⭐⭐ (4.0 - Highly Active)</option>
-                    <option value={3}>⭐⭐⭐ (3.0 - Regular Contributor)</option>
-                    <option value={2}>⭐⭐ (2.0 - Developing)</option>
-                    <option value={1}>⭐ (1.0 - Probation)</option>
+                    <option value={5}>â­â­â­â­â­ (5.0 - Outstanding)</option>
+                    <option value={4}>â­â­â­â­ (4.0 - Highly Active)</option>
+                    <option value={3}>â­â­â­ (3.0 - Regular Contributor)</option>
+                    <option value={2}>â­â­ (2.0 - Developing)</option>
+                    <option value={1}>â­ (1.0 - Probation)</option>
                   </select>
                 </div>
 

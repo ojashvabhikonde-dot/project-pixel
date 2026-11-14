@@ -1,4 +1,4 @@
-import jsPDF from 'jspdf';
+﻿import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
 interface UserRecord {
@@ -233,12 +233,12 @@ export const exportAllRegistrationsPdf = (users: UserRecord[], customTitle?: str
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(13);
       doc.setTextColor(20, 20, 30);
-      doc.text('📅 Complete Crew Event Coverage Log & Dates Timeline', 30, 40);
+      doc.text('ðŸ“… Complete Crew Event Coverage Log & Dates Timeline', 30, 40);
     } else {
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(13);
       doc.setTextColor(20, 20, 30);
-      doc.text('📅 Complete Crew Event Coverage Log & Dates Timeline', 30, finalY);
+      doc.text('ðŸ“… Complete Crew Event Coverage Log & Dates Timeline', 30, finalY);
     }
 
     const eventRows = allEvents.map((e) => [
@@ -277,14 +277,14 @@ export const exportAllRegistrationsPdf = (users: UserRecord[], customTitle?: str
   }
 
   // --- Add Page Numbers & Footer ---
-  const pageCount = (doc.internal as { getNumberOfPages: () => number }).getNumberOfPages();
+  const pageCount = (doc.internal as unknown as { getNumberOfPages: () => number }).getNumberOfPages();
   for (let i = 1; i <= pageCount; i++) {
     doc.setPage(i);
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(7.5);
     doc.setTextColor(140, 140, 150);
     doc.text(
-      'Pixela Photography Club • Oriental Group of Institutes • Official System Export',
+      'Pixela Photography Club â€¢ Oriental Group of Institutes â€¢ Official System Export',
       30,
       doc.internal.pageSize.height - 15
     );
@@ -371,10 +371,10 @@ export const exportCrewMemberDossierPdf = (member: UserRecord) => {
   doc.setFontSize(8.5);
   doc.setTextColor(80, 80, 95);
   doc.text(`Email: ${member.email || 'N/A'}`, 50, cursorY + 58);
-  doc.text(`Department: ${member.department || 'General'} (${member.year || '1st Year'} • Sem ${member.semester || 1})`, 50, cursorY + 74);
+  doc.text(`Department: ${member.department || 'General'} (${member.year || '1st Year'} â€¢ Sem ${member.semester || 1})`, 50, cursorY + 74);
 
   doc.text(`Instagram: ${member.instagramUrl || 'None'}`, 320, cursorY + 58);
-  doc.text(`Performance Score: ${member.performanceRating && member.performanceRating > 0 ? `${member.performanceRating}/5.0 ⭐` : 'Active Member'}`, 320, cursorY + 74);
+  doc.text(`Performance Score: ${member.performanceRating && member.performanceRating > 0 ? `${member.performanceRating}/5.0 â­` : 'Active Member'}`, 320, cursorY + 74);
 
   cursorY += 115;
 
@@ -382,7 +382,7 @@ export const exportCrewMemberDossierPdf = (member: UserRecord) => {
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(11);
   doc.setTextColor(20, 20, 30);
-  doc.text('📷 Gear & Camera Equipment Loadout', 35, cursorY);
+  doc.text('ðŸ“· Gear & Camera Equipment Loadout', 35, cursorY);
 
   cursorY += 12;
 
@@ -412,12 +412,12 @@ export const exportCrewMemberDossierPdf = (member: UserRecord) => {
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(11);
   doc.setTextColor(20, 20, 30);
-  doc.text('🎖️ Skill Badges & Verified Specializations', 35, cursorY);
+  doc.text('ðŸŽ–ï¸ Skill Badges & Verified Specializations', 35, cursorY);
 
   cursorY += 12;
 
   const badgesList = Array.isArray(member.badges) && member.badges.length > 0
-    ? member.badges.join('  •  ')
+    ? member.badges.join('  â€¢  ')
     : 'Active Club Member';
 
   doc.setFillColor(240, 245, 255);
@@ -433,7 +433,7 @@ export const exportCrewMemberDossierPdf = (member: UserRecord) => {
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(11);
   doc.setTextColor(20, 20, 30);
-  doc.text('📅 Logged Event Coverage Dates & Milestones', 35, cursorY);
+  doc.text('ðŸ“… Logged Event Coverage Dates & Milestones', 35, cursorY);
 
   cursorY += 10;
 
@@ -485,7 +485,7 @@ export const exportCrewMemberDossierPdf = (member: UserRecord) => {
   // Footer
   doc.setFontSize(7);
   doc.text(
-    `Official Pixela Credential Document • Generated: ${timestamp} • Verified by Pixela Club Engine`,
+    `Official Pixela Credential Document â€¢ Generated: ${timestamp} â€¢ Verified by Pixela Club Engine`,
     doc.internal.pageSize.width / 2,
     doc.internal.pageSize.height - 20,
     { align: 'center' }

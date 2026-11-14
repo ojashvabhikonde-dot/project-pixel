@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
@@ -156,7 +156,7 @@ export default function LeadershipPage() {
   const [isLoginOpen, setIsLoginOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  // Persistent set of deleted member IDs and Emails — persisted to localStorage so deletes survive page refresh
+  // Persistent set of deleted member IDs and Emails â€” persisted to localStorage so deletes survive page refresh
   const getInitialDeletedIds = (): Set<string> => {
     try {
       if (typeof window === 'undefined') return new Set<string>();
@@ -270,8 +270,11 @@ export default function LeadershipPage() {
 
     return () => {
       clearInterval(pollInterval);
-      window.removeEventListener('focus', onFocus);
-      window.removeEventListener('visibilitychange', onFocus);
+      window.removeEventListener('focus', onFocusOrEvent);
+      window.removeEventListener('visibilitychange', onFocusOrEvent);
+      window.removeEventListener('pixela_crew_updated', onFocusOrEvent);
+      window.removeEventListener('pixela_auth_change', onFocusOrEvent);
+      window.removeEventListener('storage', onFocusOrEvent);
     };
   }, []);
 
@@ -348,7 +351,7 @@ export default function LeadershipPage() {
     }
   };
 
-  // ⚡ Fast 1-Click Individual Approval (Optimistic UI)
+  // âš¡ Fast 1-Click Individual Approval (Optimistic UI)
   const handleInstantApprove = async (member: any) => {
     const memberId = member._id || member.id;
     setProcessingMemberId(memberId);
@@ -400,7 +403,7 @@ export default function LeadershipPage() {
     }
   };
 
-  // ⚡ Fast 1-Click Decline / Reject (Optimistic UI)
+  // âš¡ Fast 1-Click Decline / Reject (Optimistic UI)
   const handleInstantDecline = async (member: any) => {
     const memberId = member._id || member.id;
     setProcessingMemberId(memberId);
@@ -426,7 +429,7 @@ export default function LeadershipPage() {
     }
   };
 
-  // ⚡ Fast 1-Click Mass / Bulk Approval (Optimistic UI)
+  // âš¡ Fast 1-Click Mass / Bulk Approval (Optimistic UI)
   const handleInstantApproveAll = async () => {
     if (pendingMembers.length === 0) return;
     setIsApprovingAll(true);
@@ -444,7 +447,7 @@ export default function LeadershipPage() {
       return [...newAdditions, ...prev];
     });
 
-    setApprovalBannerMsg(`⚡ Successfully approved all ${pendingCopy.length} crew applicants!`);
+    setApprovalBannerMsg(`âš¡ Successfully approved all ${pendingCopy.length} crew applicants!`);
     setTimeout(() => setApprovalBannerMsg(''), 4000);
 
     try {
@@ -528,12 +531,12 @@ export default function LeadershipPage() {
     } finally {
       setItemToDelete(null);
       setIsDeleting(false);
-      setApprovalBannerMsg(`🗑️ ${name} permanently removed from crew roster.`);
+      setApprovalBannerMsg(`ðŸ—‘ï¸ ${name} permanently removed from crew roster.`);
       setTimeout(() => setApprovalBannerMsg(''), 4000);
     }
   };
 
-  // ⚡ Open crew dossier instantly (0ms latency, fast & smooth)
+  // âš¡ Open crew dossier instantly (0ms latency, fast & smooth)
   const handleOpenDossier = (member: any) => {
     setSelectedCrewDossier(member);
     const memberId = member._id || member.id;
@@ -656,7 +659,7 @@ export default function LeadershipPage() {
               className="flex-1 sm:flex-initial inline-flex items-center justify-center space-x-1.5 px-4 py-2 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-zinc-950 rounded-xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer shadow-lg shadow-amber-500/20 disabled:opacity-50"
             >
               <Zap className="h-3.5 w-3.5 fill-current" />
-              <span>{isApprovingAll ? 'Approving...' : '⚡ 1-Click Approve All'}</span>
+              <span>{isApprovingAll ? 'Approving...' : 'âš¡ 1-Click Approve All'}</span>
             </button>
           </div>
         </div>
@@ -704,7 +707,7 @@ export default function LeadershipPage() {
                 {(leader.dept || leader.semester) && (
                   <p className="text-[9px] text-zinc-500 font-mono mt-0.5">
                     {leader.dept}
-                    {leader.dept && leader.semester ? ' • ' : ''}
+                    {leader.dept && leader.semester ? ' â€¢ ' : ''}
                     {leader.semester ? `${leader.semester} Sem` : ''}
                   </p>
                 )}
@@ -906,7 +909,7 @@ export default function LeadershipPage() {
                         )}
                         {eventsCount > 0 && (
                           <span className="bg-black/75 px-1.5 py-0.5 rounded border border-white/10 text-amber-300">
-                            🎯 {eventsCount}
+                            ðŸŽ¯ {eventsCount}
                           </span>
                         )}
                       </div>
@@ -936,7 +939,7 @@ export default function LeadershipPage() {
 
                       <p className="text-[8px] text-zinc-500 font-mono truncate">
                         {member.department || member.dept || 'General'}
-                        {(member.department || member.dept) && (member.semester || member.year) ? ' • ' : ''}
+                        {(member.department || member.dept) && (member.semester || member.year) ? ' â€¢ ' : ''}
                         {member.semester ? `${member.semester} Sem` : member.year || ''}
                       </p>
                     </div>
@@ -1047,7 +1050,7 @@ export default function LeadershipPage() {
 
                 <p className="text-xs text-zinc-400 font-mono">
                   {selectedCrewDossier.department || 'General'}
-                  {(selectedCrewDossier.department) && (selectedCrewDossier.semester || selectedCrewDossier.year) ? ' • ' : ''}
+                  {(selectedCrewDossier.department) && (selectedCrewDossier.semester || selectedCrewDossier.year) ? ' â€¢ ' : ''}
                   {selectedCrewDossier.year || ''} {selectedCrewDossier.semester ? `(${selectedCrewDossier.semester} Sem)` : ''}
                 </p>
 
@@ -1201,7 +1204,7 @@ export default function LeadershipPage() {
                           </span>
                         </div>
                         <p className="text-[10px] text-zinc-400">
-                          {evt.location || 'Oriental Campus'} {evt.notes ? `• ${evt.notes}` : ''}
+                          {evt.location || 'Oriental Campus'} {evt.notes ? `â€¢ ${evt.notes}` : ''}
                         </p>
                       </div>
                       <div className="flex items-center space-x-1.5 bg-zinc-950 px-2.5 py-1 rounded-lg border border-white/5 shrink-0 self-start sm:self-center">
@@ -1315,7 +1318,7 @@ export default function LeadershipPage() {
                           <div>
                             <h4 className="font-bold text-white text-xs">{member.name}</h4>
                             <p className="text-[10px] text-zinc-400 font-mono">
-                              {member.department || 'General'} • {member.year || '3rd Year'} ({member.semester || 1} Sem)
+                              {member.department || 'General'} â€¢ {member.year || '3rd Year'} ({member.semester || 1} Sem)
                             </p>
                             {igHandle && (
                               <p className="text-[10px] text-[#ff5e95] font-mono flex items-center gap-1 mt-0.5">
@@ -1387,7 +1390,7 @@ export default function LeadershipPage() {
                     <span>Deleting...</span>
                   </>
                 ) : (
-                  <span>⚠️ Permanently Delete</span>
+                  <span>âš ï¸ Permanently Delete</span>
                 )}
               </button>
             </div>
